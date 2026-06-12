@@ -1,0 +1,6 @@
+{
+  "name": "Culture Globalization Workspace",
+  "description": "An AI-Agent-powered cultural globalization adaptation pipeline and workspace for international markets with RAG, Hofstede dimensional matching, and safety compliance loop fallbacks.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
