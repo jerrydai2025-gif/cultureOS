@@ -56,14 +56,22 @@ export const PRESETS: Record<string, PresetData> = {
             localEmotion: 'quiet companion (无声的自我温柔)',
             scenes: ['雨夜窗沿 (Rainy window)', '书桌温暖台灯 (Warm desk lamp)', '独自回家的街角 (Quiet street corner)'],
             dont: ['不做任何神化表述 (No divine claim)', '不灌空洞鸡汤 (No toxic positivity)', '不提玄学改运 (No fortune-telling jargon)'],
-            mappingDescription: '摒弃东方“福禄寿 / 恩赐好运”的垂直崇拜，将其扁平化为平视的伙伴(Companion)。幸运被重新定义为“能被台灯温暖的琐碎仪式感”，完美切入高个人主义白领的自我关怀(Self-Care)盲点。'
+            mappingDescription: '摒弃东方“福禄寿 / 恩赐好运”的垂直崇拜，将其扁平化为平视的伙伴(Companion)。幸运被重新定义为“能被台灯温暖的琐碎仪式感”，完美切入高个人主义白领的自我关怀(Self-Care)盲点。',
+            adaptationBasis: 'Hofstede Dimension: High Individualism (IDV 91) & Low Power Distance (PDI 40)',
+            adaptationBasisZh: '霍夫斯泰德文化维度推导：高个人主义 (IDV 91) 与低权力距离 (PDI 40) 定位',
+            evidenceData: 'Platform Trend: TikTok #SelfCare tag has 42.1B views. Lo-Fi ambient loops increase watch-time by 28% in metropolitan white-collars.',
+            evidenceDataZh: '平台实证数据：TikTok #SelfCare (自我关怀) 累计超421亿次播放，深夜平视陪伴短视频对都市白领的完播留存率高出主流大盘28%。'
           },
           {
             region: 'Latin America (拉美)',
             localEmotion: 'suerte contigo (与你同行的日常微光)',
             scenes: ['温暖街角暖光 (Corner warmth)', '社区长椅夕阳 (Sunset bench)', '双人端茶对视 (Cozy share)'],
             dont: ['不要出现大悲大喜的孤独 (No tragic loneliness)', '不套用狂欢派对的刻板偏见 (No stereotype carnival party)'],
-            mappingDescription: '结合拉美高集体主义心理，将东方“灵性”降解为温厚的“同行(Acompañamiento)”。画面避开完全冰冷的深夜，融入木伴奏和社区日常，将鹿定位为家庭微小希望的使者，避免天主教会冲突。'
+            mappingDescription: '结合拉美高集体主义心理，将东方“灵性”降解为温厚的“同行(Acompañamiento)”。画面避开完全冰冷的深夜，融入木伴奏和社区日常，将鹿定位为家庭微小希望的使者，避免天主教会冲突。',
+            adaptationBasis: 'Hofstede Dimension: High Collectivism (IDV 30) & High Uncertainty Avoidance (UAI 86)',
+            adaptationBasisZh: '霍夫斯泰德文化维度推导：低个人主义/高集体主义 (IDV 30) 与高不确定性规避 (UAI 86)',
+            evidenceData: 'Empirical Research: Spanish cultural studies on "Acompañamiento" (intimate daily walking) vs "Soledad" (passive depression repulsed by LATAM users).',
+            evidenceDataZh: '社群与学术实证：拉美学术界聚焦于“Acompañamiento”（家庭社区同行）情感粘性，对“Soledad”（孤绝冰冷）概念有天然群体抵触。'
           }
         ]
       },
@@ -141,7 +149,12 @@ export const PRESETS: Record<string, PresetData> = {
             reason: 'CopyAgent 在初版北美文案中使用了 "cures your sleepless anxiety (治愈失眠焦虑)"，此话术违背了美国 FTC 的虚假/非医类神化功效宣称准则。',
             reasonZh: '最初版宣称“能够扫空并治疗长期焦虑不寐”，触犯海外广告法法务“非医疗性产品禁止夸大或承诺治疗效果”禁区。',
             suggestion: '将涉及疗效的 "cures your anxiety" 软化替换为 "emotional comfort" 或 "a tiny moment of peace in a hectic day"，避开功效指控。',
-            suggestionZh: '将“治愈/扫空焦虑失眠”柔化改写为“在兵荒马乱的手头事务中，捕捉两秒属于自己的静谧呼吸”。'
+            suggestionZh: '将“治愈/扫空焦虑失眠”柔化改写为“在兵荒马乱的手头事务中，捕捉两秒属于自己的静谧呼吸”。',
+            basisType: 'regulatory_rule',
+            triggeredRuleCode: 'US FTC Act Section 5 / FDA Health Claim Regulations',
+            triggeredRuleCodeZh: '联邦贸易委员会法(FTC Act)第5款防虚假宣传 / FDA食品药品宣称限制令',
+            basisDescription: 'Under federal regulations, claiming that a consumer asset or digital experience "cures" or "treats" psychological symptoms (e.g. anxiety, insomnia) is legally classified as an unauthorized medical claim, leading to severe litigation risks.',
+            basisDescriptionZh: '根据美国FTC及FDA联合条例，除经临床核准的药械外，任何出海普通商品/自媒体IP文案一律严禁词涉 “Cure/Treat/Heal”(对疾病的治疗、疗愈、根治宣称)，否则将招致集体诉讼和平台下架处分。'
           },
           {
             category: 'religious_misuse',
@@ -150,7 +163,12 @@ export const PRESETS: Record<string, PresetData> = {
             reason: '最初版视觉 Prompt 包含 "deer with a perfect circle gold light halo directly behind its head"。这在海外网民眼中，布局酷似拜占庭天主教圣人画像。',
             reasonZh: '让金光在小鹿正后脑勺形成规整的正圆，构图酷似天主教、圣公会供奉的“圣人圣环”，有侵犯严肃宗教认同风险。',
             suggestion: '要求将正圆光环重构为“自然泛出发光粒子、雾粉尘雾般的微弱闪烁（star dust, tiny magical gold sparks）”，去掉规整宗教正圆形。',
-            suggestionZh: '通知后继重画脚本将规整“神格正圆光环”更改为“鹿角天然像落满了林间金色雾沙般的自然微芒”。'
+            suggestionZh: '通知后继重画脚本将规整“神格正圆光环”更改为“鹿角天然像落满了林间金色雾沙般的自然微芒”。',
+            basisType: 'cultural_taboo',
+            triggeredRuleCode: 'ICC Advertising Code Article 12 (Social & Cultural Responsibility)',
+            triggeredRuleCodeZh: 'ICC国际商会广告实务守则第12大条（社会及文化尊重责任）',
+            basisDescription: 'Depicting holy circle halos on animated creatures clashes with canonical Catholic Saint iconography in Low-PDI traditional areas, risking severe pushback from family-oriented localized communities.',
+            basisDescriptionZh: '在北美的传统中产社群及拉美普遍高度虔诚的天主教社会中，正等圆形金色圣圈（Nimbus Halo）属于神圣不可侵犯的宗教圣像专有纹样，将其强套给拟人动物易引发圣像滥用及亵渎非难。'
           },
           {
             category: 'cultural_stereotype',
@@ -159,7 +177,12 @@ export const PRESETS: Record<string, PresetData> = {
             reason: '文案已彻底规避将拉美用户默认归纳为“狂欢节派对与桑巴舞爱好者”的陈腐老套观点，使用原声吉他成功平替，风险极低。',
             reasonZh: '策略已用温厚平和小吉他，打破了海外广告中拉美网民必须“桑巴斗牛跳狂欢舞”的脸谱偏见，完全符合现代出海尊重意识。',
             suggestion: '继续保持对本土多维真实的记录，无需任何修改。',
-            suggestionZh: '保持克制客观，无需改动。'
+            suggestionZh: '保持克制客观，无需改动。',
+            basisType: 'model_bias',
+            triggeredRuleCode: 'Universal DE&I Standards (Diversity, Equity & Inclusion)',
+            triggeredRuleCodeZh: '全球多元、公平与包容（DE&I）反偏见营销指引',
+            basisDescription: 'Avoids outdated cultural flattening and patronizing clichés (such as expecting Latin Americans to only react to carnival dances/passionate festivals) by integrating serene, artistic local daily scenes.',
+            basisDescriptionZh: '旨在彻底破除“将拉美出海文案一律画作草帽、仙人掌、狂欢派对跳桑巴”的陈腐脸谱设定。以平和民谣吉他替换偏见热带喧闹，展现深厚且真实多元的现代本土风味。'
           }
         ]
       },
@@ -233,7 +256,11 @@ export const PRESETS: Record<string, PresetData> = {
             localEmotion: 'tea-meditation (午后三点的一分钟呼吸)',
             scenes: ['明亮现代灰色厨房 (Modern gray kitchen)', '阳光洒在极简木桌 (Minimalist table)', '手掌焐暖一杯茶 (Warm hands holding cup)'],
             dont: ['不穿古装汉服等遥远演服 (No period costumes)', '不强制灌输冗长玄学典故 (No heavy dynasty gossip)'],
-            mappingDescription: '将宏大茶文化降解为“给现代人的5分钟咖啡替代冥想 (Tea-Meditation)”。画面强调茶渍蒸腾、竹质杯托的温润触感，通过现代、轻透的生活美学，切入欧美高IDV网民对于精神解压与天然功能茶的向往。'
+            mappingDescription: '将宏大茶文化降解为“给现代人的5分钟咖啡替代冥想 (Tea-Meditation)”。画面强调茶渍蒸腾、竹质杯托的温润触感，通过现代、轻透的生活美学，切入欧美高IDV网民对于精神解压与天然功能茶的向往。',
+            adaptationBasis: 'Hofstede Dimension: High Individualism (IDV 91) & Muted Masculinity (MAS 62)',
+            adaptationBasisZh: '霍夫斯泰德文化维度推导：高个人主义独处 (IDV 91) 与松弛生活调调 (MAS 62)',
+            evidenceData: 'Market Data: US Specialty Tea Association reports 32% annual volume growth in wellness/herbal tea pods among Gen-Z urban professionals.',
+            evidenceDataZh: '市场实证数据：美国精品茶协会（ESTA）报告指出，保健天然功能草本茶与竹木茶具在城市青年白领群体中的自购家庭拥有率年均飙涨32%，冥想平替需求极其刚性。'
           }
         ]
       },
@@ -291,7 +318,12 @@ export const PRESETS: Record<string, PresetData> = {
             reason: '文案完全自律地避开了“Detox fat away, lowers calorie intake (喝茶消脂排毒减肥、治病降脂)”等触碰FDA的非食品成分红线宣称。',
             reasonZh: '未出现任何“刮油消重减肥、清血管降血脂、替代医疗排毒”等高敏感虚假功效承诺词汇，完全通过。',
             suggestion: '无需进行任何微改。继续贯彻该清凉舒压定位。',
-            suggestionZh: '当前安全缓冲空间开阔，建议直接全渠道推进。'
+            suggestionZh: '当前安全缓冲空间开阔，建议直接全渠道推进。',
+            basisType: 'regulatory_rule',
+            triggeredRuleCode: 'FDA Food Labeling Guide Section 101.9 / FTC Truth-in-Advertising Rules',
+            triggeredRuleCodeZh: 'FDA食品营养标签规范第101.9款 / FTC广告真实披露规则',
+            basisDescription: 'Restricts unqualified biological efficacy statements for herbal extracts; by solely positioning the tea ritual as sensory ASMR relaxation, we guarantee 100% legal immunity.',
+            basisDescriptionZh: '规避了对植物提取物功效描述的行业高风险雷区。通过将其全数重构为“ASMR听觉感知与手部温热体验”，杜绝了食品法下关于非科学实证抗病疗效的任何行政指控风险。'
           },
           {
             category: 'religious_misuse',
@@ -300,7 +332,12 @@ export const PRESETS: Record<string, PresetData> = {
             reason: '规避了将复杂茶道名词直译成 "Nirvana / Buddhist Karma" 等带有严肃宗教敬重性的词语，无冒犯本地教团风险。',
             reasonZh: '未使用“涅槃、佛家开光、皇家佛茶、因果福报”等容易让欧美广大无信仰或天主教徒感到无所适从、反感的非合规词涉，极安全。',
             suggestion: '保持当前清凉不涉神迹和教义的科学减压表达。',
-            suggestionZh: '保持静水流深格调，不带超凡神迹宣传。'
+            suggestionZh: '保持静水流深格调，不带超凡神迹宣传。',
+            basisType: 'cultural_taboo',
+            triggeredRuleCode: 'AANA Code of Ethics Section 2.1 (Religious & Cultural Nuances)',
+            triggeredRuleCodeZh: 'AANA广告道德和民俗规避指引第2.1节',
+            basisDescription: 'Direct translations of deeply holy Eastern theology (e.g. Nirvana, Karma, Dharma) frequently backfire as mock mysticism or serious offense; secular relaxation branding maintains high compliance.',
+            basisDescriptionZh: '东方深层神学词汇（如涅槃、法性、业障等）直译极易引发西方主流信徒的“异教猎奇”或“不严肃解构”反感。提炼生活美学、剔除过度玄学，使受众接纳度最大化。'
           }
         ]
       },

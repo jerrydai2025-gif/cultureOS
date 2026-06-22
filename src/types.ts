@@ -61,6 +61,10 @@ export interface CulturePack {
       scenes: string[];
       dont: string[];
       mappingDescription: string;
+      adaptationBasis?: string;
+      adaptationBasisZh?: string;
+      evidenceData?: string;
+      evidenceDataZh?: string;
     }[];
   };
   content_strategy: {
@@ -108,6 +112,11 @@ export interface CulturePack {
       reasonZh: string;
       suggestion: string;
       suggestionZh: string;
+      basisType?: 'cultural_taboo' | 'regulatory_rule' | 'platform_terms' | 'model_bias';
+      basisDescription?: string;
+      basisDescriptionZh?: string;
+      triggeredRuleCode?: string;
+      triggeredRuleCodeZh?: string;
     }[];
   };
   evaluation_score: {
@@ -136,7 +145,7 @@ export interface RagFeedback {
 export interface RagEntry {
   id: string;
   name: string;
-  category: 'symbol' | 'regulatory' | 'music_visual' | 'audience';
+  category: 'symbol' | 'regulatory' | 'music_visual' | 'audience' | 'case_study';
   version: string;
   lastUpdated: string;
   descriptionZh: string;
@@ -166,4 +175,27 @@ export interface EvolutionTrace {
   message: string;
   details?: string;
 }
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'user';
+  remainingQuota: number;
+  maxQuota: number;
+  regDate: string;
+  businessDomain?: string;
+  purpose?: string;
+}
+
+export interface QuotaAuditLog {
+  id: string;
+  timestamp: string;
+  userId: string;
+  userEmail: string;
+  action: string; // e.g. "Creative Campaign Generated", "RAG Directives Evolved", "Quota Recharge"
+  amount: number; // e.g. -1 or +5
+  remainingAfter: number;
+}
+
 

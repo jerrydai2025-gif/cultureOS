@@ -7,11 +7,96 @@ import {
 import { RagEntry, RagFeedback, EvolutionTrace } from '../types';
 import { INITIAL_RAG_ENTRIES } from '../data/rag_presets';
 
+const GLOBAL_BRAND_CASES = [
+  {
+    id: "case-01",
+    brand: "POP MART 泡泡玛特",
+    categoryZh: "潮流玩具 / 盲盒收藏品",
+    categoryEn: "Designer Art Toys / Collectible Figures",
+    logoText: "🧸",
+    domesticPositioningZh: "新锐抗压盲盒体验、强收集快感、社交身份标签",
+    domesticPositioningEn: "Gen-Z emotional reward blind boxes, intense collectible rush, pop toy peer awards",
+    overseasPositioningZh: "独立艺术家设计雕塑摆件、高级时尚桌搭、当代流行工艺美术",
+    overseasPositioningEn: "Gallery-grade designer sculptures, elegant desk setup lifestyle aesthetics",
+    domesticSloganZh: "“ 创造潮流，传递美好 ”",
+    domesticSloganEn: "“ Create trends, convey happiness ”",
+    overseasSloganZh: "“ To Light Up Passion and Bring Joy ”",
+    overseasSloganEn: "“ To Light Up Passion and Bring Joy ” (去投机色彩，归真于精神向热爱)",
+    keyInsightZh: "拒绝将低单价拼手气“盲盒”直译强推。将其精降为“艺术家授权收藏雕雕摆偶(Art Toys/Collectibles)”突显高美学自愈价值，不仅完美避过了美国多大区的博彩与分级反成瘾监管红线，更顺势抬高了客单价倍率。",
+    keyInsightEn: "Reframed standard cheap blind boxes as high-end designer artist series collectibles. Avoided gambling and game addiction legal traps in North America while elevating aesthetic premium and margins.",
+    naFocusZh: "强调独立IP合作、设计师签名溯源质感，推出精装办公桌摆插画主题、UL软塑质检。",
+    latamFocusZh: "推出日常拟人化‘守护陪伴、共同成长’的趣味全场景生活视频，配合拉丁阳光夕阳。"
+  },
+  {
+    id: "case-02",
+    brand: "ANKER 安克创新",
+    categoryZh: "消费电子 / 充电配电科技",
+    categoryEn: "Consumer Electronics / Power Charging Devices",
+    logoText: "⚡",
+    domesticPositioningZh: "百瓦高能氮化镓、物理参数极佳、降价大促高性价比数码配件",
+    domesticPositioningEn: "Brute-force high wattage (W) super chargers, affordable high-spec consumer adapters",
+    overseasPositioningZh: "不可或缺的便携低熵安全科技伴侣、海洋塑料绿色再生环保艺术、科技探索精神支柱",
+    overseasPositioningEn: "The ultimate secure eco-conscious charging companion, recycled marine plastic craft",
+    domesticSloganZh: "“ 智电生活，安克随行 ”",
+    domesticSloganEn: "“ Smart electricity, Anker is always with you ”",
+    overseasSloganZh: "“ Charge Fast, Live More ”",
+    overseasSloganEn: "“ Charge Fast, Live More ” (快快充电省下时间，去爱、去探索更辽阔的生命旅程)",
+    keyInsightZh: "在海外完全摈弃枯燥的数据功率堆叠打法，将出海方向升华为“Eco-Friendly (绿色可循环)”与“Life Protection (安全续能)”。将日常电子损耗升华为一种“不被电量束缚、积极无忧”的利他生活信仰。",
+    keyInsightEn: "Abandoned engineering feature wars. Aligned with environmental and premium security standards, turning emergency battery anxiety into a Zen-like self-care digital freedom.",
+    naFocusZh: "UL高安全规格认证、亚马逊海洋塑料可循环特装标贴、极简冷灰质感太空金属桌搭配色。",
+    latamFocusZh: "侧重于盛大公路出行、狂欢野外 Fiesta 篝火应急供电多场景互动故事，强调安全温馨。"
+  },
+  {
+    id: "case-03",
+    brand: "FLORASIS 花西子",
+    categoryZh: "高端国风美妆 / 汉彩化妆品",
+    categoryEn: "Oriental Botanical Aesthetics / Clean Makeup",
+    logoText: "🌸",
+    domesticPositioningZh: "东方古典温莹驻颜、药方调理养肤、浪漫中药古汉仪式美学",
+    domesticPositioningEn: "Classical functional makeup, ancient royalty beauty and clinical natural herbal recipes",
+    overseasPositioningZh: "馆藏艺术品般的精工微雕立体眼彩、100%植物纯素零残忍洁净美妆",
+    overseasPositioningEn: "3D micro-relief-sculpted gallery compact artwork, 100% Vegan & Cruelty-Free botanical pigments",
+    domesticSloganZh: "“ 东方彩妆，以花养妆 ”",
+    domesticSloganEn: "“ Oriental cosmetics, nourishing makeup with flowers ”",
+    overseasSloganZh: "“ Oriental Artistry on Clean Canvas ”",
+    overseasSloganEn: "“ Oriental Artistry on Clean Canvas ” (在纯净画布上，用东方工艺美学讲述真实故事)",
+    keyInsightZh: "由于FDA对中草药美妆的草本药物功效严控，花西子出海战略剔除一切“祛痘调理”功效主张，主攻“Clean Beauty (无公害零伤害纯素认证)”及“立体微雕奇迹 (Artisan 3D Carving)”。用眼见为实的手艺震撼，跨越语言障碍。",
+    keyInsightEn: "Under FDA, botanical medicinal formulas have extreme liabilities. Florasis rebranded as 100% Vegan (Cruelty-Free) while emphasizing micro-sculpting visual masterpieces, winning Western aesthetic awe.",
+    naFocusZh: "必须标贴 Cruelty-Free 零动物伤虐标识、东方微雕神妙纪录片（全手绘分明）、温润松烟黛色。",
+    latamFocusZh: "耐高温防晕、对抗潮湿大色彩对比，色卡增加拉美高饱和度嘉年华狂欢适用妆容。"
+  },
+  {
+    id: "case-04",
+    brand: "CapCut 剪映海外版",
+    categoryZh: "多合一创意媒体制作工具 / 剪辑软件",
+    categoryEn: "Digital Video Workspace / Creator Accelerator",
+    logoText: "🎬",
+    domesticPositioningZh: "轻而易剪、抖音热门视频卡点、草根笑料搞笑段子一键套用",
+    domesticPositioningEn: "Simple fast editor, synchronized one-click template library for Douyin viral memes",
+    overseasPositioningZh: "赋能全球个体创作者的数码梦工厂、安全商业音乐赋能、TikTok算法裂变大杀器",
+    overseasPositioningEn: "Unleashing individual digital potentials with secure pre-cleared audio & compliance speed",
+    domesticSloganZh: "“ 轻而易剪，让创作更简单 ”",
+    domesticSloganEn: "“ Easy edit, make creation simpler ”",
+    overseasSloganZh: "“ Unleash Your Video Creativity ”",
+    overseasSloganEn: "“ Unleash Your Video Creativity ” (释放个体的创作直觉，让每个片段闪闪发亮)",
+    keyInsightZh: "将本土化的流行烂梗声效从预置中高规格清理，聚焦于“Creator Independence (创作者独立精神)”。预置百万首完全买断版权的海外商用声轨，彻底消除了欧美网红关于DMCA版权起诉、下架罚款的硬核惊惧。",
+    keyInsightEn: "Purged generic localization content to support individual creator autonomy. Implemented secure full-use audio licensing, lifting legal concerns of DMCA copyright claims.",
+    naFocusZh: "全面合规的Commercial Sound Library、云端多重团队协作自动音视频对轨字幕。",
+    latamFocusZh: "热烈拉丁欢快鼓拍卡点、广场Fiesta多人节奏模板，动感活泼快切节奏。"
+  }
+];
+
 interface DatabaseEvolutionViewProps {
   lang: 'zh' | 'en';
+  currentUser?: any;
+  onConsumeQuota?: (actionName: string) => boolean;
 }
 
-export default function DatabaseEvolutionView({ lang }: DatabaseEvolutionViewProps) {
+export default function DatabaseEvolutionView({
+  lang,
+  currentUser,
+  onConsumeQuota
+}: DatabaseEvolutionViewProps) {
   const isZh = lang === 'zh';
 
   // State
@@ -27,6 +112,17 @@ export default function DatabaseEvolutionView({ lang }: DatabaseEvolutionViewPro
     return INITIAL_RAG_ENTRIES;
   });
   const [selectedEntryId, setSelectedEntryId] = useState<string>('rag-001');
+  const [subTab, setSubTab] = useState<'evolution' | 'cases'>('evolution');
+
+  // Startup brand customizer states
+  const [startupCategory, setStartupCategory] = useState<string>('pet_tech');
+  const [startupCustomCategory, setStartupCustomCategory] = useState<string>('');
+  const [startupRegion, setStartupRegion] = useState<'NA' | 'LATAM'>('NA');
+  const [startupRawSlogan, setStartupRawSlogan] = useState<string>('');
+  const [isBrandingEvolving, setIsBrandingEvolving] = useState<boolean>(false);
+  const [customBrandResult, setCustomBrandResult] = useState<any | null>(null);
+  const [brandingTraces, setBrandingTraces] = useState<string[]>([]);
+  
   const [isEvolving, setIsEvolving] = useState(false);
   const [modelProvider, setModelProvider] = useState<'gemini' | 'deepseek'>('gemini');
   const [customFeedback, setCustomFeedback] = useState<string>('');
@@ -82,6 +178,10 @@ export default function DatabaseEvolutionView({ lang }: DatabaseEvolutionViewPro
   // Run evolution trigger
   const triggerEvolution = async () => {
     if (!customFeedback.trim()) return;
+
+    if (onConsumeQuota && !onConsumeQuota(isZh ? '自进化 RAG 数据库安全审计分析' : 'Self-evolving RAG database threat analysis loop')) {
+      return;
+    }
 
     setIsEvolving(true);
     setEvolutionSuccess(false);
@@ -208,6 +308,248 @@ export default function DatabaseEvolutionView({ lang }: DatabaseEvolutionViewPro
     alert(isZh ? '🎉 新规则已成功确立合并并写入自进化 RAG 数据库！出海创意管线将实时加载此版新规规避红线。' : '🎉 New evolved directives successfully committed and saved to your RAG store! The campaign desk will instantly read this schema for compliance audits.');
   };
 
+  const handleGenerateBranding = async () => {
+    if (onConsumeQuota && !onConsumeQuota(isZh ? '出海初创品牌基因翻译与文案定制' : 'Startup global brand positioning & campaign copywriting translation')) {
+      return;
+    }
+
+    setIsBrandingEvolving(true);
+    setBrandingTraces([]);
+    setCustomBrandResult(null);
+
+    const steps = [
+      isZh ? "🧬 [解析层] 读取初创企业品牌基因和诉求语意..." : "🧬 [Parsing] Ingesting domestic startup brand attributes & raw slogans...",
+      isZh ? "🔍 [风控过滤] 开始进行合规雷区审计（FTC法案第5节、FDA标签草案）..." : "🔍 [Audit] Scanning advertising clinical risks against FDA/FTC checklists...",
+      isZh ? "🧠 [文化等效映射] 应用霍夫斯泰德六维度指数（北美高IDV / 拉美高集体主义）等效转换..." : "🧠 [Mapping] Synthesizing equivalent symbols under Hofstede matrix criteria...",
+      isZh ? "✍️ [智能话术合成] 智能解耦“粗放硬广”，重塑高质感温润出海 slogan 和品牌定位..." : "✍️ [Slogan Synthesis] Polishing raw taglines into high-end contextual slogans...",
+      isZh ? "✅ [安全沙盒自校验] 验证规则完整度，核发 RAG 可存续单元结构..." : "✅ [Verification] Finalizing compliance ruleset structures for RAG database..."
+    ];
+
+    for (let i = 0; i < steps.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      setBrandingTraces(prev => [...prev, steps[i]]);
+    }
+
+    // Prepare Result Data
+    let brandName = "";
+    let finalCategory = "";
+    let domesticSlogan = "";
+    let overseasSlogan = "";
+    let overseasPositioning = "";
+    let keyStrategy = "";
+    let mustHaves: string[] = [];
+    let mustNots: string[] = [];
+
+    const categoryLabel = startupCategory;
+    const regionText = startupRegion === "NA" ? "North America (北美)" : "Latin America (拉美)";
+
+    if (categoryLabel === "pet_tech") {
+      brandName = isZh ? "PAW-ZEN 智能温宠" : "PAW-ZEN Smart Companion";
+      finalCategory = isZh ? "智能宠物用具与喂食器 (Pet Tech)" : "Smart Pet Care & Feeder";
+      domesticSlogan = startupRawSlogan || (isZh ? "“ 2K高清夜视不卡粮、超长放电白菜价，随时看宠解焦虑！”" : "“2K Night Vision, clog-free feeder, ultra battery life with cheap prices!”");
+      
+      if (startupRegion === "NA") {
+        overseasSlogan = "“ Because love feeds on quiet presence. ”";
+        overseasPositioning = isZh 
+          ? "关注爱宠福祉与人宠情感互动的平视情绪守护品牌" 
+          : "Mindful animal wellness companion focusing on peaceful human-pet lifestyle synchronicity";
+        keyStrategy = isZh
+          ? "将国内“监控卡粮、狂看爱宠解焦虑”等偏向主人过度掌控的负压词软化，包装为“关注宠物健康自主与双向安全陪伴”。完美契合北美对宠物作为独立家庭角色的社会环保消费舆情。"
+          : "Softened monitoring metaphors. Reframed monitoring features as pet comfort freedom and mental calmness, adhering to NA progressive animal welfare ethics.";
+        mustHaves = [
+          isZh ? "强调爱宠独立自我的高画质“不被打扰时光”安详画面" : "Highlight scenes of pets enjoying cozy, distraction-free alone time",
+          isZh ? "列明 UL 抗漏电防咬材质、食品级不含双酚A不卡粮认证" : "UL-certified safety materials and BPA-Free food security labels"
+        ];
+        mustNots = [
+          isZh ? "严禁虚假声称该电子器物能“包治各种宠物郁结焦虑、保障宠物健康快乐成长”等越线医疗指控" : "Do NOT guarantee physical or psychological therapy claims for animals",
+          isZh ? "杜绝不断强调“全网最低、白菜促销”等砸损高客单价溢价的话术" : "Avoid cheap discount copy like 'bargain bin' that ruins brand equity"
+        ];
+      } else {
+        overseasSlogan = "“ Siempre juntos, siempre felices. ” (永远同行，永远温馨)";
+        overseasPositioning = isZh 
+          ? "家庭社区共享温馨人宠一同前行的快乐能量媒介" 
+          : "The warm messenger of shared human-animal family moments";
+        keyStrategy = isZh
+          ? "融入拉美浓郁的生命集体融洽氛围，强调智能设备是为家庭成员共享快乐时光、保障安心而生的家庭好帮手，彻底摒弃冰冷单身独处镜头。"
+          : "Integrated with LATAM family warmth. Position pet care devices as a reliable helper for family gatherings, avoiding cold isolation vibes.";
+        mustHaves = [
+          isZh ? "展示宠物在明亮日落、全家Fiesta庭院烧烤派对中撒欢玩耍的温馨大视野场景" : "Display warm clips of pets participating in family outdoor celebrations",
+          isZh ? "欢悦明快、带点低保真律动的西班牙尼龙木吉他背景音" : "Cheerful cozy spanish guitar backgrounds"
+        ];
+        mustNots = [
+          isZh ? "严禁在视频开头使用幽暗、冰冷偏暗蓝的深夜关灯空禁闭色调" : "Do NOT utilize depressive, cold, nocturnal isolated setups for pets",
+          isZh ? "避免照搬过于高冷的北欧风黑白灰单色极简主义UI色板" : "Avoid copying isolated minimalistic monochrome setups"
+        ];
+      }
+    } else if (categoryLabel === "ebike") {
+      brandName = "AERO-FLOW E-Bike";
+      finalCategory = isZh ? "绿色低碳智能城市电单车 (E-Bike)" : "Eco-Tech Micro-Mobility E-Bike";
+      domesticSlogan = startupRawSlogan || (isZh ? "“ 时速40迈跑山无阻、极大续航狂飙、全网极低性价比降维打击！”" : "“40mph ultra speed, long range, low prices crushing competitors!”");
+
+      if (startupRegion === "NA") {
+        overseasSlogan = "“ Reclaim your commute. Breathe your city. ”";
+        overseasPositioning = isZh 
+          ? "城市低碳正念通勤、倡导人际空间放空与低熵出行的高端倡导者" 
+          : "Urban quiet commuter & eco-active freedom advocate";
+        keyStrategy = isZh
+          ? "淘汰国内喜好的“狂飙、秒杀、拼速度常数、低价降维打击”等带有危险危险和廉价街头感标签，重塑为“在拥挤的欧美地铁外获取专属于个体的两英里正念呼吸时间”。完美打入中产美学。"
+          : "Eradicated aggressive speed/conquering marketing. Reframed micro-mobility as a premium, low-entropy mindfulness escape from heavy metropolitan subways, fully matching middle-class values.";
+        mustHaves = [
+          isZh ? "明确标示碳平衡减排系数证书以及环保再生合金用料质认证" : "Highlight cargo certifications, eco-alloy and carbon reduction indexes",
+          isZh ? "捕捉雨后清晨第一道街头阳光、车体顺滑掠过的静音特写" : "Serene sunlit morning streets, sleek noise-canceled design highlights"
+        ];
+        mustNots = [
+          isZh ? "严禁将主视觉标语或口号设计为鼓励超越本地城市法定限速的违规野外狂跑山" : "Avoid marketing speeding beyond regulated city limits containing off-road risk",
+          isZh ? "严禁在宣发物料中出现骑行未佩戴美国DOT头盔、甚至危险穿插行车线等反规雷区画面" : "Do NOT show reckless riders missing helmets or violating local safety guidelines"
+        ];
+      } else {
+        overseasSlogan = "“ Tu viaje, tu libertad dorada. ” (你的旅程，你的金色穿梭)";
+        overseasPositioning = isZh 
+          ? "穿梭拉美斑驳古街、连接亲情友情与全家度假自由的金色伴侣" 
+          : "The golden sunset companion connecting family on colonial streets";
+        keyStrategy = isZh
+          ? "针对拉美对自由探索和温暖社区人情的高感度。侧重于“长寿电量省下奔波时间、回家探望母亲、结伴看球夕阳Fiesta”的主题宣讲。"
+          : "Focus on connection freedom and weekend family visits. Leverage community colors and romantic dapple sunset paths.";
+        mustHaves = [
+          isZh ? "展示骑行穿过彩色殖民老楼、街坊亲昵挥手微笑的近焦深情谊画面" : "Showcase passing dapple colonial buildings with local neighbors waving hands",
+          isZh ? "暖洋洋的高对比拉丁流行沙锤、经典尼龙弦即敲打击伴奏" : "Exquisite rhythmic percussion and warm Spanish acoustic"
+        ];
+        mustNots = [
+          isZh ? "严防全盘挪用冰冷、高冷性冷淡、零温度的废墟工业朋克科技质感" : "Avoid cold, dark clinical gray mechanical isolation layouts",
+          isZh ? "避忌使用未经审核的、可能冒犯或混淆本地特定原住民氏族土地所有权敏感性的装饰符号" : "Avoid naming vectors that touch indigenous territorial pride controversy"
+        ];
+      }
+    } else if (categoryLabel === "herbal_tea") {
+      brandName = "SAGE-BREW 研岩茶";
+      finalCategory = isZh ? "东方精品冷泡草本武夷岩茶" : "Specialty Botanical Tea & Cold Brew Wuyi Rock Tea";
+      domesticSlogan = startupRawSlogan || (isZh ? "“ 汉方老祖宗中草药秘方，解酒护肝、消水肿狂刮油！两杯省下星巴克钱！”" : "“Traditional secret herbal tea, detoxing fat away, lowers calorie, save coffee budgets!”");
+
+      if (startupRegion === "NA") {
+        overseasSlogan = "“ Steep your calm, unfurl your mind. ”";
+        overseasPositioning = isZh 
+          ? "工作日下午三点电脑前白领一族提神、正念松弛的咖啡高端代用品" 
+          : "The premium 3:00 PM digital-unwind coffee alternative";
+        keyStrategy = isZh
+          ? "在国内被滥用的“老祖宗汉方消炎、排毒酒精、刮油、代替药物”在美加是触发FDA严重行政处罚的绝对熔断雷红线。CultureOS将其完全升级为“岩茶冲泡的蒸汽微距ASMR、给眼部电脑屏幕带来两分钟的东方非药物感官禅意冥想时刻”。"
+          : "Excluding all health warnings about detoxification or obesity clinics. Rebuilt campaign as a 2-minute tea-steaming ASMR escape for overworked programmers or designers, fully safe under FTC codes.";
+        mustHaves = [
+          isZh ? "展示质朴陶罐缓缓注入沸水、微距透光拍摄红茶岩骨花香茶汤交融的解压微镜头" : "Capture extreme macro-ASMR of thermal steam and clay cup texture",
+          isZh ? "包装及详情页强制标注 100% Non-GMO（非转基因）及天然天然草本食品认证标牌" : "Verified natural organic botanical tags conforming to USDA Organic guidelines"
+        ];
+        mustNots = [
+          isZh ? "绝对禁止提及任何关于“根制失眠、消弭长期焦虑、治疗脑神经衰弱”等不实药理承诺" : "Do NOT cite unqualified claims on blood pressure, weight-loss or diabetes",
+          isZh ? "避免渲染大内皇宫、权贵独享、给百姓看病的封建尊卑姿态镜头" : "Avoid outdated Imperial dynasty costumes that create cultural distance"
+        ];
+      } else {
+        overseasSlogan = "“ Sabor ancestral, alma tranquila. ” (远古的风味，安乐的心眸)";
+        overseasPositioning = isZh 
+          ? "连通大自然纯净母体与肥沃泥土的古老天然草本原汁能量" 
+          : "The pure botanical lifeforce connecting to nature and soil";
+        keyStrategy = isZh
+          ? "针对拉美“尊重自然母体与泥土恩赐（Pachamama Vibe）”的朴素生态神学理念。着重塑造100%纯天然自然原叶收割、不添加糖、无人工色素，作为亲友野聚消暑圣品。"
+          : "Evoke general Mother-Nature elements. Focus on 100% natural organic harvest and family cozy tables.";
+        mustHaves = [
+          isZh ? "微距展现热带清露、雨林深处茶农质朴劳作，以及双手捧陶汤大口饱吸天然茶露的幸福" : "Show earthen clay pots, lush organic tea garden dew and tactile comfort snaps",
+          isZh ? "展现一大壶冷茶摆放在开阔草坪，供整个街坊、多口之家开怀消遣的欢聚图景" : "Family share pitcher setups with glowing sunlit tables"
+        ];
+        mustNots = [
+          isZh ? "切记不要将茶叶故事讲成带有符咒开光、辟邪做法迷信色彩、与天主教信仰发生强烈冲突的封建神秘主义" : "Strictly avoid pagan mysticism or superstitious claims provoking Catholic areas",
+          isZh ? "极力规避单人处在黑漆房幽闭喝茶、愁云惨淡反思的情调，会引发本地社会抑郁症创伤敏感" : "Avoid dry, isolating dark meditative graphics"
+        ];
+      }
+    } else {
+      // Custom / Fallback category
+      brandName = "VIRTUE-FLOW " + (startupCustomCategory || "Outbound Elite");
+      finalCategory = startupCustomCategory || (isZh ? "初创定制出海商品 (Custom Vertical)" : "Startup Adaptive Enterprise");
+      domesticSlogan = startupRawSlogan || (isZh ? "“ 狂暴秒杀、绝对低价好用、贴心解决你的一切烦恼和不爽不适！”" : "“Extreme results, low price, instant relief for your issues!”");
+
+      overseasSlogan = startupRegion === "NA" 
+        ? "“ Elevate the everyday, elegantly. ”"
+        : "“ Hecho con alma, vivido con amor. ” (物造灵魂，生活以爱)";
+      
+      overseasPositioning = isZh 
+        ? `致力于将匠心工艺等效融入${regionText}本土消费者日常生态的高美学品牌`
+        : `A modern dedicated premium lifestyle provider built for specialized ${regionText} values`;
+
+      keyStrategy = isZh
+        ? "系统智能抓取到国内话术里的主观疗宣称，并判定“秒杀狂暴低价”等具有高反弹力负面品牌资产风险。CultureOS已强制将卖点突变重塑为“温润融入日常正念仪式、零压力合规”的高客单价叙事。"
+        : "Detected heavy commercial slogans containing clinical claiming risks. Upgraded brand to sensory aesthetic focus, bypassing safety traps while amplifying premium trust.";
+
+      mustHaves = [
+        isZh ? "微距展示产品本真物理细节，运用自然斑驳柔光，在视觉上直接证明其质感和定价溢价度" : "Close-up tactile textures, authentic handmade/precision detailing highlights",
+        isZh ? "符合大区DE&I多元共融(Diversity & Equity)审美的模特及日常社媒极简尺寸画面" : "Fully compliance certified aspect ratios and localized compliant diversity imagery"
+      ];
+      mustNots = [
+        isZh ? "严禁虚假渲染包治情绪、解决生理病理或可取代专业治疗医生和健康检测的字眼" : "Zero mentions of professional psychological cures or diagnostic alternatives",
+        isZh ? "杜绝一切粗暴的纯卖参数、反复洗脑大吼叫卖和带有赌性噱头的街头低端推销手法" : "Zero annoying aggressive loud selling clips or speculative gimmicks"
+      ];
+    }
+
+    setCustomBrandResult({
+      id: "rag-custom-" + Date.now().toString().slice(-4),
+      brandName,
+      category: finalCategory,
+      domesticSlogan,
+      overseasSlogan,
+      overseasPositioning,
+      keyStrategy,
+      mustHaves,
+      mustNots,
+      region: regionText,
+      vibeStickers: startupRegion === "NA" ? ["Mindful Trust (正念美学)", "Aesthetic Premium (高端溢价)"] : ["Warm Connection (社区温煦连接)", "Daily Happiness (日常陪伴确幸)"]
+    });
+
+    setIsBrandingEvolving(false);
+  };
+
+  const handleMergeCustomBrandToRag = () => {
+    if (!customBrandResult) return;
+
+    const newRagEntry: RagEntry = {
+      id: customBrandResult.id,
+      name: `★ ${customBrandResult.brandName} - Localized Brand Guide`,
+      category: 'case_study',
+      version: '1.0',
+      lastUpdated: new Date().toISOString().replace('T', ' ').slice(0, 19),
+      descriptionZh: `针对【${customBrandResult.category}】出海研发的定制文案及定位对标导则。原案：${customBrandResult.domesticSlogan}`,
+      descriptionEn: `Localized brand guide of ${customBrandResult.brandName} for target category ${customBrandResult.category}.`,
+      coreConcepts: [
+        { name: isZh ? '国内原始设想' : 'Raw Domestic Setup', values: [customBrandResult.domesticSlogan] },
+        { name: isZh ? '海外主打定位差异' : 'Overseas Brand Shift', values: [customBrandResult.overseasPositioning, customBrandResult.overseasSlogan] }
+      ],
+      regionalGuidelines: [
+        {
+          region: customBrandResult.region,
+          mustHaves: customBrandResult.mustHaves,
+          mustNots: customBrandResult.mustNots,
+          vibeStickers: customBrandResult.vibeStickers
+        }
+      ],
+      feedbacks: [],
+      changeLogs: [
+        {
+          version: '1.0',
+          timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+          triggerFeedbackId: 'initial',
+          changeSummary: `通过初创品牌定位进化器一键生成，将国内原始概念一键解耦重塑，成功突变成符合 ${customBrandResult.region} 安全合规的大区执行规章。`
+        }
+      ]
+    };
+
+    const updatedList = [newRagEntry, ...entries];
+    setEntries(updatedList);
+    localStorage.setItem('cultureos_rag_entries', JSON.stringify(updatedList));
+    setSelectedEntryId(newRagEntry.id);
+    
+    // Switch to evolution view to show their entry dynamically selected in full glory!
+    setSubTab('evolution');
+
+    alert(isZh 
+      ? `🎉 出海定制成功！品牌【${customBrandResult.brandName}】已作为全新 RAG 规章单元正式写入系统自进化数据库中心！创意生成器现已加载该合规过滤边界。` 
+      : `🎉 Custom success! Outbound rules for [${customBrandResult.brandName}] have been merged into your active system RAG database.`
+    );
+  };
+
   if (!activeEntry) {
     return (
       <div className="flex items-center justify-center p-12 text-slate-400 font-mono text-sm">
@@ -253,8 +595,34 @@ export default function DatabaseEvolutionView({ lang }: DatabaseEvolutionViewPro
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* Sub tabs navigation */}
+      <div className="flex border-b border-slate-800/60 pb-3 gap-4">
+        <button
+          onClick={() => setSubTab('evolution')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+            subTab === 'evolution'
+              ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20 shadow shadow-cyan-500/5'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Database className="w-4 h-4" />
+          <span>{isZh ? 'RAG 规则动态自进化' : 'RAG Database Evolution'}</span>
+        </button>
+        <button
+          onClick={() => setSubTab('cases')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+            subTab === 'cases'
+              ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20 shadow shadow-cyan-500/5'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+          <span>{isZh ? '出海名企案例与定位定制库' : 'Brand Cases & Slogan Generator'}</span>
+        </button>
+      </div>
+
+      {subTab === 'evolution' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Modules List & Detail preview */}
         <div className="lg:col-span-7 space-y-6">
           {/* List Entries */}
@@ -605,6 +973,345 @@ export default function DatabaseEvolutionView({ lang }: DatabaseEvolutionViewPro
           )}
         </div>
       </div>
+      ) : (
+        <div className="space-y-8 animate-fade-in">
+          {/* Top segment: Case Explorer cards */}
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <span className="text-[10px] text-amber-400 font-bold tracking-widest uppercase">CASE BENCHMARK STUDY</span>
+                <h3 className="text-xl font-bold text-white">{isZh ? "中国名企全球化多维度定位对标" : "Multidimensional Brand Globalization Cases"}</h3>
+              </div>
+              <p className="text-xs text-slate-400 max-w-sm sm:text-right leading-snug">
+                {isZh ? "对比分析中国品类在国内与欧美/拉美的营销口号、定位与合规禁区，获取落地规章经验。" : "Analyze how top performers modified taglines to match regional ethics and culture."}
+              </p>
+            </div>
+
+            {/* Grid of 4 brand cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {GLOBAL_BRAND_CASES.map((item) => (
+                <div key={item.id} className="border border-slate-800/80 rounded-2xl bg-slate-900/40 overflow-hidden flex flex-col justify-between">
+                  {/* Card header */}
+                  <div className="bg-slate-900/60 p-4 border-b border-slate-800/60 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl bg-slate-950 p-2 rounded-xl border border-slate-800">{item.logoText}</span>
+                      <div>
+                        <h4 className="font-extrabold text-white text-base leading-snug">{item.brand}</h4>
+                        <p className="text-[11px] text-amber-300 font-mono mt-0.5">{isZh ? item.categoryZh : item.categoryEn}</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono border border-slate-800 bg-slate-950 px-2 py-0.5 rounded text-slate-400">BENCHMARK</span>
+                  </div>
+
+                  {/* Slogans and Positioning table */}
+                  <div className="p-5 space-y-4 text-xs">
+                    {/* Domestic vs Overseas Contrast Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-b border-slate-850/60 pb-4">
+                      {/* Left: Domestic */}
+                      <div className="space-y-2 border-slate-850 md:border-r md:pr-4">
+                        <span className="text-[10px] text-slate-500 font-bold uppercase">{isZh ? "🇨🇳 国内定位与话术" : "🇨🇳 Domestic Setup"}</span>
+                        <div className="p-2.5 rounded-lg bg-slate-950/40 space-y-1">
+                          <p className="text-slate-350 leading-relaxed font-sans">{isZh ? item.domesticPositioningZh : item.domesticPositioningEn}</p>
+                          <p className="text-pink-400 font-bold italic text-[11px] mt-1">{isZh ? item.domesticSloganZh : item.domesticSloganEn}</p>
+                        </div>
+                      </div>
+
+                      {/* Right: Overseas */}
+                      <div className="space-y-2">
+                        <span className="text-[10px] text-cyan-400 font-bold uppercase flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-amber-400 animate-pulse" />
+                          <span>{isZh ? "🌐 外海定位与合规重塑" : "🌐 Globalized Upgrade"}</span>
+                        </span>
+                        <div className="p-2.5 rounded-lg bg-cyan-950/20 border border-cyan-500/10 space-y-1">
+                          <p className="text-slate-200 leading-relaxed font-sans">{isZh ? item.overseasPositioningZh : item.overseasPositioningEn}</p>
+                          <p className="text-cyan-300 font-bold italic text-[11px] mt-1">{isZh ? item.overseasSloganZh : item.overseasSloganEn}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Key takeaways */}
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase">{isZh ? "💡 核心合规与等效心智基因" : "💡 Strategic Takeaway"}</span>
+                      <p className="text-slate-300 text-xs leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-900/60 font-sans">{isZh ? item.keyInsightZh : item.keyInsightEn}</p>
+                    </div>
+
+                    {/* North America vs LATAM specifics */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[11px] pt-1">
+                      <div className="bg-slate-950/20 p-2.5 rounded-xl border border-slate-900/60 space-y-1">
+                        <p className="font-bold text-slate-450 border-b border-slate-900 pb-1 flex items-center gap-1">
+                          <span>🇺🇸 North America</span>
+                          <span className="text-[9px] bg-slate-800 text-slate-400 px-1 rounded">北美落地</span>
+                        </p>
+                        <p className="text-slate-400 leading-relaxed font-sans">{item.naFocusZh}</p>
+                      </div>
+                      <div className="bg-slate-950/20 p-2.5 rounded-xl border border-slate-900/60 space-y-1">
+                        <p className="font-bold text-slate-450 border-b border-slate-900 pb-1 flex items-center gap-1">
+                          <span>🇲🇽 Latin America</span>
+                          <span className="text-[9px] bg-slate-800 text-slate-400 px-1 rounded">拉美落地</span>
+                        </p>
+                        <p className="text-slate-400 leading-relaxed font-sans">{item.latamFocusZh}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Interactive Startup Tool Section */}
+          <div className="border border-amber-500/10 rounded-2xl bg-gradient-to-b from-slate-900/80 to-slate-950 p-6 md:p-8 space-y-6 relative overflow-hidden">
+            {/* Ambient accent lights */}
+            <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-5 z-10 relative">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[10px] font-mono text-amber-400 font-extrabold uppercase tracking-widest flex items-center gap-1 animate-pulse">
+                    <Sparkles className="w-3 h-3" />
+                    <span>AI BRANDING GENOME ADAPTER</span>
+                  </span>
+                </div>
+                <h3 className="text-lg font-black text-white">{isZh ? "初创企业出海定位与 Slogan 定制一键适配引擎" : "Startup Brand Slogan Adaptive Engine"}</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  {isZh ? "输入您的主营品类和国内爆款原始宣传，系统编译器将自动进行广告合规除菌、翻译等效益映射，生成可在系统 RAG 数据库中装载的定制合规导则。" : "Instantly adapt your domestic brand slogans into premium, localized, compliant global messaging assets."}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
+              {/* Form Input fields */}
+              <div className="lg:col-span-5 space-y-5 bg-slate-950/40 p-5 rounded-2xl border border-slate-900">
+                {/* Category Vertical picker */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-350">{isZh ? "首选产品行业垂直类目" : "Product Vertical"}</label>
+                  <select
+                    value={startupCategory}
+                    onChange={(e) => setStartupCategory(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-500/40"
+                  >
+                    <option value="pet_tech">{isZh ? "🧸 智能宠物电器/喂食器 (Pet Tech)" : "Smart Pet Care"}</option>
+                    <option value="ebike">{isZh ? "⚡ 绿色智能低碳电动车 (E-Bike)" : "Carbon Commuter E-Bike"}</option>
+                    <option value="herbal_tea">{isZh ? "🍵 东方植物古汉冷泡茶 (Herbal Tea)" : "Wellness Oriental Tea"}</option>
+                    <option value="custom">{isZh ? "❖ 其它品类 (手动输入个性定制)" : "Custom Enterprise Categories"}</option>
+                  </select>
+                </div>
+
+                {/* Conditional custom category name */}
+                {startupCategory === 'custom' && (
+                  <div className="space-y-2 animate-fade-in">
+                    <label className="text-xs font-bold text-slate-350">{isZh ? "自定义出海品类名称" : "Custom Brand Category"}</label>
+                    <input
+                      type="text"
+                      value={startupCustomCategory}
+                      onChange={(e) => setStartupCustomCategory(e.target.value)}
+                      placeholder={isZh ? "例如: 智能降噪冲浪板 / 婴儿恒温奶嘴" : "e.g., Smart Surfboard / E-Yoga Mat"}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-500/40"
+                    />
+                  </div>
+                )}
+
+                {/* Target Region */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-350">{isZh ? "落地出海目标大区" : "Target Territory"}</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setStartupRegion('NA')}
+                      className={`py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                        startupRegion === 'NA'
+                          ? 'bg-cyan-550/10 border-cyan-500/40 text-cyan-200'
+                          : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      🇺🇸 North America (北美)
+                    </button>
+                    <button
+                      onClick={() => setStartupRegion('LATAM')}
+                      className={`py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                        startupRegion === 'LATAM'
+                          ? 'bg-cyan-550/10 border-cyan-500/40 text-cyan-200'
+                          : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      🇲🇽 Latin America (拉美)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Domestic raw slogan input */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-350">{isZh ? "国内诉求文案 (建议包含过度吹嘘/中草药疗效词)" : "Domestic Raw Slogan / Claims"}</label>
+                  <textarea
+                    rows={4}
+                    value={startupRawSlogan}
+                    onChange={(e) => setStartupRawSlogan(e.target.value)}
+                    placeholder={
+                      startupCategory === 'pet_tech'
+                        ? (isZh ? "智能定时定量、不卡粮极速放电。随时看宠解焦虑白菜促销！" : "Smart timing, 2K cam to watch pet to solve separation anxiety with cheap pricing!")
+                        : startupCategory === 'ebike'
+                        ? (isZh ? "时速40迈超速狂飙跑山、极速跑更远、性能完爆全网！" : "40mph speeds, long range trail riding, best stats on the market!")
+                        : startupCategory === 'herbal_tea'
+                        ? (isZh ? "中药植物老方，排毒解酒护肝利尿、省下一大笔咖啡钱！" : "Ancient herbs of secret recipe, detoxifies liver/fat, perfect price!")
+                        : (isZh ? "例如：“狂暴大功率、秒杀打骨折、包治你神经衰弱和睡眠焦虑...”" : "Input raw direct hardmatic domestic tags...")
+                    }
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-100 focus:outline-none focus:border-cyan-500/40 font-mono resize-none"
+                  />
+                  <span className="text-[10px] text-slate-500 block leading-relaxed select-none">
+                    {isZh ? "🔥 提示：试着输入一些极其“中国特色营销”的口号，观察 AI 文化编译器如何在翻译和重塑时，进行无害化解耦，转化为符合当地环保、反成瘾和 FDA 法令的高客单价叙事。" : "🔥 Inside tip: Add heavy clinical promises or severe pricing slangs to observe how our engine dissolves and reconstructs copy."}
+                  </span>
+                </div>
+
+                {/* Submit button */}
+                <button
+                  type="button"
+                  disabled={isBrandingEvolving}
+                  onClick={handleGenerateBranding}
+                  className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition ${
+                    isBrandingEvolving
+                      ? 'bg-slate-800 text-slate-500'
+                      : 'bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-black hover:opacity-90 shadow-lg shadow-amber-500/10'
+                  }`}
+                >
+                  <RefreshCw className={`w-4 h-4 ${isBrandingEvolving ? 'animate-spin' : ''}`} />
+                  <span>{isZh ? "一键运行品牌出海重塑映射" : "Mutate and Compile Localized Branding Matrix"}</span>
+                </button>
+              </div>
+
+              {/* Progress Terminal and Output Display */}
+              <div className="lg:col-span-7 space-y-5">
+                {/* Traces execution log */}
+                {(isBrandingEvolving || brandingTraces.length > 0) && (
+                  <div className="bg-slate-950 p-4 rounded-xl border border-slate-900 space-y-2.5 font-mono text-[11px] leading-relaxed relative">
+                    <div className="flex items-center justify-between text-slate-500 pb-2 border-b border-slate-900">
+                      <span>CULTURE_OS ADAPTER COMPILER COMPILING...</span>
+                      <span className="w-2 h-2 rounded bg-green-450 animate-pulse" />
+                    </div>
+                    <div className="space-y-1.5">
+                      {brandingTraces.map((trace, idx) => (
+                        <div key={idx} className="flex items-start gap-2 text-emerald-400">
+                          <span className="text-emerald-600 select-none">&gt;</span>
+                          <p>{trace}</p>
+                        </div>
+                      ))}
+                      {isBrandingEvolving && (
+                        <div className="flex items-center gap-2 text-amber-400 animate-pulse pl-4 mt-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                          <span>AI Agent compiling cultural re-alignment data vectors...</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Adapt Result Display */}
+                {customBrandResult && !isBrandingEvolving && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="border border-cyan-500/20 rounded-2xl bg-slate-900/40 p-6 space-y-6"
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="bg-cyan-550/15 text-cyan-300 border border-cyan-500/25 px-2 py-0.5 rounded font-mono text-[10px] uppercase font-extrabold">
+                            {customBrandResult.region} ADAPTATION COMPLETED
+                          </span>
+                        </div>
+                        <h4 className="font-extrabold text-white text-lg mt-1">{customBrandResult.brandName}</h4>
+                        <p className="text-xs text-amber-300 font-mono mt-0.5">{customBrandResult.category}</p>
+                      </div>
+                      
+                      {/* Vibe labels */}
+                      <div className="flex flex-wrap gap-1.5 justify-end">
+                        {customBrandResult.vibeStickers.map((label: string, idx: number) => (
+                          <span key={idx} className="text-[10px] font-mono font-bold bg-[#14233c] text-cyan-350 border border-cyan-500/10 px-2 py-0.5 rounded-lg">
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Compare layout */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs font-sans">
+                      {/* Raw input */}
+                      <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-900 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-500 block uppercase">🇨🇳 DOMESTIC RAW SETUP (国内原始包装及原始野蛮话术)</span>
+                        <p className="text-slate-350 italic font-mono leading-relaxed">{customBrandResult.domesticSlogan}</p>
+                      </div>
+
+                      {/* Transformed */}
+                      <div className="bg-cyan-950/20 p-4 rounded-xl border border-cyan-500/15 space-y-1">
+                        <span className="text-[10px] font-bold text-cyan-400 flex items-center gap-1 uppercase">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                          <span>🌐 LOCALIZED OPTIMIZED ASSETS (海外重组高端美标文案)</span>
+                        </span>
+                        <p className="text-cyan-200 font-extrabold italic text-sm py-1 font-sans">{customBrandResult.overseasSlogan}</p>
+                        <p className="text-slate-300 text-xs mt-0.5 leading-relaxed font-sans">{customBrandResult.overseasPositioning}</p>
+                      </div>
+                    </div>
+
+                    {/* Shift insight analysis */}
+                    <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-900 text-xs space-y-1.5">
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">🧠 ADAPTER SHIFT INSIGHT (底层去味除味与心智合规解析报告)</span>
+                      <p className="text-slate-300 leading-relaxed font-sans">{customBrandResult.keyStrategy}</p>
+                    </div>
+
+                    {/* Hard Must-Have / Must-Not guidelines to merge */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-1">
+                      <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/10 space-y-2">
+                        <p className="font-bold text-green-400 font-mono text-[11px] uppercase flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4 text-green-400" />
+                          <span>MUST-HAVES 刚性契合基因</span>
+                        </p>
+                        <ul className="space-y-1.5 text-[11px] text-slate-300 list-disc pl-4 leading-relaxed font-sans">
+                          {customBrandResult.mustHaves.map((m: string, i: number) => (
+                            <li key={i}>{m}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-rose-500/5 border border-rose-500/10 space-y-2">
+                        <p className="font-bold text-rose-400 font-mono text-[11px] uppercase flex items-center gap-1.5">
+                          <AlertTriangle className="w-4 h-4 text-rose-400" />
+                          <span>MUST-NOTS 禁忌规避熔断红线</span>
+                        </p>
+                        <ul className="space-y-1.5 text-[11px] text-slate-300 list-disc pl-4 leading-relaxed font-sans">
+                          {customBrandResult.mustNots.map((m: string, i: number) => (
+                            <li key={i}>{m}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Action buttons to write to DB */}
+                    <div className="flex justify-end pt-3 border-t border-slate-800/40">
+                      <button
+                        onClick={handleMergeCustomBrandToRag}
+                        className="bg-cyan-550 hover:bg-cyan-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl cursor-pointer transition flex items-center gap-1.5 shadow-md hover:shadow-cyan-500/10"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>{isZh ? "一键写入并合并至 RAG 核心知识库中" : "Merge and Export Guide into Active RAG Database"}</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Empty state visual */}
+                {!customBrandResult && !isBrandingEvolving && (
+                  <div className="border border-dashed border-slate-800/80 p-12 rounded-2xl bg-slate-900/10 text-center space-y-3 flex flex-col items-center justify-center h-full min-h-[300px]">
+                    <Sparkles className="w-10 h-10 text-slate-600 animate-pulse" />
+                    <p className="text-slate-400 font-bold text-xs">{isZh ? "未运行品牌突变编译器" : "No adaptation matrix computed yet"}</p>
+                    <p className="text-slate-500 text-[11px] max-w-xs leading-relaxed font-sans">
+                      {isZh ? "请在左侧表单中配置您的出海垂直行业、大区以及国内口号。点击【一键运行】按钮，编译器会在 1.8 秒内运行基因重组和去伪过滤，自动合成符合欧美/拉美最高合规标准的高品质对标导则模板！" : "Select your category on the sidebar and click the mutate compiler button to generate localized brand definitions."}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

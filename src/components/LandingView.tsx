@@ -6,6 +6,8 @@ import {
   Music, Camera, Phone, Terminal, Play, Flame, HelpCircle
 } from 'lucide-react';
 import { AgentNode, CulturePack } from '../types';
+import { PRESETS } from '../data/presets';
+import CulturePackView from './CulturePackView';
 
 interface LandingViewProps {
   lang: 'zh' | 'en';
@@ -58,24 +60,24 @@ export default function LandingView({
           >
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-bold uppercase tracking-wider text-cyan-400">
               <Sparkles className="w-3.5 h-3.5 animate-spin" />
-              <span>{isZh ? '7-Agent 全新一代文化转译协议' : '7-Agent NEXT-GEN CULTURAL GLOBALIZATION'}</span>
+              <span>{isZh ? '新一代跨文化 IP 创作工具' : 'Next-Gen Cross-Cultural IP Creation Tool'}</span>
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
-              {isZh ? '文化出海 ' : 'Cultural globalization is '}
+              {isZh ? '让 IP 跨越 ' : 'Let your IP Cross '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200 glow-gold">
-                {isZh ? '不仅是翻译' : 'NOT translation'}
+                {isZh ? '语言与文化的壁垒' : 'Language & Cultural Barriers'}
               </span>
               <br className="hidden sm:inline" />
               <span className="text-xl md:text-3xl font-light text-slate-300 tracking-wide mt-3 block leading-[1.3]">
-                {isZh ? '7-Agent 管线，将东方 IP 适配为本土爆款' : '7 autonomous agents adapting IP for exact local resonates'}
+                {isZh ? '智能协同工作流，解决出海落地差异，打造全球本土化爆款' : 'An intelligent orchestration pipeline resolving localization barriers to create global hits'}
               </span>
             </h1>
 
             <p className="text-base md:text-lg text-slate-400 leading-relaxed max-w-xl">
               {isZh 
-                ? 'CultureOS 用智能体集群编排流程，彻底攻克长链路出海内容“幻觉”和“语义温热流散”。结合 RAG 本地大区知识库、Hofstede 规则引擎与 Compliance 对抗合规机制，在保证 100% 海外安全边界的前提下，让同一个东方 IP 在北美温柔陪伴，在拉美同行暖心。'
-                : 'Translation solves linguistic spelling, but fails cultural resonance. CultureOS resolves this meaning gap via independent RAG vectors, Hofstede metric restraints, and Compliance loop Fallbacks that guard your IP across global markets safely.'}
+                ? 'CultureOS 是一款面向全球市场的跨文化 IP 创作与落地协同工具。通过 7 大核心专家级智能体，我们打通了语言翻译、地域文俗雷区甄别、地方合规性审查和多语种视听自适应，在提供 100% 安全保障的同时，帮创作者把同一个东方故事，落地为满足北美独立感性或拉美温润陪伴的个性化本土共鸣。'
+                : 'CultureOS is a workflow integration workspace for cross-cultural IP creation and swift global publishing. Powered by 7 autonomous expert agents, we streamline translation, regional taboos checks, compliance audits, and multi-language acoustic adaptation to let your unique story resonate flawlessly.'}
             </p>
 
             <div className="flex flex-wrap gap-4 pt-4">
@@ -207,6 +209,82 @@ export default function LandingView({
         </div>
       </section>
 
+      {/* Direct Value Proposition & Feature Contrast */}
+      <section className="py-12 px-6 lg:px-16 bg-slate-900/25 border-b border-slate-900/50">
+        <div className="max-w-7xl mx-auto space-y-8">
+          <div className="bg-gradient-to-b from-[#0b1324] to-[#040812] border border-cyan-500/20 p-6 md:p-8 rounded-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl bg-cyan-700/25 border-l border-b border-cyan-500/20 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-widest animate-pulse">
+              How CultureOS Works
+            </div>
+            
+            <div className="max-w-3xl space-y-4">
+              <span className="text-[10px] uppercase font-mono font-black text-cyan-400 tracking-wider">
+                {isZh ? '💡 直白讲透：产品优势与本土适配原理' : '💡 CORE ADVANTAGE & ADAPTATION LOGIC'}
+              </span>
+              <h2 className="text-2xl md:text-3xl font-black text-white leading-normal">
+                {isZh ? '为什么不应该仅仅用翻译软件出海？' : 'Why simple translation software fails you?'}
+              </h2>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                {isZh 
+                  ? '传统的翻译工具只改换文字字符（字面翻译），却往往踩中大区敏感雷区或令本地受众感觉词不达意、产生原声抗性。CultureOS 并非通用翻译，而是一站式【精神符号级、地区合规级、视听体验级】的深层文化转译引擎，其核心重构原理如下：'
+                  : 'Traditional translation tools only swap words literal-to-literal, overlooking region taboos or emotional distance. CultureOS is the first systemic symbolic / sonic / regulatory adapter:'}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 pt-6 border-t border-slate-800/60">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-amber-300 font-extrabold text-sm">
+                  <span className="w-5 h-5 rounded-full bg-amber-400/10 border border-amber-400/25 flex items-center justify-center font-mono text-xs">1</span>
+                  <span>{isZh ? '符号内核解耦 & 精神对位' : 'Symbol Re-Anchoring'}</span>
+                </div>
+                <p className="text-slate-400 text-xs leading-relaxed pl-7">
+                  {isZh 
+                    ? '解耦东方 IP 原始精神（守望、陪伴、平安），转译为大区受众熟知的心灵锚点。例如，在北美，我们将“福星高照（FORTUNE）”拆解并重构为温润安心的“深夜床头台灯流金”，避免强加神明宗教负担。'
+                    : 'Deconstruct cultural components (luck, destiny, duty) into familiar regional equivalents (personal self-care lights/rainy solo moments for high-individualism markets).'}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-cyan-300 font-extrabold text-sm">
+                  <span className="w-5 h-5 rounded-full bg-cyan-400/10 border border-cyan-400/25 flex items-center justify-center font-mono text-xs">2</span>
+                  <span>{isZh ? '区域合规熔断 (FTC红线主动规避)' : 'Interactive Safeguard'}</span>
+                </div>
+                <p className="text-slate-400 text-xs leading-relaxed pl-7">
+                  {isZh 
+                    ? '内置大区自进化 RAG 合规及民俗黑名单。在撰写广告文案时，大模型自动前置拦截类似“抗抑郁/治疗失眠/祈福改运”等涉嫌医疗欺诈虚假宣称（FTC 严管）的越界词，并将其改换为安全的纯意境环境描写。'
+                    : 'Built-in real-time local compliance RAG vectors to proactively block high-risk medical terms (e.g., "cure daytime insomnia/anxieties") or religious halos, keeping ads 100% safe.'}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-purple-300 font-extrabold text-sm">
+                  <span className="w-5 h-5 rounded-full bg-purple-400/10 border border-purple-400/25 flex items-center justify-center font-mono text-xs">3</span>
+                  <span>{isZh ? '多模态视听氛围等效转化' : 'Sonic & Music Equivalence'}</span>
+                </div>
+                <p className="text-slate-400 text-xs leading-relaxed pl-7">
+                  {isZh 
+                    ? '不仅翻译文案，更将声场、伴奏和乐器一并本土匹配。为拉美受众自动补充木吉他合奏和低保真手摇沙锤节拍调和社区阳光感；为北美配置深夜细腻雨音配温存 sub-bass，实现高品质文化共鸣。'
+                    : 'Adapts sonic textures, beats, and instruments. Recommends nylon guitar to add warmth for Latin communities; suggests quiet Lo-fi ambient sounds with bedroom raindrops for individualist US listeners.'}
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-6 pt-4 border-t border-slate-900 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-900">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping" />
+                <span>{isZh ? '提示：你可以点击右上角导航栏「知识库自进化」，一键测试 RAG 自我适应、回吞反馈的硬核演示。' : 'Try our brand-new self-evolving RAG module in the top navigation!'}</span>
+              </div>
+              <button
+                onClick={onEnterWorkspace}
+                className="text-xs font-black text-cyan-300 hover:text-cyan-200 flex items-center gap-1 cursor-pointer transition animate-bounce"
+              >
+                <span>{isZh ? '去智能协同工作台 ➜' : 'Launch Workspace & Try It ➜'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Problem Solver Section */}
       <section className="py-20 px-6 lg:px-16 bg-slate-950/40 border-y border-slate-900/60">
         <div className="max-w-7xl mx-auto space-y-12">
@@ -248,7 +326,7 @@ export default function LandingView({
               </h4>
               <p className="text-sm text-slate-400 leading-relaxed">
                 {isZh 
-                  ? '让大语言模型连续撰写、修改、翻译，信息犹如击鼓传花：最初坚守的品牌宗旨“克制温柔安抚”到第 5 个文案阶段可能被异化为廉价的“孤独鸡汤文字”，彻底背离原始品牌形象。'
+                  ? '让大语言模型连续撰写、修改、翻译，信息犹如击鼓传花：最初坚守的品牌宗旨“克制温柔安抚”到第 5 个文案阶段可能被异化为廉价的“大白话孤独”，彻底背离原始品牌形象。'
                   : 'Passing prompts forward through multiple writing turns dilutes original constraints. The core brand tone loses itself to ChatGPT template cliches.'}
               </p>
             </div>
@@ -262,7 +340,7 @@ export default function LandingView({
               </h4>
               <p className="text-sm text-slate-400 leading-relaxed">
                 {isZh 
-                  ? '市面普通翻译一说到出海宣发，就将拉丁美洲默认设定为“狂欢节、桑巴、斗牛与极度活跃热情”，却不知拉美同样对温厚、宁静的亲情和小吉他日常有无声而宏大的心灵需求。'
+                  ? '市面普通翻译一说到出海宣发，就将拉丁美洲默认设定为“狂欢节、桑巴、斗牛与极度活跃”，却不知拉美同样对温厚、宁静的亲缘或安静生活有无声而宏大的心灵渴望。'
                   : 'Standard translators box Latin America into carnival dances and louder colors, totally missing the massive market in slow quiet daily intimacy and family warmth.'}
               </p>
             </div>
@@ -270,202 +348,245 @@ export default function LandingView({
         </div>
       </section>
 
-      {/* Interactive Case Study Section */}
-      <section className="py-20 px-6 lg:px-16 relative" id="case-study">
-        <div className="max-w-7xl mx-auto space-y-12">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-800 pb-6">
-            <div className="space-y-3">
-              <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">
-                {isZh ? '双区域文化映射深度对比' : 'MAPPING MATRIX IN REAL-TIME'}
-              </span>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
-                {isZh ? '中国「一鹿繁花」IP' : 'Deer in Bloom (一鹿繁花) IP Paradigm'}
-              </h2>
-              <p className="text-slate-400 max-w-2xl text-sm leading-relaxed">
-                {isZh 
-                  ? '同一个情感内核下的中国「一鹿繁花」，在北美化为“自我疗愈的深夜床灯”，在拉美化为“夕阳街角随行的温润福照”。选择标签，查看其令人惊叹的转译详情：'
-                  : 'See how the same character morphs across low-power distance individualist and collectivist audiences.'}
-              </p>
-            </div>
+      {/* Interactive Case Study / Judges rapid-access verification suite */}
+      <section className="py-20 px-6 lg:px-16 relative border-t border-b border-slate-900/40 bg-gradient-to-b from-[#060a13] to-slate-950" id="case-study">
+        {/* Decorative corner indicators */}
+        <div className="absolute top-4 left-4 font-mono text-[9px] text-slate-600 tracking-widest pl-4 hidden md:block">
+          BUILDATHON REAL-TIME PROTOTYPE VERIFICATION
+        </div>
+        <div className="absolute top-4 right-4 font-mono text-[9px] text-slate-600 tracking-widest pr-4 hidden md:block">
+          JURY rapid ACCESS: SECURE & ACTIVE
+        </div>
 
-            <div className="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 flex-shrink-0">
-              <button 
-                id="tab-na-deer"
-                onClick={() => setActiveCaseTab('na')}
-                className={`px-4 py-2 rounded-lg font-bold text-xs transition duration-150 cursor-pointer ${
-                  activeCaseTab === 'na' 
-                    ? 'bg-amber-400 text-slate-950 font-black shadow-md shadow-amber-500/10' 
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                North America (北美)
-              </button>
-              <button 
-                id="tab-latam-deer"
-                onClick={() => setActiveCaseTab('latam')}
-                className={`px-4 py-2 rounded-lg font-bold text-xs transition duration-150 cursor-pointer ${
-                  activeCaseTab === 'latam' 
-                    ? 'bg-amber-400 text-slate-950 font-black shadow-md shadow-amber-500/10' 
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                Latin America (拉美)
-              </button>
+        <div className="max-w-7xl mx-auto space-y-10">
+          <div className="text-center max-w-4xl mx-auto space-y-4">
+            <div className="mx-auto w-max inline-flex items-center gap-2 px-3 py-1 bg-amber-400/10 border border-amber-400/25 text-amber-300 text-xs font-mono rounded-full font-black animate-pulse">
+              🏆 协创松·评审专家快速验证通道 ( JURY rapid ON-SITE INSPECT )
             </div>
+            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
+              {isZh ? '免登录：7-Agent 落地成果极速查验' : 'No-Login Jury Deck: Dynamic Output Verification'}
+            </h2>
+            <p className="text-sm md:text-base text-slate-400 leading-relaxed max-w-3xl mx-auto">
+              {isZh 
+                ? '为确保大赛评审会现场“开箱即用”的高校吞吐性，我们在此公开了未经登录、真实离岸流生成的 CulturePack 全套包，包括系统 7 大多智能体对抗审计的原始回退 Trace Logs。您可任意切换查看。'
+                : 'To ensure effortless on-site auditability during the buildathon, we bypass logins for this rapid inspection desk. Explore original briefs, actual 7-agent trace loops, and final adaptively generated CulturePacks instantly.'}
+            </p>
           </div>
 
-          {/* Tab Panels */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left Column - Brief & Local Canons */}
-            <div className="lg:col-span-5 space-y-6">
-              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
-                <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 border-b border-slate-800 pb-3">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400" />
-                  <span>{isZh ? '目标大区转译规格 (Specs)' : 'Region Specifications'}</span>
-                </h3>
+          {/* Core Interactive Widget */}
+          {(() => {
+            const [selectedId, setSelectedId] = useState<'lucky_deer' | 'tea_ritual'>('lucky_deer');
+            const [activeJuryTab, setActiveJuryTab] = useState<'brief' | 'logs' | 'deliverable'>('deliverable');
 
-                <div className="space-y-4 text-sm">
-                  <div className="flex justify-between items-center py-2 border-b border-slate-800/40">
-                    <span className="text-slate-500 font-mono text-xs uppercase">{isZh ? '目标区域' : 'Region'}</span>
-                    <span className="text-slate-200 font-bold">{activeCaseTab === 'na' ? 'North America' : 'Latin America'}</span>
+            const currentPreset = PRESETS[selectedId];
+            if (!currentPreset) return null;
+
+            return (
+              <div className="border border-slate-800 rounded-2xl bg-[#090f1d] shadow-2xl relative overflow-hidden">
+                
+                {/* Header Row: Presets Selectors & Action Toggles */}
+                <div className="p-4 sm:p-6 bg-[#040811] border-b border-slate-850 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+                  {/* Preset Selector tabs */}
+                  <div className="flex flex-wrap gap-2.5 items-center">
+                    <span className="text-xs uppercase font-mono text-slate-500 font-bold block pr-2.5 border-r border-slate-800 hidden sm:inline-block">
+                      {isZh ? '📁 选择 IP 预设模型大类:' : 'IP Preset:'}
+                    </span>
+                    {(Object.keys(PRESETS) as Array<'lucky_deer' | 'tea_ritual'>).map((id) => (
+                      <button
+                        key={id}
+                        id={`jury-id-${id}`}
+                        onClick={() => setSelectedId(id)}
+                        className={`px-4 py-2.5 rounded-xl font-bold font-sans text-xs sm:text-sm tracking-wide transition cursor-pointer border flex items-center gap-2 ${
+                          selectedId === id 
+                            ? 'bg-gradient-to-r from-amber-400 to-amber-300 text-slate-950 font-black border-amber-400 shadow-md shadow-amber-405/10 scale-[1.01]' 
+                            : 'text-slate-300 bg-slate-900/50 hover:bg-slate-900 border-slate-800 hover:border-slate-700'
+                        }`}
+                      >
+                        <span>{PRESETS[id].name}</span>
+                      </button>
+                    ))}
                   </div>
 
-                  <div className="flex justify-between items-center py-2 border-b border-slate-800/40">
-                    <span className="text-slate-500 font-mono text-xs uppercase">{isZh ? '情绪核 (local_emotion)' : 'Local Emotion'}</span>
-                    <span className="text-amber-300 font-bold">
-                      {activeCaseTab === 'na' 
-                        ? (isZh ? '安静的自我温柔 (Quiet Self-Kindness)' : 'Quiet Companion') 
-                        : (isZh ? '同行日常微光 (Suerte Contigo)' : 'Warm Companionship')}
+                  {/* Actions summary stat or button */}
+                  <div className="text-right flex items-center justify-end gap-3 font-mono text-xs">
+                    <span className="text-slate-500 uppercase tracking-wider hidden lg:inline">{isZh ? '当前评估状态：' : 'Compliance Security:'}</span>
+                    <span className={`px-2.5 py-1 rounded border-2 uppercase font-black tracking-widest block ${
+                      currentPreset.culturePack.compliance_review.decision === 'Pass' 
+                        ? 'bg-green-500/10 text-green-400 border-green-500/20' 
+                        : 'bg-amber-400/10 text-amber-300 border-amber-400/20 animate-pulse'
+                    }`}>
+                      {currentPreset.culturePack.compliance_review.decision} Locked
                     </span>
                   </div>
+                </div>
 
-                  <div className="py-2 border-b border-slate-800/40 space-y-1">
-                    <span className="text-slate-500 font-mono text-xs uppercase block">{isZh ? '推荐场景 (scenes)' : 'Best Scenes'}</span>
-                    <span className="text-slate-300 text-xs block leading-relaxed">
-                      {activeCaseTab === 'na' 
-                        ? (isZh ? '城市夜晚 · Lo-Fi书桌 · 昏暗台灯 · 玻璃窗雨打声' : 'Rainy window, cozy lamp lights, lo-fi table') 
-                        : (isZh ? '旧小提琴吉他 · 落日余晖街头 · 社区合伙茶暖色彩' : 'Warm sunset colonial streets, guitar melody, community bench')}
+                {/* Sub-Tabs Selector: Brief vs Logs vs Deliverable */}
+                <div className="flex border-b border-slate-850/80 bg-[#070b16] p-1 gap-1">
+                  <button
+                    id="jury-tab-brief"
+                    onClick={() => setActiveJuryTab('brief')}
+                    className={`flex-1 py-3 text-xs sm:text-sm font-bold tracking-wide transition cursor-pointer border-b-2 flex items-center justify-center gap-2 ${
+                      activeJuryTab === 'brief' 
+                        ? 'text-cyan-400 border-cyan-400 bg-cyan-950/20' 
+                        : 'text-slate-450 hover:text-slate-350 border-transparent hover:bg-slate-900/10'
+                    }`}
+                  >
+                    <span>📝 {isZh ? '原始 IP 简报评估' : 'Target Campaign Brief'}</span>
+                  </button>
+                  <button
+                    id="jury-tab-logs"
+                    onClick={() => setActiveJuryTab('logs')}
+                    className={`flex-1 py-3 text-xs sm:text-sm font-bold tracking-wide transition cursor-pointer border-b-2 flex items-center justify-center gap-2 ${
+                      activeJuryTab === 'logs' 
+                        ? 'text-cyan-400 border-cyan-400 bg-cyan-950/20' 
+                        : 'text-slate-450 hover:text-slate-350 border-transparent hover:bg-slate-900/10'
+                    }`}
+                  >
+                    <span>⚡ {isZh ? '7-Agent 多智能体协同溯源日志' : '7-Agent Collab Trace Logs'}</span>
+                  </button>
+                  <button
+                    id="jury-tab-deliverable"
+                    onClick={() => setActiveJuryTab('deliverable')}
+                    className={`flex-1 py-3 text-xs sm:text-sm font-bold tracking-wide transition cursor-pointer border-b-2 flex items-center justify-center gap-2 ${
+                      activeJuryTab === 'deliverable' 
+                        ? 'text-amber-300 border-amber-300 bg-amber-500/5' 
+                        : 'text-slate-450 hover:text-slate-350 border-transparent hover:bg-slate-900/10'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                      <span>🎁 {isZh ? '多维输出: CulturePack™ 文化包' : 'Output CulturePack'}</span>
                     </span>
-                  </div>
+                  </button>
+                </div>
 
-                  <div className="py-2 border-b border-slate-800/40 space-y-1">
-                    <span className="text-slate-500 font-mono text-xs uppercase block">{isZh ? '音色氛围气声 (sound_prompt)' : 'Acoustics'}</span>
-                    <span className="text-slate-300 text-xs block leading-relaxed">
-                      {activeCaseTab === 'na' 
-                        ? (isZh ? '雨滴轻打玻璃声、Lo-fi 深夜舒缓钢琴节拍、闷盖 sub-bass' : 'Cozy lo-fi raindups, soft piano reverb, warm synth base') 
-                        : (isZh ? '原声尼龙弦吉他扫弦、软排笛气声、落日余晖声场回音' : 'Nylon guitar strums, breezy pan-flutes, sunset room echo')}
-                    </span>
-                  </div>
+                {/* Sub-Tab Contents display */}
+                <div className="p-6 md:p-8 bg-[#080d19]/90 min-h-[420px]">
+                  
+                  {/* TAB 1: BRIEF */}
+                  {activeJuryTab === 'brief' && (
+                    <div className="max-w-4xl mx-auto space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 leading-relaxed">
+                        <div className="p-5 rounded-xl bg-slate-950/65 border border-slate-900 space-y-3.5">
+                          <span className="text-[10px] font-mono uppercase text-cyan-400 tracking-wider block font-bold">🎯 {isZh ? '出海商业构想与目标' : 'Commercial Context'}</span>
+                          <div className="space-y-2">
+                            <h4 className="text-lg font-extrabold text-white">{currentPreset.brief.name}</h4>
+                            <div className="grid grid-cols-2 gap-4 text-xs font-mono pt-2 border-t border-slate-900/60">
+                              <div>
+                                <span className="text-slate-500 uppercase block">{isZh ? '原型文化资产' : 'Source Asset'}</span>
+                                <span className="text-slate-300 font-bold block pt-0.5">{currentPreset.brief.cultureAsset}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-500 uppercase block">{isZh ? '目标出海大群' : 'Target Reach'}</span>
+                                <span className="text-slate-300 font-bold block pt-0.5">{currentPreset.brief.targetRegions.join(', ')}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
 
-                  <div className="py-2 space-y-1">
-                    <span className="text-red-400 font-mono text-xs uppercase block">{isZh ? '禁止触犯 (dont)' : 'Rigid Taboos (\'Dont\')'}</span>
-                    <span className="text-red-300 text-xs block leading-relaxed">
-                      {activeCaseTab === 'na' 
-                        ? (isZh ? '严禁出现主观情绪疗效疗法宣告、神化信仰；不灌空洞鸡汤文字' : 'Do not hint spiritual cure or miracle remedies. Keep away from religious halo.') 
-                        : (isZh ? '严防正圆光环重合头部违规圣像；坚决拒绝狂欢热舞群体刻板偏见' : 'Strictly forbid circular halo composition matching religious martyrs.')}
-                    </span>
-                  </div>
+                        <div className="p-5 rounded-xl bg-slate-950/65 border border-slate-900 space-y-3">
+                          <span className="text-[10px] font-mono uppercase text-cyan-400 tracking-wider block font-bold">✨ {isZh ? '核心情感核 (Emotional Kernels)' : 'Emotional Kernels'}</span>
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {currentPreset.brief.emotionalKernel.map((kern, i) => (
+                              <span key={i} className="text-xs bg-slate-900 text-slate-300 px-3 py-1 rounded-lg border border-slate-850">
+                                {kern}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Must Have & Must Not Contrast borders */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="p-5 rounded-xl bg-slate-950/50 border border-green-500/10 space-y-3">
+                          <span className="text-xs text-green-400 uppercase font-mono font-black block flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            {isZh ? '✓ 品牌原真必须承袭特质 (MUST-HAVE)' : 'Rigid Brand DNA (Must-HAVE)'}
+                          </span>
+                          <ul className="space-y-2 text-sm text-slate-300">
+                            {currentPreset.brief.mustHave.map((item, i) => (
+                              <li key={i} className="flex items-start gap-2 italic">
+                                <span className="text-green-400 mt-1 font-black">✓</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="p-5 rounded-xl bg-slate-950/50 border border-red-500/10 space-y-3">
+                          <span className="text-xs text-red-400 uppercase font-mono font-black block flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-red-450 animate-pulse" />
+                            {isZh ? '🚫 本地禁忌与刚性禁入红线 (MUST-NOT)' : 'De-escalated Pitfalls (Must-NOT)'}
+                          </span>
+                          <ul className="space-y-2 text-sm text-slate-300">
+                            {currentPreset.brief.mustNot.map((item, i) => (
+                              <li key={i} className="flex items-start gap-2 italic">
+                                <span className="text-red-400 mt-1.5 font-black">×</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 2: DETAILED LOGS TRACE */}
+                  {activeJuryTab === 'logs' && (
+                    <div className="max-w-4xl mx-auto space-y-4">
+                      <div className="p-4 bg-slate-950 rounded-xl border border-slate-900 flex justify-between items-center text-xs text-cyan-400 font-mono">
+                        <span>Console Node: secure_pipeline_audit_run --preset={selectedId}</span>
+                        <span className="animate-pulse">● System: Read-only Trace Sandbox</span>
+                      </div>
+                      
+                      <div className="bg-slate-950 p-5 rounded-2xl border border-slate-900 font-mono text-xs overflow-y-auto max-h-[380px] space-y-3 shadow-inner scrollbar-thin">
+                        {currentPreset.logs.map((log, idx) => {
+                          const isWarning = log.type === 'warning';
+                          const isError = log.type === 'error';
+                          const isSuccess = log.type === 'success';
+
+                          let color = 'text-slate-400';
+                          if (isWarning) color = 'text-amber-300';
+                          if (isError) color = 'text-red-400 font-extrabold bg-red-950/15 p-1 rounded border border-red-900/30';
+                          if (isSuccess) color = 'text-emerald-450';
+
+                          return (
+                            <div key={idx} className={`flex items-start gap-3.5 leading-relaxed py-1 border-b border-slate-900/30 ${color}`}>
+                              <span className="text-slate-655 flex-shrink-0 select-none">[{log.timestamp}]</span>
+                              <span className="font-bold text-cyan-405 flex-shrink-0">{log.agent}:</span>
+                              <div className="flex-1 min-w-0">
+                                <span className="font-extrabold pr-2 text-slate-200">({log.event})</span>
+                                <span>{log.message}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-slate-950/40 border border-slate-900 text-xs text-slate-450 leading-relaxed max-w-3xl font-sans italic">
+                        {isZh 
+                          ? '💡 提示：在 Trace Logs 中您能看到系统“自律对抗（Adversarial Self-Audit）”闭环。在初版送审违规时，ComplianceAgent 会主动触发 Block 并下发 Fallback 自动回退，指挥 Content/Copy Agent 自动擦除高危词，直至抗病及宗教侵权要素 100% 纠偏清零，最终评出高评分打包落地。这充分展示了多智能体串行工作流规避主观偏倚的技术优越性。'
+                          : '💡 Insight: The trace details how the ComplianceAgent actively detects violations (such as the initial medical/anxiety claims violating US FTC regulations), blocks the release, and forces a closed-loop Fallback. This automated revision operates without any developer intervention.'}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 3: LIVE RE-RENDERED CULTUREPACK VIEW */}
+                  {activeJuryTab === 'deliverable' && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <CulturePackView lang={lang} pack={currentPreset.culturePack} />
+                    </motion.div>
+                  )}
+
                 </div>
               </div>
+            );
+          })()}
 
-              {/* RAG Context block */}
-              <div className="p-5 rounded-xl bg-slate-900/30 border border-slate-900 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 flex-shrink-0 border border-cyan-500/15">
-                  <Cpu className="w-5 h-5" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-slate-200">{isZh ? 'RAG 知识库隔离检索机制' : 'RAG Region Isolation Engaged'}</h4>
-                  <p className="text-xs text-slate-400 leading-normal">
-                    {isZh 
-                      ? '在运行中，本系统会在检索条件物理嵌入 [region: ' + activeCaseTab + '] 限定。系统在检索本地黑词和民俗库时实现 100% 纳米级拦截，拒绝拉美资料污染北美决策、避免偏见发生。'
-                      : 'Our RAG architecture physical binds region tags at search-time, avoiding cross-pollination between separate continent briefs.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column - Prompts & Ad Copy Pack Preview */}
-            <div className="lg:col-span-7 space-y-6">
-              {/* Copy Pack Previews */}
-              <div className="space-y-4">
-                <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-3">
-                  <div className="flex items-center justify-between text-xs font-mono text-slate-500 uppercase pb-2 border-b border-slate-800">
-                    <span>TikTok / Reels Caption</span>
-                    <span className="text-amber-400 flex items-center gap-1">
-                      <Flame className="w-3.5 h-3.5 fill-current" />
-                      <span>Hook A-Test</span>
-                    </span>
-                  </div>
-                  <p className="text-xl font-medium italic text-slate-200 font-serif leading-snug glow-gold">
-                    {activeCaseTab === 'na' 
-                      ? '"A little golden deer for the nights when you forget to be kind to yourself."'
-                      : '"La suerte camina contigo, incluso en los días lentos."'}
-                  </p>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    {activeCaseTab === 'na' 
-                      ? (isZh ? '中文内译：“深夜，当你记起了要对自己轻声温柔，这只闪亮的发光小鹿精灵便趴在你身旁。”' : 'Designed to tap perfectly into self-care / alone-time mentalities of NA white-collar workers.')
-                      : (isZh ? '中文内译：“即使日子再慢，温度再淡，好运其实正和你并排笃步、同行。”' : 'Designed with high community warmth and acompañamiento tone for Latin markets.')}
-                  </p>
-                </div>
-
-                <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-3">
-                  <div className="flex items-center justify-between text-xs font-mono text-slate-500 uppercase pb-2 border-b border-slate-800">
-                    <span>Lyrics Hook</span>
-                    <span>Music Generation Prompt</span>
-                  </div>
-                  <p className="text-sm font-mono text-cyan-300">
-                    &quot;{activeCaseTab === 'na' 
-                      ? "You don't need a miracle. Just a small light on your desk..." 
-                      : "No necesitas un milagro. Solo una colita dorada que camina contigo..."}&quot;
-                  </p>
-                  <div className="p-3.5 bg-slate-950/60 rounded-xl border border-slate-900 space-y-1">
-                    <span className="text-[10px] uppercase font-mono text-slate-500 block">{isZh ? 'AI 音乐提示词' : 'Suno/Udio Compliant Prompt'}</span>
-                    <p className="text-xs text-slate-400 leading-relaxed font-mono">
-                      {activeCaseTab === 'na' 
-                        ? defaultPack.copy_pack.regions[0].musicPrompt 
-                        : defaultPack.copy_pack.regions[1].musicPrompt}
-                    </p>
-                  </div>
-                </div>
-
-                {/* 3-layer adaptation logic bullet visualization */}
-                <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
-                  <h4 className="text-sm font-bold text-slate-200 border-b border-slate-800 pb-2">
-                    {isZh ? '🧠 CultureAdapter 3层文化映射细节' : 'Three-Layer Mapping Execution'}
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                    <div className="space-y-1.5 p-3 rounded-lg bg-slate-950/40 border border-slate-900/80">
-                      <span className="font-bold text-cyan-300">1. Hofstede restrains</span>
-                      <p className="text-slate-400 leading-normal text-[11px]">
-                        {activeCaseTab === 'na' 
-                          ? (isZh ? '映射低PDI高IDV空间。排除高高在上的福泽，拉近至自我关怀日常。' : 'Low PDI constraint pulls down "blessed luck" into democratic companion.')
-                          : (isZh ? '映射高UAI高COL空间。融合温暖、可靠和日常陪伴，避开空落绝望。' : 'High COL + High UAI restrains loneliness. Infuses cozy warmth and predictability.')}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1.5 p-3 rounded-lg bg-slate-950/40 border border-slate-900/80">
-                      <span className="font-bold text-amber-300">2. KB Taboo Filtering</span>
-                      <p className="text-slate-400 leading-normal text-[11px]">
-                        {activeCaseTab === 'na' 
-                          ? (isZh ? '自动截断 RAG 类似 "fortune", "wealth cures illness" 等可能越界广告禁忌的名词。' : 'FTS5 vector blocks terms like "cure depression" to pass strict FTC compliance.')
-                          : (isZh ? '自动检测鹿角后的圆轮发光。判定天主教对烛圣光混同危险等级高，拦截。' : 'Checks deer silhouettes to prevent religious saint gold halo collision.')}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1.5 p-3 rounded-lg bg-slate-950/40 border border-slate-900/80">
-                      <span className="font-bold text-purple-300">3. Kernel Reconstruct</span>
-                      <p className="text-slate-400 leading-normal text-[11px]">
-                        {activeCaseTab === 'na' 
-                          ? (isZh ? '“守护” 变更为 “quiet companion”，“治愈” 降解为桌面的一盏 Lo-fi 温暖灯缕。' : 'Deconjugates "protect" into window lofi rain ambient, reshaping local meaning.')
-                          : (isZh ? '“灵动” 重组为 “sunset walker”；“陪伴” 定位至老式民谣和手捂热茶的生活。' : 'Reframes "spirit" into local sunset walk, bringing collective belonging.')}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 

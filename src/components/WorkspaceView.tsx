@@ -13,6 +13,8 @@ interface WorkspaceViewProps {
   onWorkflowComplete: (pack: CulturePack, finalLogs: TraceLog[], brief: CampaignBrief) => void;
   activeRunId: string | null;
   setActiveRunId: (id: string | null) => void;
+  currentUser?: any;
+  onConsumeQuota?: (actionName: string) => boolean;
 }
 
 export default function WorkspaceView({
@@ -20,7 +22,9 @@ export default function WorkspaceView({
   agents: defaultAgents,
   onWorkflowComplete,
   activeRunId,
-  setActiveRunId
+  setActiveRunId,
+  currentUser,
+  onConsumeQuota
 }: WorkspaceViewProps) {
   const isZh = lang === 'zh';
 
@@ -115,7 +119,12 @@ export default function WorkspaceView({
 
   // Main high-fidelity sequential execution simulation
   const startSimulation = () => {
+    if (onConsumeQuota && !onConsumeQuota(isZh ? '协同工作台 - 7-Agent 出海仿真演算' : 'Adaptation Desk - 7-Agent Copipeline simulation')) {
+      return;
+    }
+
     if (stepIntervalRef.current) {
+
       clearInterval(stepIntervalRef.current);
     }
     setIsRunning(true);

@@ -11,7 +11,373 @@
     background-color: #06090f;
     color: #e8f0f6;
     font-family: var(--font-sans);
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
+}
+
+/* ==========================================================================
+   PREMIUM AISIGNAL × LONGBRIDGE VI LIGHT MODE SYSTEM (PRECISION DAYLIGHT SUITE)
+   ========================================================================== */
+.theme-light {
+  /* Brand Theme Colors */
+  --color-olo-cyan: #006B53;        /* Olo Brand Teal/Green */
+  --color-olo-cyan-hover: #004D3C;
+  --color-signal-orange: #B25E00;   /* High Contrast Orange */
+  --color-info-blue: #0969DA;       /* Clean Blue */
+  --color-semantic-up: #137752;     /* Readable Forest Green */
+  --color-semantic-down: #CF222E;   /* High Contrast Crimson Red */
+  
+  /* Canvas Background Hierarchy */
+  --bg-canvas: #FAF8F5;             /* Elegant creamy warm white */
+  --bg-surface: #FFFFFF;            /* Pure white for panels & active zones */
+  --bg-surface-alt: #F4EFE6;        /* Warm sand context containers */
+  --border-color: #E2D9C8;          /* Warm champagne divider lines */
+
+  /* Readable Typography Hierarchy (Meets modern readability demands) */
+  --text-primary: #1C1E21;          /* High contrast charcoal black */
+  --text-secondary: #404854;        /* Solid readability slate gray */
+  --text-muted: #6E7684;            /* Accessible helper text gray */
+}
+
+/* Base Body Styles in Light Theme */
+.theme-light body {
+  background-color: var(--bg-canvas) !important;
+  background-image: radial-gradient(var(--border-color) 0.9px, transparent 0.9px) !important;
+  background-size: 24px 24px !important;
+  color: var(--text-primary) !important;
+}
+
+/* Main Container Text Alignment */
+.theme-light,
+.theme-light main,
+.theme-light section,
+.theme-light article,
+.theme-light aside {
+  color: var(--text-secondary) !important;
+}
+
+/* Complete Heading Overrides for Unfailing Daylight Contrast */
+.theme-light h1,
+.theme-light h2,
+.theme-light h3,
+.theme-light h4,
+.theme-light h5,
+.theme-light h6 {
+  color: var(--text-primary) !important;
+  text-shadow: none !important;
+}
+
+/* Header Override - Pristine Matte Surface */
+.theme-light header {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+.theme-light header span,
+.theme-light header .text-white {
+  color: var(--text-primary) !important;
+}
+
+.theme-light header nav button {
+  color: var(--text-secondary) !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+}
+
+.theme-light header nav button:hover {
+  background-color: var(--bg-surface-alt) !important;
+  color: var(--color-olo-cyan) !important;
+}
+
+/* Active Top Navigation Tab: High End Olo Green Accent */
+.theme-light header nav button[class*="bg-[#14233c]"] {
+  background: var(--color-olo-cyan) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--color-olo-cyan-hover) !important;
+}
+.theme-light header nav button[class*="bg-[#14233c]"] span,
+.theme-light header nav button[class*="bg-[#14233c]"] svg {
+  color: #FFFFFF !important;
+}
+
+/* Adaptive Outer Cards: Mapping Dark Background Blocks to Warm White Paper Surfaces */
+.theme-light [class*="bg-[#0c1322]"],
+.theme-light [class*="bg-[#0b1324]"],
+.theme-light [class*="bg-[#090f1e]"],
+.theme-light [class*="bg-[#101b2e]"],
+.theme-light [class*="bg-[#0a0f1d]"],
+.theme-light [class*="bg-[#0e172a]"],
+.theme-light [class*="bg-[#080d1a]"],
+.theme-light [class*="bg-[#090e1a]"],
+.theme-light [class*="bg-[#050912]"],
+.theme-light .bg-slate-900,
+.theme-light .bg-slate-[900],
+.theme-light .bg-slate-900\/60,
+.theme-light [class*="bg-slate-900\/"],
+.theme-light [class*="bg-gradient-to-b"][class*="from-slate-"],
+.theme-light [class*="bg-gradient-to-b"][class*="from-[#0b1324]"],
+.theme-light [class*="from-[#0b1324]"],
+.theme-light [class*="from-blue-950"],
+.theme-light [class*="from-[#050912]"],
+.theme-light [class*="from-slate-900"] {
+  background: var(--bg-surface) !important;
+  background-color: var(--bg-surface) !important;
+  background-image: none !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-secondary) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Sub-card/Nesting zones translated to Soft Warm Sand tint (Not dark!) */
+.theme-light [class*="bg-slate-950"],
+.theme-light [class*="bg-[#03060c]"],
+.theme-light [class*="bg-[#020408]"],
+.theme-light [class*="bg-[#050912]"],
+.theme-light [class*="bg-[#14233c]"],
+.theme-light [class*="bg-[#1e2f4d]"],
+.theme-light .bg-slate-950,
+.theme-light .bg-slate-950\/60,
+.theme-light .bg-slate-950\/80,
+.theme-light .bg-slate-950\/90,
+.theme-light .bg-slate-900\/40,
+.theme-light .bg-slate-900\/60 {
+  background: var(--bg-surface-alt) !important;
+  background-color: var(--bg-surface-alt) !important;
+  background-image: none !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Input Fields & Textareas with Crisp White Interiors */
+.theme-light input,
+.theme-light select,
+.theme-light textarea {
+  background-color: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.theme-light input:focus,
+.theme-light select:focus,
+.theme-light textarea:focus {
+  border-color: var(--color-olo-cyan) !important;
+  box-shadow: 0 0 0 3px rgba(0, 107, 83, 0.12) !important;
+}
+
+.theme-light input::placeholder,
+.theme-light textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Precise Mapping of Tailwind Text-Slate spectrum into Daylight Text Hierarchy */
+.theme-light .text-white:not(button *, a *, [class*="bg-emerald"] *, [class*="bg-cyan"] *, [class*="bg-amber"] *, [class*="bg-gradient"] *, [class*="bg-red"] *, [class*="bg-blue"] *, .bg-[#006B53] *, [class*="bg-[#006B53]"] *),
+.theme-light .text-slate-50:not(button *, a *),
+.theme-light .text-slate-100:not(button *, a *),
+.theme-light .text-slate-200:not(button *, a *, [class*="bg-emerald"] *, [class*="bg-cyan"] *, [class*="bg-[#006B53]"] *),
+.theme-light .text-slate-300:not(button *, a *, [class*="bg-emerald"] *, [class*="bg-cyan"] *, [class*="bg-[#006B53]"] *),
+.theme-light .text-slate-350:not(button *, a *),
+.theme-light [class*="text-white"]:not(button *, a *, [class*="bg-emerald"] *, [class*="bg-cyan"] *, [class*="bg-amber"] *, [class*="bg-gradient"] *, [class*="bg-red"] *, [class*="bg-blue"] *, .bg-[#006B53] *, [class*="bg-[#006B53]"] *),
+.theme-light [class*="text-slate-50"]:not(button *, a *),
+.theme-light [class*="text-slate-100"]:not(button *, a *),
+.theme-light [class*="text-slate-200"]:not(button *, a *, [class*="bg-emerald"] *, [class*="bg-cyan"] *, [class*="bg-[#006B53]"] *),
+.theme-light [class*="text-slate-300"]:not(button *, a *, [class*="bg-emerald"] *, [class*="bg-cyan"] *, [class*="bg-[#006B53]"] *) {
+  color: var(--text-primary) !important;
+}
+
+.theme-light .text-slate-400,
+.theme-light .text-slate-500,
+.theme-light .text-slate-550,
+.theme-light [class*="text-slate-400"],
+.theme-light [class*="text-slate-500"] {
+  color: var(--text-secondary) !important;
+}
+
+.theme-light .text-slate-600,
+.theme-light .text-slate-700,
+.theme-light .text-slate-800,
+.theme-light .text-slate-900,
+.theme-light [class*="text-slate-600"],
+.theme-light [class*="text-slate-700"],
+.theme-light [class*="text-slate-800"] {
+  color: var(--text-muted) !important;
+}
+
+/* Transparent-Glow Brand Headings converted into Noble Solid Olo Green */
+.theme-light .text-transparent.bg-clip-text {
+  color: var(--color-olo-cyan) !important;
+  background-image: none !important;
+  background-clip: border-box !important;
+  -webkit-background-clip: border-box !important;
+  -webkit-text-fill-color: var(--color-olo-cyan) !important;
+}
+
+/* Highly readable label weights */
+.theme-light label {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+}
+
+/* Secondary Actions / Slate Buttons mapped back to warm paper pills */
+.theme-light button.bg-slate-800,
+.theme-light [class*="bg-slate-855"],
+.theme-light [class*="bg-slate-800"],
+.theme-light a[class*="bg-slate-800"] {
+  background: var(--bg-surface-alt) !important;
+  background-color: var(--bg-surface-alt) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+.theme-light button.bg-slate-800 *,
+.theme-light [class*="bg-slate-800"] *,
+.theme-light a[class*="bg-slate-800"] * {
+  color: var(--text-primary) !important;
+}
+
+.theme-light button.bg-slate-800:hover,
+.theme-light [class*="bg-slate-800"]:hover,
+.theme-light a[class*="bg-slate-800"]:hover {
+  background-color: var(--border-color) !important;
+}
+
+/* Primary Accent & Run Loop Actions: Mapped cleanly to Signature Brand Olo Green */
+.theme-light .bg-amber-400,
+.theme-light button.bg-amber-400,
+.theme-light [class*="bg-amber-400"],
+.theme-light [class*="bg-gradient-to-r"][class*="from-amber-"],
+.theme-light [class*="bg-gradient-to-r"][class*="from-cyan-"],
+.theme-light [class*="from-cyan-400"][class*="to-blue-500"] {
+  background: var(--color-olo-cyan) !important;
+  background-color: var(--color-olo-cyan) !important;
+  background-image: none !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--color-olo-cyan-hover) !important;
+  box-shadow: 0 4px 12px rgba(0, 107, 83, 0.18) !important;
+}
+
+.theme-light .bg-cyan-400,
+.theme-light button.bg-gradient-to-r {
+  background-image: none !important;
+  background-color: var(--color-olo-cyan) !important;
+  color: #FFFFFF !important;
+}
+
+/* Guarantee exact solid background color nodes with internal pure-white texts */
+.theme-light button.bg-gradient-to-r *,
+.theme-light button.bg-amber-400 *,
+.theme-light button[class*="bg-amber-"] *,
+.theme-light button.bg-cyan-500 *,
+.theme-light [class*="bg-[#006B53]"] *,
+.theme-light .bg-emerald-600 *,
+.theme-light .bg-red-600 *,
+.theme-light .bg-blue-600 * {
+  color: #FFFFFF !important;
+}
+
+.theme-light .bg-amber-400:hover,
+.theme-light button.bg-amber-400:hover,
+.theme-light button.bg-gradient-to-r:hover {
+  background: var(--color-olo-cyan-hover) !important;
+}
+
+/* Daylight Thematic Accent Badges (Beautiful contrast highlights without over-bleeding) */
+.theme-light [class*="bg-amber-500/10"],
+.theme-light [class*="bg-amber-400/10"],
+.theme-light [class*="bg-amber-400/20"] {
+  background-color: rgba(178, 94, 0, 0.08) !important;
+  border-color: rgba(178, 94, 0, 0.22) !important;
+  color: var(--color-signal-orange) !important;
+}
+.theme-light [class*="bg-amber-500/10"] *,
+.theme-light [class*="bg-amber-400/10"] *,
+.theme-light [class*="bg-amber-400/20"] * {
+  color: var(--color-signal-orange) !important;
+}
+
+.theme-light [class*="bg-cyan-500/10"],
+.theme-light [class*="bg-cyan-400/10"],
+.theme-light [class*="bg-cyan-400/20"] {
+  background-color: rgba(0, 107, 83, 0.08) !important;
+  border-color: rgba(0, 107, 83, 0.2) !important;
+  color: var(--color-olo-cyan) !important;
+}
+.theme-light [class*="bg-cyan-500/10"] *,
+.theme-light [class*="bg-cyan-400/10"] *,
+.theme-light [class*="bg-cyan-400/20"] * {
+  color: var(--color-olo-cyan) !important;
+}
+
+.theme-light [class*="bg-red-500/10"],
+.theme-light [class*="bg-red-400/10"] {
+  background-color: rgba(207, 34, 46, 0.06) !important;
+  border-color: rgba(207, 34, 46, 0.18) !important;
+  color: var(--color-semantic-down) !important;
+}
+.theme-light [class*="bg-red-500/10"] *,
+.theme-light [class*="bg-red-400/10"] * {
+  color: var(--color-semantic-down) !important;
+}
+
+.theme-light [class*="bg-green-500/10"],
+.theme-light [class*="bg-emerald-500/10"] {
+  background-color: rgba(19, 119, 82, 0.06) !important;
+  border-color: rgba(19, 119, 82, 0.18) !important;
+  color: var(--color-semantic-up) !important;
+}
+.theme-light [class*="bg-green-500/10"] *,
+.theme-light [class*="bg-emerald-500/10"] * {
+  color: var(--color-semantic-up) !important;
+}
+
+/* Footer Section Overrides */
+.theme-light footer {
+  background: var(--bg-surface) !important;
+  background-color: var(--bg-surface) !important;
+  border-top: 1px solid var(--border-color) !important;
+}
+.theme-light footer p,
+.theme-light footer p[class*="text-slate-605"] {
+  color: var(--text-secondary) !important;
+}
+
+/* Console logs wrapper for daylight theme */
+.theme-light [ref*="Console"],
+.theme-light [ref*="console"] {
+  background-color: var(--bg-surface-alt) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Scrollbars configured for high integration in light mode */
+.theme-light ::-webkit-scrollbar-track {
+  background: var(--bg-surface-alt) !important;
+}
+
+.theme-light ::-webkit-scrollbar-thumb {
+  background-color: var(--border-color) !important;
+}
+
+.theme-light ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-olo-cyan) !important;
+}
+
+/* General clean champagne border lines */
+.theme-light [class*="border-slate-"],
+.theme-light [class*="border-[#1e2f4d]"],
+.theme-light [class*="border-[#1e3048]"],
+.theme-light [class*="border-[#1e2f4d]/40"],
+.theme-light [class*="border-[#1e2f4d]/50"],
+.theme-light [class*="border-[#1e2f4d]/60"],
+.theme-light [class*="border-[#1e2f4d]/65"],
+.theme-light .border-slate-800 {
+  border-color: var(--border-color) !important;
+}
+
+/* Soft grid/opacity settings */
+.theme-light .opacity-40,
+.theme-light [class*="opacity-40"],
+.theme-light .opacity-70,
+.theme-light [class*="opacity-70"] {
+  opacity: 0.95 !important;
 }
 
 /* Custom scrollbar to keep layout highly integrated */
@@ -68,4 +434,167 @@
 .pulse-ring-slow {
   animation: pulse-ring 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+/* ==========================================================================
+   HIGH-CONTRAST MODAL BOX INSULATORS & EYE-FRIENDLY RESPONSIVE SCALING UTILITIES
+   ========================================================================== */
+
+/* 1. Modal backdrop overlays absolute safety guard (Always readable, never plain white) */
+.fixed.inset-0,
+.theme-light .fixed.inset-0,
+.theme-light [class*="bg-slate-950/80"] {
+  background-color: rgba(6, 10, 18, 0.82) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+/* 2. Modal card boxes highlight & neon boundary lines */
+.fixed.inset-0 > div,
+.theme-light .fixed.inset-0 > div {
+  border: 1.5px solid rgba(60, 216, 208, 0.45) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 
+              0 0 50px rgba(60, 216, 208, 0.22) !important;
+}
+
+.theme-light .fixed.inset-0 > div {
+  background: #ffffff !important;
+  color: #1c1e21 !important;
+  border: 1.5px solid rgba(0, 107, 83, 0.55) !important;
+  box-shadow: 0 25px 50px -12px rgba(8, 20, 36, 0.35), 
+              0 0 50px rgba(0, 107, 83, 0.15) !important;
+}
+
+/* 3. Global Responsive Typography scaling layers (Enlarge tiny font layouts) */
+@layer utilities {
+  .text-\[8px\], .text-\[9px\] {
+    font-size: 0.775rem !important; /* Scale up slightly ~12.4px */
+  }
+  .text-\[10px\] {
+    font-size: 0.825rem !important; /* Scale up ~13.2px */
+  }
+  .text-\[11px\] {
+    font-size: 0.85rem !important; /* Scale up ~13.6px */
+  }
+  .text-xs {
+    font-size: 0.9rem !important; /* Enlarge from 12px to ~14.4px */
+  }
+  .text-sm {
+    font-size: 1rem !important; /* Enlarge to ~16px */
+  }
+  
+  /* Mobile devices optimization pass: auto scale small texts representing key dialog metrics */
+  @media (max-width: 768px) {
+    .text-\[8px\],
+    .text-\[9px\],
+    .text-\[10px\],
+    .text-\[11px\],
+    .text-xs {
+      font-size: 0.9rem !important; /* Enlarge all tiny fonts to a perfectly readable 14.4px on mobile! */
+      line-height: 1.35 !important;
+    }
+    
+    .text-sm {
+      font-size: 1rem !important; /* Enlarge sm to 16px */
+    }
+  }
+}
+
+/* ==========================================================================
+   ULTRA-HIGH CONTRAST GLOBAL WIREFRAMES & NEON OUTLINES (GLOW SYSTEM)
+   ========================================================================== */
+
+/* 1. All standard form/input elements must stand out clearly with intense high contrast */
+input, textarea, select {
+  border: 1.5px solid rgba(14, 165, 233, 0.7) !important; /* Vivid Light Cyan / Sky Blue */
+  box-shadow: 0 0 4px rgba(14, 165, 233, 0.15) !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #06b6d4 !important; /* Crisp radiant neon cyan */
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.45) !important;
+}
+
+/* Light Mode Input Enhancements */
+.theme-light input,
+.theme-light textarea,
+.theme-light select {
+  border: 1.8px solid #006B53 !important; /* Deep Forest Green for outstanding text readable boundaries */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+.theme-light input:focus,
+.theme-light textarea:focus,
+.theme-light select:focus {
+  border-color: #004D3C !important;
+  box-shadow: 0 0 0 4px rgba(0, 107, 83, 0.25) !important;
+}
+
+/* 2. Overcoming very faint default overlay card or dashboard borders ([#1e2f4d]/40, etc.) */
+[class*="border-[#1e2f4d]"],
+[class*="border-slate-800"],
+[class*="border-slate-900"],
+[class*="border-slate-700"] {
+  border-color: rgba(30, 47, 77, 0.9) !important; /* Highly visible steel-navy borders */
+  border-width: 1.5px !important;
+}
+
+/* 3. Preformatted text elements, RAG databases output logs, and chat dialog zones */
+pre, code, [class*="bg-[#050912]"], [class*="bg-[#03060c]"], [class*="bg-[#020408]"] {
+  border: 1.5px solid rgba(8, 145, 178, 0.6) !important; /* Prominent bright teal frame */
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+}
+
+.theme-light pre,
+.theme-light code,
+.theme-light [class*="bg-[#050912]"],
+.theme-light [class*="bg-[#03060c]"],
+.theme-light [class*="bg-[#020408]"] {
+  background-color: #FDF9F2 !important;
+  border: 1.8px solid #006B53 !important; /* Distinct rich contract lines on daylight theme */
+  box-shadow: inset 0 1px 4px rgba(8, 20, 36, 0.08) !important;
+  color: #1C1E21 !important;
+}
+
+/* 4. Target Specific UI Focus-Mode Selectors - Making dialog inputs and containers beautifully highlighted */
+
+/* Selector 1: Active chatbot search or response input */
+div#root:nth-of-type(1) > div:nth-of-type(1) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > input:nth-of-type(1) {
+  border: 2px solid #22d3ee !important; /* Bright Neon Cyan outline */
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.45) !important;
+  background-color: #0c1322 !important;
+}
+
+.theme-light div#root:nth-of-type(1) > div:nth-of-type(1) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > input:nth-of-type(1) {
+  border: 2px solid #006B53 !important;
+  box-shadow: 0 0 12px rgba(0, 107, 83, 0.25) !important;
+  background-color: #FFFFFF !important;
+}
+
+/* Selector 2: Dialogue text streams / responses view board */
+div#root:nth-of-type(1) > div:nth-of-type(1) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) {
+  border: 2px solid rgba(14, 165, 233, 0.6) !important; /* Strong structural Sky Cyan framework */
+  border-radius: 12px !important;
+  background-color: #070c16 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 5px rgba(14, 165, 233, 0.1) !important;
+}
+
+.theme-light div#root:nth-of-type(1) > div:nth-of-type(1) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) {
+  border: 2px solid #006B53 !important;
+  background-color: #FAF8F5 !important;
+  box-shadow: 0 6px 20px rgba(0, 107, 83, 0.08), inset 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Selector 3: Parent Desk Adaptation workspace panel */
+div#root:nth-of-type(1) > div:nth-of-type(1) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) {
+  border: 2px solid rgba(56, 189, 248, 0.75) !important; /* Thick safety neon frame around active adaptation desk view */
+  border-radius: 16px !important;
+  box-shadow: 0 12px 35px -10px rgba(0, 0, 0, 0.65), 0 0 25px rgba(56, 189, 248, 0.2) !important;
+}
+
+.theme-light div#root:nth-of-type(1) > div:nth-of-type(1) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) {
+  border: 2px solid #006B53 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 12px 35px -10px rgba(8, 20, 36, 0.15), 0 0 25px rgba(0, 107, 83, 0.1) !important;
+}
+
 

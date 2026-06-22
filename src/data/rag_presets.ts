@@ -97,5 +97,70 @@ export const INITIAL_RAG_ENTRIES: RagEntry[] = [
         changeSummary: '部署首个安全红线审查元数据，包含严谨医学术语熔断和天主教圣物轮廓合规审查判定。'
       }
     ]
+  },
+  {
+    id: 'rag-003',
+    name: '名企出海对标案例与定位库 (Successful Branding Comparison Cases)',
+    category: 'case_study',
+    version: '1.0',
+    lastUpdated: '2026-06-22 09:00:00',
+    descriptionZh: '精选中国头部潮玩（泡泡玛特）、3C配件（安克）、国风美妆（花西子）及创意工具（剪映）出海营销成功案例，对比国内外定位与营销话术差异。',
+    descriptionEn: 'Selected success stories of Chinese Brand Globalization across Art Toys (Pop Mart), Power Chargers (Anker), Cosmetics (Florasis), and Creative Tools (CapCut). Compares domestic vs. overseas slogans.',
+    coreConcepts: [
+      { name: 'POP MART 泡泡玛特', values: ['中国：盲盒、收藏、确幸 [创造潮流，传递美好]', '出海：艺术桌搭精品、潮玩模型 [To Light Up Passion and Bring Joy]'] },
+      { name: 'ANKER 安克创新', values: ['中国：硬核高能百瓦充电、性价比配件 [安克随行，充电智能]', '出海：生活态度伴侣、长寿命高安全性环保、极简美学 [Charge Fast, Live More]'] },
+      { name: 'FLORASIS 花西子', values: ['中国：东方雕花彩妆、中草药养颜 [以花养妆，西子之美]', '出海：微雕馆藏艺术、100%纯素洁净美妆 [Oriental Artistry on Clean Canvas]'] },
+      { name: 'CAPCUT 剪映海外版', values: ['中国：轻而易剪、抖音短视频卡点神剪 [让创作更简单]', '出海：赋能全球个体创作者、TikTok算法大流量加速器 [Unleash Your Creativity]'] }
+    ],
+    regionalGuidelines: [
+      {
+        region: 'North America (北美)',
+        mustHaves: [
+          'POP MART: 重点推介知名青年艺术家原创合作款 (Designer Artist Collaboration)，宣介高品质潮玩桌搭文化。',
+          'ANKER: 宣介环保再生材料包装(Eco-friendly / Ocean-plastic Recycled)并强调UL Safety标准。',
+          'FLORASIS: 必备 "Cruelty-Free / Vegan Certified" (零残忍/符合素食主义消费环保伦理) 明确认证标语。',
+          'CAPCUT: 内嵌正版授权海外音乐库 (Licensed Commercial Audio Track List) 预防严苛版权侵权起诉。'
+        ],
+        mustNots: [
+          'POP MART: 绝对杜绝刻意渲染类似抽卡成瘾、高赔率盲盒投机话术，规避博彩法案擦边起诉。',
+          'ANKER: 营销首屏杜绝过多枯燥物理常数(如W功率，单晶物理阀)轰炸，应将其融入“快冲生活省时自救”的情态描写。',
+          'FLORASIS: 严禁声称 “内含茯苓首乌可以根治暗沉暗疮” 等越界触犯美国FDA关于药物功效夸大指控的话术。',
+          'CAPCUT: 严防照搬国内拼音网络黑笑料、陈旧网络梗，容易在YouTube及多语言上被打为无意义互联网垃圾。'
+        ],
+        vibeStickers: ['Aesthetic Value-Driven (高美学价值主张)', 'Regulatory Compliance (高合规防御)', 'Eco-Responsibility (生态环保意识)']
+      },
+      {
+        region: 'Latin America (拉美)',
+        mustHaves: [
+          'POP MART: 突出玩具伴侣拟人化的多家庭日常生活治愈感短片，融入温馨家庭桌头。',
+          'ANKER: 侧重表现户外派对（Outdoor Party）、家庭烧烤（Fiesta Setup）与长途公路旅行的电量后盾。',
+          'FLORASIS: 选取色系更张扬、持久耐汗抗汗、能在拉美热烈派对上完美维持高亮高饱和彩墨的展示。',
+          'CAPCUT: 提供拉美拉丁欢聚风格卡点模板与舞步对齐，支持群体创作者欢快合影。'
+        ],
+        mustNots: [
+          '各出海品牌：严忌使用过分孤清、绝望、性冷淡冷灰色调作为视觉底框，拉美公众极其缺乏心理认同。',
+          '各出海品牌：忌用未经本土解耦的东方陈旧皇家帝制、高高在上的权威讲解式文案。'
+        ],
+        vibeStickers: ['Collective Inclusivity (集体融入)', 'High-Energy Contrast (高能量暖烘底)', 'Fiesta Integration (节庆场景融合)']
+      }
+    ],
+    feedbacks: [
+      {
+        id: 'fb-301',
+        timestamp: '2026-06-21 21:00:00',
+        source: 'DTC Founder Circle',
+        content: '希望在案例库里增加安克对比花西子的国内外定位差异，帮起步阶段的跨境电商公司理清主张。',
+        sentiment: 'neutral',
+        impactMetrics: 'Strategic request from seed startups'
+      }
+    ],
+    changeLogs: [
+      {
+        version: '1.0',
+        timestamp: '2026-06-22 09:00:00',
+        triggerFeedbackId: 'initial',
+        changeSummary: '系统首发品类对标库，汇总头部中国出海品牌的品类定位及正反向合规熔断边界提示。'
+      }
+    ]
   }
 ];

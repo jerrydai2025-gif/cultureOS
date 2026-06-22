@@ -1,0 +1,1179 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  User, Lock, Key, Shield, LogIn, LogOut, UserPlus, CreditCard, 
+  RefreshCw, BarChart2, ShieldAlert, CheckCircle2, Trash2, Edit2, 
+  Plus, Users, Compass, Clock, Check, AlertTriangle, Send, Sparkles, Building
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { UserProfile, QuotaAuditLog } from '../types';
+
+// Storage keys
+const STORAGE_PREFIX = 'cultureos_auth_';
+
+export interface QuotaRequest {
+  id: string;
+  userEmail: string;
+  userName: string;
+  requestedAmount: number;
+  message: string;
+  status: 'pending' | 'approved' | 'rejected';
+  timestamp: string;
+}
+
+export function useAuthManager() {
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [usersList, setUsersList] = useState<UserProfile[]>([]);
+  const [auditLogs, setAuditLogs] = useState<QuotaAuditLog[]>([]);
+  const [upgradeRequests, setUpgradeRequests] = useState<QuotaRequest[]>([]);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authView, setAuthView] = useState<'login' | 'signup' | 'profile'>('login');
+  const [quotaExceededModalOpen, setQuotaExceededModalOpen] = useState(false);
+
+  // Initialize and load persistent state
+  useEffect(() => {
+    // 1. Load users list, pre-populating mock accounts
+    let storedUsers: UserProfile[] = [];
+    const localUsers = localStorage.getItem(`${STORAGE_PREFIX}users`);
+    if (localUsers) {
+      try {
+        storedUsers = JSON.parse(localUsers);
+      } catch (e) {}
+    }
+
+    if (storedUsers.length === 0) {
+      // Seed default accounts
+      storedUsers = [
+        {
+          id: 'u-1',
+          email: 'admin@cultureos.com',
+          name: '系统超级管理员 (Platform Admin)',
+          role: 'admin',
+          remainingQuota: 999999,
+          maxQuota: 999999,
+          regDate: '2026-05-10',
+          businessDomain: 'CultureOS SaaS Platform',
+          purpose: 'Global administrative control & enterprise scaling'
+        },
+        {
+          id: 'u-2',
+          email: 'demo@cultureos.com',
+          name: '出海瑞鹿电器 (Lucky Deer Pet Inc)',
+          role: 'user',
+          remainingQuota: 3,
+          maxQuota: 5,
+          regDate: '2026-06-15',
+          businessDomain: '智能宠物电器 / 喂食器 (Pet Tech)',
+          purpose: 'North America Amazon retail scaling'
+        },
+        {
+          id: 'u-3',
+          email: 'tea_pioneers@outlook.com',
+          name: '东方茗风冷泡茶 (Ancient Eastern Leaf)',
+          role: 'user',
+          remainingQuota: 0, // Exhausted by default to showcase lock screen!
+          maxQuota: 5,
+          regDate: '2026-06-18',
+          businessDomain: '中草自然东方冷萃茶 (Herbal Tea & Cold Brew)',
+          purpose: 'Southeast Asia and UK boutique tea mapping'
+        }
+      ];
+      localStorage.setItem(`${STORAGE_PREFIX}users`, JSON.stringify(storedUsers));
+    }
+    setUsersList(storedUsers);
+
+    // 2. Load pending upgrade requests
+    let storedRequests: QuotaRequest[] = [];
+    const localRequests = localStorage.getItem(`${STORAGE_PREFIX}requests`);
+    if (localRequests) {
+      try {
+        storedRequests = JSON.parse(localRequests);
+      } catch (e) {}
+    }
+    if (storedRequests.length === 0) {
+      storedRequests = [
+        {
+          id: 'req-1',
+          userEmail: 'tea_pioneers@outlook.com',
+          userName: '东方茗风冷泡茶',
+          requestedAmount: 10,
+          message: '国内爆款古汉冷泡茶，需要更大的配额以适配英国大区 Tiktok 的全谱系分发和词组包，请求扩容',
+          status: 'pending',
+          timestamp: '2026-06-21 16:30'
+        }
+      ];
+      localStorage.setItem(`${STORAGE_PREFIX}requests`, JSON.stringify(storedRequests));
+    }
+    setUpgradeRequests(storedRequests);
+
+    // 3. Load Quota audit logs
+    let storedAudit: QuotaAuditLog[] = [];
+    const localAudit = localStorage.getItem(`${STORAGE_PREFIX}audit`);
+    if (localAudit) {
+      try {
+        storedAudit = JSON.parse(localAudit);
+      } catch (e) {}
+    }
+    if (storedAudit.length === 0) {
+      storedAudit = [
+        {
+          id: 'aud-1',
+          timestamp: '2026-06-22 00:15',
+          userId: 'u-2',
+          userEmail: 'demo@cultureos.com',
+          action: 'RAG 规则动态自进化',
+          amount: -1,
+          remainingAfter: 3
+        },
+        {
+          id: 'aud-2',
+          timestamp: '2026-06-21 18:22',
+          userId: 'u-3',
+          userEmail: 'tea_pioneers@outlook.com',
+          action: '协同工作台 - 极瑞智能流程运算',
+          amount: -1,
+          remainingAfter: 0
+        }
+      ];
+      localStorage.setItem(`${STORAGE_PREFIX}audit`, JSON.stringify(storedAudit));
+    }
+    setAuditLogs(storedAudit);
+
+    // 4. Load logged in user
+    const savedUser = localStorage.getItem(`${STORAGE_PREFIX}current`);
+    if (savedUser) {
+      try {
+        const u = JSON.parse(savedUser) as UserProfile;
+        // Keep synced with dynamic state in general list
+        const matched = storedUsers.find(su => su.id === u.id);
+        if (matched) {
+          setCurrentUser(matched);
+        } else {
+          setCurrentUser(u);
+        }
+      } catch (e) {}
+    } else {
+      // Default to guest or auto login demo for easy usability
+      const defaultUser = storedUsers.find(su => su.email === 'demo@cultureos.com');
+      if (defaultUser) {
+        setCurrentUser(defaultUser);
+        localStorage.setItem(`${STORAGE_PREFIX}current`, JSON.stringify(defaultUser));
+      }
+    }
+  }, []);
+
+  // Update localStorage and triggers when currentUser changes
+  const saveCurrentUser = (user: UserProfile | null) => {
+    setCurrentUser(user);
+    if (user) {
+      localStorage.setItem(`${STORAGE_PREFIX}current`, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(`${STORAGE_PREFIX}current`);
+    }
+  };
+
+  const handleLogin = (email: string): { success: boolean; error?: string } => {
+    const matched = usersList.find(u => u.email.trim().toLowerCase() === email.trim().toLowerCase());
+    if (matched) {
+      saveCurrentUser(matched);
+      return { success: true };
+    }
+    return { success: false, error: '未找到匹配的账户。试着使用默认账号 demo@cultureos.com 或是 admin@cultureos.com。' };
+  };
+
+  const handleRegister = (name: string, email: string, businessDomain: string, purpose: string): { success: boolean; error?: string } => {
+    const trimmedEmail = email.trim().toLowerCase();
+    if (usersList.some(u => u.email === trimmedEmail)) {
+      return { success: false, error: '该邮箱已经注册过系统账号。试着直接登录！' };
+    }
+
+    const newUser: UserProfile = {
+      id: `u-${Date.now()}`,
+      email: trimmedEmail,
+      name,
+      role: trimmedEmail.includes('admin') ? 'admin' : 'user',
+      remainingQuota: trimmedEmail.includes('admin') ? 999999 : 5, // Default 5 trials
+      maxQuota: trimmedEmail.includes('admin') ? 999999 : 5,
+      regDate: new Date().toISOString().split('T')[0],
+      businessDomain,
+      purpose
+    };
+
+    const updatedUsers = [...usersList, newUser];
+    setUsersList(updatedUsers);
+    localStorage.setItem(`${STORAGE_PREFIX}users`, JSON.stringify(updatedUsers));
+    
+    // Automatically log in
+    saveCurrentUser(newUser);
+
+    // Create an audit log
+    const audit: QuotaAuditLog = {
+      id: `aud-${Date.now()}`,
+      timestamp: new Date().toLocaleString(),
+      userId: newUser.id,
+      userEmail: newUser.email,
+      action: '注册新账号并分配免费算力额度',
+      amount: newUser.remainingQuota,
+      remainingAfter: newUser.remainingQuota
+    };
+    const updatedAudit = [audit, ...auditLogs];
+    setAuditLogs(updatedAudit);
+    localStorage.setItem(`${STORAGE_PREFIX}audit`, JSON.stringify(updatedAudit));
+
+    return { success: true };
+  };
+
+  const handleLogout = () => {
+    saveCurrentUser(null);
+  };
+
+  // Check and consume Quota
+  const handleCheckAndConsumeQuota = (actionName: string): boolean => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return false;
+    }
+
+    if (currentUser.role === 'admin') {
+      return true; // Infinite capacity for admins
+    }
+
+    if (currentUser.remainingQuota <= 0) {
+      setQuotaExceededModalOpen(true);
+      return false;
+    }
+
+    // Decrement quota
+    const updatedUser = {
+      ...currentUser,
+      remainingQuota: currentUser.remainingQuota - 1
+    };
+
+    // Update locally and in users list
+    saveCurrentUser(updatedUser);
+    const updatedUsers = usersList.map(u => u.id === currentUser.id ? updatedUser : u);
+    setUsersList(updatedUsers);
+    localStorage.setItem(`${STORAGE_PREFIX}users`, JSON.stringify(updatedUsers));
+
+    // Register inside audit log
+    const audit: QuotaAuditLog = {
+      id: `aud-${Date.now()}`,
+      timestamp: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString().slice(0, 5),
+      userId: currentUser.id,
+      userEmail: currentUser.email,
+      action: actionName,
+      amount: -1,
+      remainingAfter: updatedUser.remainingQuota
+    };
+    const updatedAudit = [audit, ...auditLogs];
+    setAuditLogs(updatedAudit);
+    localStorage.setItem(`${STORAGE_PREFIX}audit`, JSON.stringify(updatedAudit));
+
+    return true;
+  };
+
+  // Admin recharge operation
+  const handleRechargeUser = (userId: string, amount: number) => {
+    const updatedUsers = usersList.map(u => {
+      if (u.id === userId) {
+        const remainingQuota = u.role === 'admin' ? 999999 : Math.min(u.maxQuota + amount, u.remainingQuota + amount);
+        const maxQuota = u.role === 'admin' ? 999999 : u.maxQuota + amount;
+        return {
+          ...u,
+          remainingQuota,
+          maxQuota
+        };
+      }
+      return u;
+    });
+
+    setUsersList(updatedUsers);
+    localStorage.setItem(`${STORAGE_PREFIX}users`, JSON.stringify(updatedUsers));
+
+    // Update currentUser if modified
+    const matched = updatedUsers.find(u => u.id === currentUser?.id);
+    if (matched) {
+      saveCurrentUser(matched);
+    }
+
+    // Create log
+    const targetUser = usersList.find(u => u.id === userId);
+    if (targetUser) {
+      const audit: QuotaAuditLog = {
+        id: `aud-${Date.now()}`,
+        timestamp: new Date().toLocaleString(),
+        userId: userId,
+        userEmail: targetUser.email,
+        action: `管理员重新分配/补充额度 (${amount})`,
+        amount: amount,
+        remainingAfter: targetUser.remainingQuota + amount
+      };
+      const updatedAudit = [audit, ...auditLogs];
+      setAuditLogs(updatedAudit);
+      localStorage.setItem(`${STORAGE_PREFIX}audit`, JSON.stringify(updatedAudit));
+    }
+  };
+
+  // Submit Upgrade Request from customer
+  const handleSubmitUpgradeRequest = (requestedAmount: number, message: string) => {
+    if (!currentUser) return;
+
+    const newRequest: QuotaRequest = {
+      id: `req-${Date.now()}`,
+      userEmail: currentUser.email,
+      userName: currentUser.name,
+      requestedAmount,
+      message,
+      status: 'pending',
+      timestamp: new Date().toLocaleString()
+    };
+
+    const updated = [newRequest, ...upgradeRequests];
+    setUpgradeRequests(updated);
+    localStorage.setItem(`${STORAGE_PREFIX}requests`, JSON.stringify(updated));
+  };
+
+  // Admin handles upgrade requests
+  const handleProcessUpgradeRequest = (requestId: string, approve: boolean) => {
+    const request = upgradeRequests.find(r => r.id === requestId);
+    if (!request) return;
+
+    const updated = upgradeRequests.map(r => {
+      if (r.id === requestId) {
+        return { ...r, status: approve ? ('approved' as const) : ('rejected' as const) };
+      }
+      return r;
+    });
+    setUpgradeRequests(updated);
+    localStorage.setItem(`${STORAGE_PREFIX}requests`, JSON.stringify(updated));
+
+    if (approve) {
+      // Find user and add quota
+      const user = usersList.find(u => u.email === request.userEmail);
+      if (user) {
+        handleRechargeUser(user.id, request.requestedAmount);
+      }
+    }
+  };
+
+  return {
+    currentUser,
+    usersList,
+    auditLogs,
+    isAuthModalOpen,
+    setIsAuthModalOpen,
+    authView,
+    setAuthView,
+    quotaExceededModalOpen,
+    setQuotaExceededModalOpen,
+    upgradeRequests,
+    handleLogin,
+    handleRegister,
+    handleLogout,
+    handleCheckAndConsumeQuota,
+    handleRechargeUser,
+    handleSubmitUpgradeRequest,
+    handleProcessUpgradeRequest
+  };
+}
+
+// =============================================================
+// SUB-COMPONENT: PORTABLE STATS BADGE & ROLE LABEL
+// =============================================================
+export function AuthQuotaControl({
+  currentUser,
+  onLoginClick,
+  onLogout,
+  isZh
+}: {
+  currentUser: UserProfile | null;
+  onLoginClick: () => void;
+  onLogout: () => void;
+  isZh: boolean;
+}) {
+  if (!currentUser) {
+    return (
+      <button
+        onClick={onLoginClick}
+        className="px-4 py-2 rounded-xl bg-orange-550/20 text-orange-300 border border-orange-500/30 hover:bg-orange-550/30 cursor-pointer flex items-center gap-1.5 text-xs font-black transition shadow-md"
+      >
+        <LogIn className="w-3.5 h-3.5" />
+        <span>{isZh ? '登录账号' : 'Client Login'}</span>
+      </button>
+    );
+  }
+
+  const isAdmin = currentUser.role === 'admin';
+
+  return (
+    <div className="flex items-center gap-3 bg-slate-950/60 p-1.5 pl-3 pr-2.5 rounded-xl border border-slate-800/80">
+      <div className="text-left">
+        <div className="flex items-center gap-1.5">
+          {isAdmin ? (
+            <Shield className="w-3 h-3 text-amber-400 animate-pulse" />
+          ) : (
+            <User className="w-3 h-3 text-cyan-400" />
+          )}
+          <span className="text-[11px] font-black text-slate-100 max-w-[120px] truncate leading-tight">
+            {currentUser.name}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 mt-0.5 font-mono text-[9px]">
+          {isAdmin ? (
+            <span className="text-amber-400 font-extrabold uppercase">SUPER ADMIN</span>
+          ) : (
+            <div className="flex items-center gap-1">
+              <span className="text-cyan-400 font-black">{currentUser.remainingQuota}</span>
+              <span className="text-slate-500">/ {currentUser.maxQuota}</span>
+              <span className="text-slate-400 ml-1">Credits</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Quota Progress line for regular users */}
+      {!isAdmin && (
+        <div className="hidden md:block w-14 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+          <div 
+            className="h-full bg-cyan-400 rounded-full"
+            style={{ width: `${Math.max(0, Math.min(100, (currentUser.remainingQuota / currentUser.maxQuota) * 100))}%` }}
+          />
+        </div>
+      )}
+
+      <button
+        onClick={onLogout}
+        className="p-1.5 rounded-lg text-slate-450 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer transition"
+        title={isZh ? '注销登录' : 'Sign Out'}
+      >
+        <LogOut className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
+
+// =============================================================
+// SUB-COMPONENT: RECHARGE / UPGRADE LIMIT EXCEEDED MODAL
+// =============================================================
+export function QuotaExceededModal({
+  isOpen,
+  onClose,
+  onSubmitRequest,
+  currentUser,
+  isZh
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmitRequest: (amount: number, message: string) => void;
+  currentUser: UserProfile | null;
+  isZh: boolean;
+}) {
+  const [requestedAmount, setRequestedAmount] = useState<number>(10);
+  const [message, setMessage] = useState<string>('');
+  const [submitted, setSubmitted] = useState(false);
+
+  if (!isOpen || !currentUser) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmitRequest(requestedAmount, message || (isZh ? '请求为项目扩容，以便生成更多大区包装。' : 'Requesting quota booster for production runs.'));
+    setSubmitted(true);
+    setTimeout(() => {
+      setSubmitted(false);
+      onClose();
+    }, 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
+      <div className="bg-[#0b1220] border border-cyan-500/20 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
+        
+        {/* Banner header icon */}
+        <div className="bg-gradient-to-r from-red-500/25 to-amber-500/25 p-5 border-b border-red-500/10 text-center space-y-1 relative">
+          <div className="w-12 h-12 rounded-xl bg-orange-550/15 border border-orange-500/30 flex items-center justify-center text-orange-400 mx-auto animate-bounce">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <h3 className="text-base font-black text-white mt-3">
+            {isZh ? '🚀 免费算力额度已用尽' : 'Adoption Quota Exhausted'}
+          </h3>
+          <p className="text-[11px] text-slate-400">
+            {isZh ? '普通体验账号默认配额已消耗。请求管理员扩容以解锁全球化生产。' : 'Experience account free trial credit has run out.'}
+          </p>
+        </div>
+
+        <div className="p-6">
+          {submitted ? (
+            <div className="text-center py-6 space-y-3">
+              <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto animate-pulse" />
+              <p className="text-sm font-bold text-slate-100">{isZh ? '扩容请求已呈报管理员！' : 'Booster request submitted!'}</p>
+              <p className="text-xs text-slate-400 font-sans">{isZh ? '管理员账号可以直接进行全局管理审批。您也可以一键切换至管理账号完成充值！' : 'Switch accounts to the administrator panel or wait for approval.'}</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs font-sans">
+              <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-900 leading-relaxed text-slate-350 select-none">
+                <span className="font-bold text-slate-200">{isZh ? '当前账号：' : 'Account: '}</span>
+                {currentUser.name} <span className="text-slate-500">({currentUser.email})</span>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-slate-400 font-bold">{isZh ? '申请追加算力大礼包 (Credits)' : 'Booster Size'}</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[5, 10, 20].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setRequestedAmount(num)}
+                      className={`py-2 rounded-xl border text-xs font-bold font-mono transition cursor-pointer ${
+                        requestedAmount === num
+                          ? 'bg-orange-550/20 border-orange-500/40 text-orange-300'
+                          : 'bg-slate-900 border-slate-850 text-slate-400'
+                      }`}
+                    >
+                      +{num} {isZh ? '个创意' : 'Crs'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-slate-400 font-bold">{isZh ? '拟出海业务背景及申请理由' : 'Enterprise Rationale'}</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder={isZh ? "描述您的出海竞品诉求（例如：我们是智能宠物碗品牌，希望适配北美Tiktok，需要10次创意额度...）" : "Type your scaling context..."}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-500/40 resize-none font-sans"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-3 border-t border-slate-850/60">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-800 hover:text-slate-200 cursor-pointer text-slate-400 font-bold transition"
+                >
+                  {isZh ? '取消' : 'Dismiss'}
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-orange-550 hover:bg-orange-600 cursor-pointer text-slate-950 font-black flex items-center justify-center gap-1.5 shadow-md shadow-orange-550/10 transition"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{isZh ? '提交申请' : 'Request Booster'}</span>
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================
+// SUB-COMPONENT: LOGIN & REGISTRATION OVERLAY
+// =============================================================
+export function AuthModal({
+  isOpen,
+  onClose,
+  view,
+  setView,
+  onLogin,
+  onRegister,
+  isZh
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  view: 'login' | 'signup' | 'profile';
+  setView: (v: 'login' | 'signup' | 'profile') => void;
+  onLogin: (email: string) => { success: boolean; error?: string };
+  onRegister: (name: string, email: string, businessDomain: string, purpose: string) => { success: boolean; error?: string };
+  isZh: boolean;
+}) {
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [domain, setDomain] = useState('ebike');
+  const [customDomain, setCustomDomain] = useState('');
+  const [purpose, setPurpose] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [regSuccess, setRegSuccess] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+
+    if (view === 'login') {
+      const res = onLogin(email);
+      if (res.success) {
+        onClose();
+        setEmail('');
+      } else {
+        setErrorMsg(res.error || '');
+      }
+    } else {
+      const finalDomain = domain === 'custom' ? customDomain : domain;
+      if (!name || !email || !finalDomain || !purpose) {
+        setErrorMsg(isZh ? '请按规范填写出完整用户档案。' : 'Please complete all details.');
+        return;
+      }
+      const res = onRegister(name, email, finalDomain, purpose);
+      if (res.success) {
+        setRegSuccess(true);
+        setTimeout(() => {
+          setRegSuccess(false);
+          onClose();
+          // Reset
+          setName('');
+          setEmail('');
+          setCustomDomain('');
+          setPurpose('');
+        }, 1500);
+      } else {
+        setErrorMsg(res.error || '');
+      }
+    }
+  };
+
+  const loadPresetAccount = (targetEmail: string) => {
+    setEmail(targetEmail);
+    setErrorMsg('');
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
+      <div className="bg-[#0b1220] border border-cyan-500/20 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
+        
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-slate-500 hover:text-slate-300 font-bold"
+        >
+          ✕
+        </button>
+
+        {/* Content */}
+        <div className="p-6 md:p-8 space-y-6">
+          <div className="text-center space-y-1.5">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-slate-900 shadow-md shadow-cyan-500/10 mx-auto">
+              <Shield className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-lg font-black text-white mt-3">
+              {view === 'login' ? (isZh ? '出海商家身份登录' : 'Client Authorization') : (isZh ? '建立出海商家档案 (留下用户资料)' : 'Establish Merchant Profile')}
+            </h3>
+            <p className="text-slate-400 text-xs font-sans">
+              {isZh 
+                ? 'CultureOS 提供管理员全局监控与普通商家的配额防御算力隔离。' 
+                : 'Role isolation protects your API keys and quotas securely.'}
+            </p>
+          </div>
+
+          {regSuccess ? (
+            <div className="text-center py-8 space-y-3 animate-fade-in">
+              <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto animate-pulse" />
+              <p className="text-sm font-bold text-white">{isZh ? '商家档案创建成功！' : 'Client Profile Authorized!'}</p>
+              <p className="text-xs text-slate-400">{isZh ? '系统已自动生成 5 次免费创意体验额度，已为您自动进入工作台。' : 'You have been awarded 5 creative credits.'}</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs font-sans">
+              
+              {errorMsg && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-400 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              {view === 'login' ? (
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-slate-400 font-bold">{isZh ? '账号邮箱地址' : 'Account Email'}</label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-3.5 text-slate-500 w-4 h-4" />
+                      <input
+                        required
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="demo@cultureos.com"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-500/40 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Seed Preset account quick tabs */}
+                  <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-900 space-y-1.5 select-none">
+                    <span className="text-[10px] text-slate-500 font-bold block uppercase">{isZh ? '✨ 点击预设测试账号直接体验' : '✨ CLick preset account to experience'}</span>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => loadPresetAccount('demo@cultureos.com')}
+                        className="p-2 border border-slate-800 rounded bg-slate-900 text-[10px] text-cyan-300 hover:border-cyan-500/20 text-left font-mono"
+                      >
+                        <div className="font-bold font-sans">普通客户 (Quota: 3/5)</div>
+                        <div>demo@cultureos.com</div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => loadPresetAccount('admin@cultureos.com')}
+                        className="p-2 border border-slate-800 rounded bg-slate-900 text-[10px] text-amber-300 hover:border-amber-500/20 text-left font-mono"
+                      >
+                        <div className="font-bold font-sans flex items-center gap-1">
+                          <Shield className="w-2.5 h-2.5 text-amber-400" />
+                          <span>全局管理员 (Admin)</span>
+                        </div>
+                        <div>admin@cultureos.com</div>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-slate-400 font-bold">{isZh ? '真实姓名 / 企业主体' : 'Name / Company'}</label>
+                    <input
+                      required
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder={isZh ? "张三 / 智能冲浪板实验室" : "James / SurfingTech Labs"}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-500/40 font-sans"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-slate-400 font-bold">{isZh ? '注册邮箱 (登录凭证)' : 'Register Email'}</label>
+                    <input
+                      required
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="client@company.com"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-500/40 font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-slate-400 font-bold">{isZh ? '产品主营垂直品类' : 'Product Category'}</label>
+                    <select
+                      value={domain}
+                      onChange={(e) => setDomain(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-500/40"
+                    >
+                      <option value="pet_tech">{isZh ? "🧸 智能温控宠物电器" : "Pet Tech Accessories"}</option>
+                      <option value="ebike">{isZh ? "⚡ 强续航低碳智能电动车 (E-Bike)" : "Carbon Low E-Bike"}</option>
+                      <option value="herbal_tea">{isZh ? "🍵 东方古方高浓缩草本茶" : "Herbal Oriental Tea"}</option>
+                      <option value="custom">{isZh ? "❖ 其它品类 (手动输入个性定制)" : "Custom Enterprise Category"}</option>
+                    </select>
+                  </div>
+
+                  {domain === 'custom' && (
+                    <div className="space-y-1.5 animate-fade-in">
+                      <label className="text-slate-450">{isZh ? '产品描述大类名称' : 'Custom Category Name'}</label>
+                      <input
+                        required
+                        type="text"
+                        value={customDomain}
+                        onChange={(e) => setCustomDomain(e.target.value)}
+                        placeholder="e.g. 降噪耳机 / 恒温睡袋"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none"
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-slate-400 font-bold">{isZh ? '出海核心业务目标 (简述)' : 'Primary Global Goal'}</label>
+                    <textarea
+                      required
+                      rows={2}
+                      value={purpose}
+                      onChange={(e) => setPurpose(e.target.value)}
+                      placeholder={isZh ? "例：攻坚欧美中产减压市场，以更具高级感的话术打入Tiktok流媒体，替代廉价感促销。" : "e.g., Reach EU urban young professionals with rich branding assets to boost CTR"}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-cyan-500/40 font-sans resize-none"
+                    />
+                  </div>
+                </>
+              )}
+
+              <button
+                type="submit"
+                className="w-full py-3.5 mt-2 rounded-xl bg-cyan-550 hover:bg-cyan-600 font-extrabold cursor-pointer text-slate-950 flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/10 transition"
+              >
+                {view === 'login' ? (
+                  <>
+                    <LogIn className="w-4 h-4 text-slate-950" />
+                    <span>{isZh ? '立即进入智能工作台' : 'Verify and Authorized'}</span>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4 text-slate-950" />
+                    <span>{isZh ? '提交商家档案并开始试用体验' : 'Register Merchant Profile'}</span>
+                  </>
+                )}
+              </button>
+
+              {/* View Switcher toggle */}
+              <div className="text-center pt-2 select-none border-t border-slate-900">
+                {view === 'login' ? (
+                  <p className="text-slate-400 text-[11px]">
+                    {isZh ? '还没有账户资料？' : 'First time merchant? '}
+                    <button
+                      type="button"
+                      onClick={() => setView('signup')}
+                      className="text-cyan-400 font-bold hover:underline cursor-pointer"
+                    >
+                      {isZh ? '一键创建商家建档 (留下资料)' : 'Establish and Register Port'}
+                    </button>
+                  </p>
+                ) : (
+                  <p className="text-slate-400 text-[11px]">
+                    {isZh ? '已有注册账号？' : 'Returning global player? '}
+                    <button
+                      type="button"
+                      onClick={() => setView('login')}
+                      className="text-cyan-400 font-bold hover:underline cursor-pointer"
+                    >
+                      {isZh ? '直接邮箱登录登录' : 'Sign In Now'}
+                    </button>
+                  </p>
+                )}
+              </div>
+            </form>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================
+// SUB-COMPONENT: FULL ADMINISTRATOR GLOBALS MANAGEMENT DASHBOARD
+// =============================================================
+export function AdminDashboardView({
+  usersList,
+  auditLogs,
+  requests,
+  onRecharge,
+  onProcessRequest,
+  isZh
+}: {
+  usersList: UserProfile[];
+  auditLogs: QuotaAuditLog[];
+  requests: QuotaRequest[];
+  onRecharge: (userId: string, amount: number) => void;
+  onProcessRequest: (requestId: string, approve: boolean) => void;
+  isZh: boolean;
+}) {
+  const [activeSubTab, setActiveSubTab] = useState<'users' | 'requests' | 'audit'>('users');
+  const [rechargeAmounts, setRechargeAmounts] = useState<{[key: string]: number}>({});
+
+  const handleChargeSubmit = (userId: string) => {
+    const amount = rechargeAmounts[userId] || 5;
+    onRecharge(userId, amount);
+  };
+
+  const handleAmtChange = (userId: string, val: number) => {
+    setRechargeAmounts(prev => ({ ...prev, [userId]: val }));
+  };
+
+  return (
+    <div className="space-y-6">
+      
+      {/* Intro Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Metric 1 */}
+        <div className="p-4 rounded-2xl bg-slate-900/40 border border-slate-800/80 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-slate-450 uppercase font-black">{isZh ? '系统总授权商家数' : 'Merchant Entities'}</span>
+            <Users className="w-4 h-4 text-cyan-400" />
+          </div>
+          <p className="text-2xl font-black text-white">{usersList.length}</p>
+          <span className="text-[10px] text-slate-500 font-sans block">{isZh ? '已分离的客户角色与沙盒隔离系统' : 'Isolated client-sandboxing records.'}</span>
+        </div>
+
+        {/* Metric 2 */}
+        <div className="p-4 rounded-2xl bg-slate-900/40 border border-slate-800/80 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-slate-450 uppercase font-black">{isZh ? '待处理扩容申请' : ' booser requests'}</span>
+            <Clock className="w-4 h-4 text-amber-405 animate-pulse" />
+          </div>
+          <p className="text-2xl font-black text-white">
+            {requests.filter(r => r.status === 'pending').length}
+          </p>
+          <span className="text-[10px] text-slate-500 font-sans block">{isZh ? '亟待审批充值的爆款出海商户' : 'Awaiting super booster allocation.'}</span>
+        </div>
+
+        {/* Metric 3 */}
+        <div className="p-4 rounded-2xl bg-slate-900/40 border border-slate-800/80 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-slate-450 uppercase font-black">{isZh ? '已扣减算力次数' : 'Credits Used'}</span>
+            <CreditCard className="w-4 h-4 text-emerald-400" />
+          </div>
+          <p className="text-2xl font-black text-white">
+            {auditLogs.filter(l => l.amount < 0).length}
+          </p>
+          <span className="text-[10px] text-slate-500 font-sans block">{isZh ? '包含视频脚本、霍夫斯泰德与RAG自进化' : 'Aggregated production operations.'}</span>
+        </div>
+
+        {/* Metric 4 */}
+        <div className="p-4 rounded-2xl bg-[#141d2f]/40 border border-amber-500/10 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-amber-400 uppercase font-black">{isZh ? '系统运行状态' : 'SYSTEM HEALTH'}</span>
+            <Shield className="w-4 h-4 text-amber-450 animate-pulse" />
+          </div>
+          <p className="text-2xl font-black text-white">NORMAL</p>
+          <span className="text-[10px] text-slate-500 font-sans block">{isZh ? '沙盒与安全规则链正在运行' : 'API proxy is encrypted.'}</span>
+        </div>
+      </div>
+
+      {/* Internal Navigation tabs */}
+      <div className="flex border-b border-slate-800/60 pb-3 gap-4">
+        <button
+          onClick={() => setActiveSubTab('users')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+            activeSubTab === 'users'
+              ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20 shadow shadow-cyan-500/5'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>{isZh ? '商户档案与算力管控' : 'Registered Merchant Rosters'}</span>
+        </button>
+        <button
+          onClick={() => setActiveSubTab('requests')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer relative ${
+            activeSubTab === 'requests'
+              ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20 shadow shadow-cyan-500/5'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Clock className="w-4 h-4" />
+          <span>{isZh ? '体验额度追加审批' : 'Booster Applications'}</span>
+          {requests.filter(r => r.status === 'pending').length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white min-w-4 h-4 rounded-full flex items-center justify-center font-black font-mono text-[9px] animate-pulse px-1">
+              {requests.filter(r => r.status === 'pending').length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveSubTab('audit')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+            activeSubTab === 'audit'
+              ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20 shadow shadow-cyan-500/5'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <BarChart2 className="w-4 h-4" />
+          <span>{isZh ? '系统算力调度审计日志' : 'Operations Audit Records'}</span>
+        </button>
+      </div>
+
+      {/* Sub Tabs views */}
+      <AnimatePresence mode="wait">
+        {activeSubTab === 'users' && (
+          <motion.div
+            key="users"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="space-y-4"
+          >
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+              <div className="space-y-0.5">
+                <h4 className="text-sm font-bold text-slate-100">{isZh ? "全局客户档案控制面板" : "Global User Registries"}</h4>
+                <p className="text-[11px] text-slate-500">{isZh ? "管理员以此平台管理分配给普通用户的免费体验配额、注销或重新赋权。" : "Authorize new trial increments directly inside live state."}</p>
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="border border-slate-800/80 rounded-2xl bg-slate-900/10 overflow-hidden divide-y divide-slate-800/60 font-sans text-xs">
+              {usersList.map((usr) => (
+                <div key={usr.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-slate-950/20 transition">
+                  <div className="space-y-1.5 max-w-md">
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-extrabold text-white text-sm">{usr.name}</span>
+                      <span className="font-mono text-slate-500 text-[10px]">{usr.email}</span>
+                      {usr.role === 'admin' ? (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[9px] font-mono text-amber-400 font-extrabold uppercase">SUPER ADMIN</span>
+                      ) : (
+                        <span className="px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/15 text-[9px] font-mono text-cyan-400 font-black">CLIENT</span>
+                      )}
+                    </div>
+                    {usr.businessDomain && (
+                      <p className="text-slate-400 text-xs">
+                        {isZh ? '主营：' : 'Vertical: '} <span className="text-slate-300 font-sans">{usr.businessDomain}</span>
+                      </p>
+                    )}
+                    {usr.purpose && (
+                      <p className="text-slate-400 text-xs">
+                        {isZh ? '全球诉求：' : 'Core Goal: '} <span className="text-slate-400 italic font-sans">{usr.purpose}</span>
+                      </p>
+                    )}
+                    <p className="text-[10px] text-slate-550 font-mono">
+                      {isZh ? '注册时间：' : 'Joined: '} {usr.regDate}
+                    </p>
+                  </div>
+
+                  {/* Quota controller */}
+                  <div className="flex items-center gap-4">
+                    {usr.role !== 'admin' ? (
+                      <div className="text-right space-y-1">
+                        <div className="flex items-center gap-1.5 justify-end">
+                          <span className="text-slate-400 font-mono text-xs">{isZh ? '当前余额：' : 'Credits Remaining:'}</span>
+                          <span className={`font-mono text-sm font-black ${usr.remainingQuota <= 0 ? 'text-red-400' : 'text-cyan-400'}`}>{usr.remainingQuota}</span>
+                          <span className="text-slate-500 font-mono">/ {usr.maxQuota}</span>
+                        </div>
+                        
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-2 mt-1">
+                          <select
+                            onChange={(e) => handleAmtChange(usr.id, parseInt(e.target.value))}
+                            className="bg-slate-900 border border-slate-800 text-[10px] rounded px-1.5 py-1 text-slate-200 focus:outline-none"
+                            defaultValue={5}
+                          >
+                            <option value={5}>+5 Credits</option>
+                            <option value={10}>+10 Credits</option>
+                            <option value={20}>+20 Credits</option>
+                          </select>
+                          <button
+                            onClick={() => handleChargeSubmit(usr.id)}
+                            className="bg-cyan-550/20 border border-cyan-550/30 text-cyan-300 px-3 py-1 rounded text-[10px] font-black cursor-pointer hover:bg-cyan-500/20 active:opacity-80 transition"
+                          >
+                            {isZh ? '立即充值' : 'Recharge'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-slate-500 font-mono text-[10px] uppercase">
+                        {isZh ? '♾️ 无限制管理员算力' : '♾️ UNLIMITED CAPACITY'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {activeSubTab === 'requests' && (
+          <motion.div
+            key="requests"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="space-y-4 font-sans text-xs"
+          >
+            <div className="space-y-0.5 pb-2">
+              <h4 className="text-sm font-bold text-slate-100">{isZh ? "商家扩容充值申请处理队列" : "Quota Booster Requests Queue"}</h4>
+              <p className="text-[11px] text-slate-500">{isZh ? "普通商家额度消耗完毕后提交的追加算力大礼包申请，会在此通过安全审计实时呈报，可对其进行一键审批发放。" : "Approve client requests instantly to credit live limits."}</p>
+            </div>
+
+            {requests.length === 0 ? (
+              <div className="border border-dashed border-slate-800 p-8 rounded-2xl text-center text-slate-500">
+                {isZh ? '目前没有任何追加算力申请' : 'Clear! No pending applications found.'}
+              </div>
+            ) : (
+              <div className="space-y-3.5">
+                {requests.map((r) => (
+                  <div key={r.id} className="border border-slate-800/80 rounded-2xl bg-slate-900/30 p-5 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-850 pb-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-white text-sm">{r.userName}</span>
+                          <span className="text-[10px] font-mono text-slate-500">({r.userEmail})</span>
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-mono block mt-0.5">申请提交时间：{r.timestamp}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-400 font-mono font-bold bg-[#14233c] px-2 py-0.5 rounded text-[10px]">
+                          请求追加: +{r.requestedAmount} Credits
+                        </span>
+                        {r.status === 'pending' ? (
+                          <span className="px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/25 text-blue-400 text-[10px] font-bold">待审批</span>
+                        ) : r.status === 'approved' ? (
+                          <span className="px-2 py-0.5 rounded bg-green-500/10 border border-green-500/25 text-green-400 text-[10px] font-bold">已批准通过</span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/25 text-rose-400 text-[10px] font-bold">已驳回</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-900">
+                      <p className="text-slate-300 leading-relaxed font-sans italic">“{r.message}”</p>
+                    </div>
+
+                    {r.status === 'pending' && (
+                      <div className="flex justify-end gap-3.5 pt-1">
+                        <button
+                          onClick={() => onProcessRequest(r.id, false)}
+                          className="px-4 py-2 border border-slate-800 rounded-xl hover:text-rose-400 cursor-pointer text-slate-400 font-bold transition text-[11px]"
+                        >
+                          {isZh ? '驳回申请' : 'Deny Application'}
+                        </button>
+                        <button
+                          onClick={() => onProcessRequest(r.id, true)}
+                          className="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-600 hover:opacity-90 active:opacity-85 text-slate-950 font-black cursor-pointer rounded-xl flex items-center gap-1 transition shadow-md shadow-amber-500/10 text-[11px]"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>{isZh ? '确认发放、立即扩容' : 'Grant Booster'}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {activeSubTab === 'audit' && (
+          <motion.div
+            key="audit"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="space-y-4"
+          >
+            <div className="space-y-0.5">
+              <h4 className="text-sm font-bold text-slate-100">{isZh ? "全局算力分配审计跟踪器" : "System Operations Logs"}</h4>
+              <p className="text-[11px] text-slate-500">{isZh ? "实时记录普通用户与管理员在系统内核中的高危算力扣减和恢复操作，确保算力无损耗可追溯。" : "Secure immutable trail for account usage."}</p>
+            </div>
+
+            {/* Logs card */}
+            <div className="border border-slate-800/80 rounded-2xl bg-slate-900/10 overflow-hidden text-xs">
+              <div className="max-h-[350px] overflow-y-auto divide-y divide-slate-800/40 font-mono">
+                {auditLogs.map((log) => (
+                  <div key={log.id} className="p-4 flex items-start gap-4 hover:bg-slate-950/20 transition text-[11px]">
+                    <span className="text-slate-550 select-none flex-shrink-0">[{log.timestamp}]</span>
+                    
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-cyan-400 font-bold">{log.userEmail}</span>
+                        <span className="text-slate-500 select-none">|</span>
+                        <span className="text-slate-200">{log.action}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex-shrink-0 text-right">
+                      <span className={`font-bold px-2 py-0.5 rounded-lg border font-mono ${
+                        log.amount < 0 
+                          ? 'bg-rose-500/5 border-rose-500/15 text-rose-450' 
+                          : 'bg-emerald-500/5 border-emerald-500/15 text-emerald-450'
+                      }`}>
+                        {log.amount > 0 ? `+${log.amount}` : log.amount}
+                      </span>
+                      <span className="text-[10px] text-slate-500 block mt-1 font-sans">{isZh ? '余额' : 'Remain'}: {log.remainingAfter}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

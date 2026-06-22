@@ -2,21 +2,72 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Globe, Layers, Cpu, Compass, BookOpen, AlertCircle, Award, 
-  Sparkles, Clipboard, Check, ArrowRight, Download, BookOpenCheck
+  Sparkles, Clipboard, Check, ArrowRight, Download, BookOpenCheck, Sun, Moon
 } from 'lucide-react';
 import LandingView from './components/LandingView';
 import WorkspaceView from './components/WorkspaceView';
 import CulturePackView from './components/CulturePackView';
 import CreativeStudioView from './components/CreativeStudioView';
 import DatabaseEvolutionView from './components/DatabaseEvolutionView';
+import PresentationView from './components/PresentationView';
 import { AgentNode, CulturePack, CampaignBrief, TraceLog } from './types';
 import { PRESETS } from './data/presets';
 import { prdMarkdown, designMarkdown, adapterMarkdown, evalMarkdown } from './data/prd_content';
+import { 
+  useAuthManager, AuthQuotaControl, AuthModal, QuotaExceededModal, AdminDashboardView 
+} from './components/AuthManager';
+import { Shield } from 'lucide-react';
 
 export default function App() {
-  const [view, setView] = useState<'landing' | 'workspace' | 'studio' | 'docs' | 'database'>('landing');
+  const [view, setView] = useState<'landing' | 'workspace' | 'studio' | 'docs' | 'database' | 'ppt' | 'admin'>('landing');
   const [lang, setLang] = useState<'zh' | 'en'>('zh');
+
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
+
+  const {
+    currentUser,
+    usersList,
+    auditLogs,
+    isAuthModalOpen,
+    setIsAuthModalOpen,
+    authView,
+    setAuthView,
+    quotaExceededModalOpen,
+    setQuotaExceededModalOpen,
+    upgradeRequests,
+    handleLogin,
+    handleRegister,
+    handleLogout,
+    handleCheckAndConsumeQuota,
+    handleRechargeUser,
+    handleSubmitUpgradeRequest,
+    handleProcessUpgradeRequest
+  } = useAuthManager();
+
+  // Theme support
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    try {
+      const saved = localStorage.getItem('cultureos-theme');
+      if (saved === 'light' || saved === 'dark') {
+        return saved;
+      }
+    } catch (e) {}
+    return 'dark';
+  });
+
+  // Sync theme selection to document element/body classes
+  useEffect(() => {
+    try {
+      localStorage.setItem('cultureos-theme', theme);
+    } catch (e) {}
+    if (theme === 'light') {
+      document.documentElement.classList.add('theme-light');
+      document.body.classList.add('theme-light');
+    } else {
+      document.documentElement.classList.remove('theme-light');
+      document.body.classList.remove('theme-light');
+    }
+  }, [theme]);
 
   // Default initial states based on presets
   const [currentPack, setCurrentPack] = useState<CulturePack>(PRESETS.lucky_deer.culturePack);
@@ -176,88 +227,198 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#070b13] text-[#f1f5f9] flex flex-col font-sans selection:bg-cyan-500/20 selection:text-cyan-300">
+    <div className={`min-h-screen ${theme === 'light' ? 'bg-[#f8fafc]' : 'bg-[#070b13]'} flex flex-col font-sans selection:bg-cyan-500/20 selection:text-cyan-300 transition-colors duration-300`}>
       
       {/* Top Professional Navigation Header */}
-      <header className="sticky top-0 z-50 bg-[#0c1322]/80 backdrop-blur-md border-b border-[#1e2f4d]/60 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div 
-            onClick={() => setView('landing')}
-            className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-slate-900 shadow-md shadow-cyan-500/10 cursor-pointer hover:opacity-90 transition"
-          >
-            <Layers className="w-5.5 h-5.5 text-white" />
-          </div>
-          <div>
-            <span 
+      <header className="sticky top-0 z-50 bg-[#0c1322]/90 backdrop-blur-md border-b border-[#1e2f4d]/80 px-4 md:px-6 py-3 flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4">
+        <div className="flex items-center justify-between w-full md:w-auto">
+          {/* Logo Title Section */}
+          <div className="flex items-center gap-2.5">
+            <div 
               onClick={() => setView('landing')}
-              className="font-bold text-lg md:text-xl tracking-tight text-white hover:text-cyan-400 transition cursor-pointer font-sans"
+              className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-slate-900 shadow-md shadow-cyan-500/10 cursor-pointer hover:opacity-90 transition shrink-0"
             >
-              CultureOS
-            </span>
-            <span className="hidden sm:inline-block ml-3 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/25 text-[10px] font-mono text-amber-400 uppercase font-black tracking-widest leading-none">
-              7-Agent Pipeline
-            </span>
+              <Layers className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <span 
+                onClick={() => setView('landing')}
+                className="font-bold text-[#fafafa] hover:text-cyan-400 transition cursor-pointer font-sans leading-none block py-1"
+                style={{ fontSize: '1.25rem' }}
+              >
+                CultureOS
+              </span>
+            </div>
+          </div>
+
+          {/* Right controls on mobile directly, inside the same row */}
+          <div className="flex items-center gap-2 md:hidden">
+            <AuthQuotaControl
+              currentUser={currentUser}
+              onLoginClick={() => {
+                setAuthView('login');
+                setIsAuthModalOpen(true);
+              }}
+              onLogout={handleLogout}
+              isZh={isZh}
+            />
+
+            {/* Theme Toggle Button */}
+            <button
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              className="flex items-center justify-center p-2 rounded-lg border border-[#1e2f4d]/60 bg-[#0a0f1d] hover:text-amber-400 transition cursor-pointer text-slate-450 shrink-0"
+              title={isZh ? '点击切换白天/黑夜主题' : 'Toggle Light/Dark Theme'}
+            >
+              {theme === 'light' ? (
+                <Moon className="w-3.5 h-3.5 text-cyan-600" />
+              ) : (
+                <Sun className="w-3.5 h-3.5 text-amber-400" />
+              )}
+            </button>
+            
+            {/* Language Switcher */}
+            <div className="flex bg-[#0a0f1d] p-0.5 rounded-lg border border-[#1e2f4d]/65 text-xs">
+              <button
+                onClick={() => setLang('zh')}
+                className={`px-1.5 py-0.5 rounded font-bold transition cursor-pointer text-[10px] ${
+                  lang === 'zh' ? 'bg-amber-400 text-slate-950 font-black' : 'text-slate-450 hover:text-slate-300'
+                }`}
+              >
+                中
+              </button>
+              <button
+                onClick={() => setLang('en')}
+                className={`px-1.5 py-0.5 rounded font-bold transition cursor-pointer text-[10px] ${
+                  lang === 'en' ? 'bg-amber-400 text-slate-950 font-black' : 'text-slate-450 hover:text-slate-300'
+                }`}
+              >
+                EN
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <nav className="flex items-center gap-1.5 md:gap-4">
+        {/* Navigation Tabs - swipeable/scrollable horizontally on mobile, spacious but compact on desktop */}
+        <div className="w-full md:w-auto overflow-x-auto scrollbar-none flex-1 max-w-full md:max-w-none">
+          <nav className="flex items-center gap-1.5 md:gap-2 px-0.5 py-0.5">
+            <button
+              id="nav-home"
+              onClick={() => setView('landing')}
+              className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
+                view === 'landing' 
+                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm' 
+                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
+              }`}
+            >
+              <span>{isZh ? '指南首页' : 'Hub'}</span>
+            </button>
+            
+            <button
+               id="nav-workspace"
+               onClick={() => setView('workspace')}
+               className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
+                 view === 'workspace' 
+                   ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm' 
+                   : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
+               }`}
+            >
+              <span>{isZh ? '工作台' : 'Adapt Desk'}</span>
+            </button>
+
+            <button
+              id="nav-studio"
+              onClick={() => setView('studio')}
+              className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
+                view === 'studio' 
+                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm' 
+                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{isZh ? 'AI工坊' : 'AI Studio'}</span>
+            </button>
+
+            <button
+              id="nav-database"
+              onClick={() => setView('database')}
+              className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
+                view === 'database' 
+                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm' 
+                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{isZh ? '自进化' : 'Evolution'}</span>
+            </button>
+
+            <button
+              id="nav-docs"
+              onClick={() => setView('docs')}
+              className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
+                view === 'docs' 
+                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm' 
+                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
+              }`}
+            >
+              <BookOpenCheck className="w-3.5 h-3.5 text-cyan-450" />
+              <span>{isZh ? '系统文档' : 'Docs'}</span>
+            </button>
+
+            <button
+              id="nav-ppt"
+              onClick={() => setView('ppt')}
+              className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
+                view === 'ppt' 
+                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm' 
+                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
+              }`}
+            >
+              <Award className="w-3.5 h-3.5 text-amber-500" />
+              <span>{isZh ? '演示PPT' : 'Deck'}</span>
+            </button>
+
+            {currentUser?.role === 'admin' && (
+              <button
+                id="nav-admin"
+                onClick={() => setView('admin')}
+                className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
+                  view === 'admin' 
+                    ? 'bg-[#1e2518] text-amber-300 border-amber-500/50 shadow-sm' 
+                    : 'text-amber-450 border-transparent hover:text-amber-300 hover:bg-amber-500/10'
+                }`}
+              >
+                <Shield className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                <span>{isZh ? '控制台' : 'Admin'}</span>
+              </button>
+            )}
+          </nav>
+        </div>
+
+        {/* Global Control Buttons - Desktop-Only */}
+        <div className="hidden md:flex items-center gap-3">
+          <AuthQuotaControl
+            currentUser={currentUser}
+            onLoginClick={() => {
+              setAuthView('login');
+              setIsAuthModalOpen(true);
+            }}
+            onLogout={handleLogout}
+            isZh={isZh}
+          />
+
+          {/* Theme Toggle Button */}
           <button
-            id="nav-home"
-            onClick={() => setView('landing')}
-            className={`px-3.5 py-2 rounded-lg text-xs md:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer ${
-              view === 'landing' ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20' : 'text-slate-400 hover:text-slate-200'
-            }`}
+            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            className="flex items-center justify-center p-2 rounded-lg border border-[#1e2f4d]/60 bg-[#0a0f1d] hover:text-amber-400 transition cursor-pointer text-slate-400"
+            title={isZh ? '点击切换白天/黑夜主题' : 'Toggle Light/Dark Theme'}
           >
-            <span>{isZh ? '首页指南' : 'Home Hub'}</span>
-          </button>
-          
-          <button
-            id="nav-workspace"
-            onClick={() => setView('workspace')}
-            className={`px-3.5 py-2 rounded-lg text-xs md:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer ${
-              view === 'workspace' ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <span>{isZh ? '协同工作台' : 'Adaptation Desk'}</span>
+            {theme === 'light' ? (
+              <Moon className="w-4 h-4 text-cyan-600 animate-pulse" />
+            ) : (
+              <Sun className="w-4 h-4 text-amber-400 animate-pulse" />
+            )}
           </button>
 
-          <button
-            id="nav-studio"
-            onClick={() => setView('studio')}
-            className={`px-3.5 py-2 rounded-lg text-xs md:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer ${
-              view === 'studio' ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Sparkles className="w-4 h-4 text-cyan-400" />
-            <span>{isZh ? 'AI 创意工坊' : 'AI Studio'}</span>
-          </button>
-
-          <button
-            id="nav-database"
-            onClick={() => setView('database')}
-            className={`px-3.5 py-2 rounded-lg text-xs md:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer ${
-              view === 'database' ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Globe className="w-4 h-4 text-cyan-400" />
-            <span>{isZh ? '知识库自进化' : 'RAG Evolution'}</span>
-          </button>
-
-          <button
-            id="nav-docs"
-            onClick={() => setView('docs')}
-            className={`px-3.5 py-2 rounded-lg text-xs md:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer ${
-              view === 'docs' ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <BookOpenCheck className="w-4 h-4 text-cyan-400" />
-            <span>{isZh ? '开发设计文档' : 'System Docs'}</span>
-          </button>
-        </nav>
-
-        {/* Global Control Buttons */}
-        <div className="flex items-center gap-3">
           {/* Language Switcher */}
           <div className="flex bg-[#0a0f1d] p-1 rounded-lg border border-[#1e2f4d]/65 text-xs">
             <button
@@ -271,7 +432,7 @@ export default function App() {
             <button
               onClick={() => setLang('en')}
               className={`px-2.5 py-1 rounded font-bold transition cursor-pointer ${
-                lang === 'en' ? 'bg-amber-400 text-slate-950 font-black' : 'text-slate-400 hover:text-slate-350'
+                lang === 'en' ? 'bg-amber-400 text-slate-950 font-black' : 'text-slate-400 hover:text-slate-355'
               }`}
             >
               EN
@@ -316,7 +477,10 @@ export default function App() {
                 activeRunId={activeRunId}
                 setActiveRunId={setActiveRunId}
                 onWorkflowComplete={handleWorkflowComplete}
+                currentUser={currentUser}
+                onConsumeQuota={handleCheckAndConsumeQuota}
               />
+
 
               {/* Interactive CulturePack delivers render area */}
               {hasRun && (
@@ -360,6 +524,8 @@ export default function App() {
             >
               <CreativeStudioView 
                 lang={lang}
+                currentUser={currentUser}
+                onConsumeQuota={handleCheckAndConsumeQuota}
               />
             </motion.div>
           )}
@@ -374,9 +540,12 @@ export default function App() {
             >
               <DatabaseEvolutionView 
                 lang={lang}
+                currentUser={currentUser}
+                onConsumeQuota={handleCheckAndConsumeQuota}
               />
             </motion.div>
           )}
+
 
           {view === 'docs' && (
             <motion.div
@@ -529,6 +698,38 @@ export default function App() {
               </div>
             </motion.div>
           )}
+
+          {view === 'ppt' && (
+            <motion.div
+              key="ppt"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.4 }}
+            >
+              <PresentationView lang={lang} />
+            </motion.div>
+          )}
+
+          {view === 'admin' && currentUser?.role === 'admin' && (
+            <motion.div
+              key="admin"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.4 }}
+              className="space-y-6 pt-4"
+            >
+              <AdminDashboardView
+                usersList={usersList}
+                auditLogs={auditLogs}
+                requests={upgradeRequests}
+                onRecharge={handleRechargeUser}
+                onProcessRequest={handleProcessUpgradeRequest}
+                isZh={isZh}
+              />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
@@ -541,6 +742,26 @@ export default function App() {
           All Rights Reserved. MIT-licensed. Fully Compatible with ISO 1801 Advertising Standard.
         </p>
       </footer>
+
+      {/* Auth Modal Overlay */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        view={authView}
+        setView={setAuthView}
+        onLogin={handleLogin}
+        onRegister={handleRegister}
+        isZh={isZh}
+      />
+
+      {/* Quota Limit Reached Modal Overlay */}
+      <QuotaExceededModal
+        isOpen={quotaExceededModalOpen}
+        onClose={() => setQuotaExceededModalOpen(false)}
+        onSubmitRequest={handleSubmitUpgradeRequest}
+        currentUser={currentUser}
+        isZh={isZh}
+      />
     </div>
   );
 }
