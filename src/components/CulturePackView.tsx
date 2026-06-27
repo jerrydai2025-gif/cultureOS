@@ -32,10 +32,10 @@ export default function CulturePackView({ lang, pack }: CulturePackViewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col xl:flex-row gap-6 items-stretch">
+      <div className="flex flex-col gap-6 w-full">
         
-        {/* Left Column Navigation List */}
-        <div className="xl:w-60 flex-shrink-0 flex flex-row xl:flex-col gap-2 overflow-x-auto xl:overflow-x-visible pb-2 xl:pb-0 border-b xl:border-b-0 xl:border-r border-slate-800/80 pr-0 xl:pr-4">
+        {/* Top Horizontal Navigation List */}
+        <div className="w-full flex flex-row gap-2 overflow-x-auto pb-3 border-b border-slate-800/80 scrollbar-none">
           {tabsList.map(tab => {
             const Icon = tab.icon;
             const isActive = activePackTab === tab.key;
@@ -44,9 +44,9 @@ export default function CulturePackView({ lang, pack }: CulturePackViewProps) {
                 key={tab.key}
                 id={`pack-tab-${tab.key}`}
                 onClick={() => setActivePackTab(tab.key)}
-                className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-left text-xs sm:text-sm font-bold font-sans whitespace-nowrap transition cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold font-sans whitespace-nowrap transition cursor-pointer ${
                   isActive 
-                    ? 'bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-500/20 scale-[1.02]' 
+                    ? 'bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-500/20 scale-[1.01]' 
                     : 'text-slate-350 hover:text-white hover:bg-slate-900/60 border border-transparent hover:border-slate-800/50'
                 }`}
               >
@@ -57,8 +57,8 @@ export default function CulturePackView({ lang, pack }: CulturePackViewProps) {
           })}
         </div>
  
-        {/* Right Column Details display */}
-        <div className="flex-1 bg-[#0b1324]/90 border-2 border-slate-700/80 shadow-2xl p-6 md:p-8 rounded-2xl min-h-[480px] flex flex-col justify-between">
+        {/* Full Width Details display */}
+        <div className="w-full bg-[#0b1324]/90 border-2 border-slate-700/80 shadow-2xl p-6 md:p-8 rounded-2xl min-h-[480px] flex flex-col justify-between">
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-slate-850 pb-3.5">
               <div className="flex items-center gap-2.5">

@@ -52,8 +52,10 @@ export default function PresentationView({ lang }: PresentationViewProps) {
     };
   }, [demoIsRunning]);
 
-  // Main PPT Slides list mapping the 10 images precisely
-  const slides = [
+  const [deckType, setDeckType] = useState<'strategy' | 'commercial'>('strategy');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const commercialSlides = [
     // SLIDE 1: COVER
     {
       id: 'slide-1',
@@ -96,7 +98,7 @@ export default function PresentationView({ lang }: PresentationViewProps) {
       tag: isZh ? '05 Case Matrix' : '05 Case Matrix',
       section: isZh ? 'IP案例迁移矩阵' : 'IP Adaptability Verification',
       title: isZh ? 'IP案例矩阵：我们验证的是“结构可迁移性”' : 'Case Matrix: Verifying Replicable Growth Architecture',
-      subtitle: isZh ? '所有 IP 本质不同，但底层的内容增长机制是高度统一的' : 'Different IPs, identical recommendation mechanics',
+      subtitle: isZh ? '所有 IP 本质不同，但底层的内容增长机制 is 高度统一的' : 'Different IPs, identical recommendation mechanics',
       type: 'case',
     },
     // SLIDE 6: SYSTEM ARCHITECTURE
@@ -146,6 +148,84 @@ export default function PresentationView({ lang }: PresentationViewProps) {
     }
   ];
 
+  const strategySlides = [
+    // SLIDE 1: STRATEGY COVER & BLUEPRINT
+    {
+      id: 'strat-1',
+      tag: isZh ? '01 战略定位' : '01 Blueprint',
+      section: isZh ? '定位蓝图' : 'Positioning Blueprint',
+      title: isZh ? '阿琪是我 / CultureOS 战略定位蓝图 V1.0' : 'A-Qi Is Me / CultureOS Positioning Blueprint V1.0',
+      subtitle: isZh ? '中国文化热点的 AI 内容转译与 IP 资产化系统：前台 IP (阿琪) × 后台产品 (CultureOS)' : 'Chinese cultural hot-spots AI content translation & IP assetization system',
+      type: 'strat_blueprint',
+    },
+    // SLIDE 2: CREATOR PROFIT MODEL MAP
+    {
+      id: 'strat-2',
+      tag: isZh ? '02 盈利模式' : '02 Monetization',
+      section: isZh ? '创作者盈利模式' : 'IP Creator Monetization',
+      title: isZh ? 'Top X 创作者生态盈利模式地图' : 'Top X IP Creator Monetization Map',
+      subtitle: isZh ? '打通工具产品型、知识资产型、广告流量型、资讯聚合型、品牌商用型五大变现模型' : 'Five core monetization frameworks scaling from traffic and courses to custom assets',
+      type: 'strat_monetization',
+    },
+    // SLIDE 3: BOTTOM SIGNAL SYSTEM MAP
+    {
+      id: 'strat-3',
+      tag: isZh ? '03 信号系统' : '03 Signal Matrix',
+      section: isZh ? '底层信号系统' : '5-Tier Signals',
+      title: isZh ? '五层确定性底层信号系统' : 'The 5-Tier Bottom Signal Matrix',
+      subtitle: isZh ? '从世界级合规、文化级图腾、平台级算法，到商业级转化与自我能力基因' : 'Guiding creators from global compliance to local Hofstede coordinates and algorithm hooks',
+      type: 'strat_signal',
+    },
+    // SLIDE 4: ECOSYSTEM PLAYER MAP
+    {
+      id: 'strat-4',
+      tag: isZh ? '04 生态地图' : '04 Ecosystem Players',
+      section: isZh ? '生态玩家地图' : 'Ecosystem Map',
+      title: isZh ? '全球文化转译生态玩家地图' : 'Global Culture-OS Players Map',
+      subtitle: isZh ? '全景价值链：上游 IP、平台渠道、AI 联盟创作者、To C 情感用户与 To B 出海品牌' : 'Interconnecting upstream composers, short-video networks, micro-creators, and DTC brands',
+      type: 'strat_player',
+    },
+    // SLIDE 5: STRATEGY METHOD MAP
+    {
+      id: 'strat-5',
+      tag: isZh ? '05 打法路线' : '05 Strategy Map',
+      section: isZh ? '打法方法地图' : 'Tactical Road',
+      title: isZh ? '「一体两翼三阶段」打法方法地图' : 'The "One Core, Two Wings, Three Phases" Map',
+      subtitle: isZh ? '以阿琪是我为样板间，内容产品双翼协同，本地验证到生态协作的演进图腾' : 'Progression path from cold launch proof to custom CulturePack SaaS downloads and scale',
+      type: 'strat_strategy',
+    },
+    // SLIDE 6: RESOURCE ASSETIZATION & DIAGNOSIS
+    {
+      id: 'strat-6',
+      tag: isZh ? '06 资产诊断' : '06 Assets & Diagnosis',
+      section: isZh ? '资源资产化与诊断' : 'Diagnosis',
+      title: isZh ? '四大资源资产化系统与赛道全景诊断' : 'Resource Assetization & Strategic Track Diagnosis',
+      subtitle: isZh ? '能力/案例/关系/数据四大资产变现机制，与华语青春记忆垂直赛道红利优势' : 'Analyzing vertical opportunities: Chinese youth memories x AI visual clips x cultural adapters',
+      type: 'strat_assets',
+    }
+  ];
+
+  const slides = deckType === 'strategy' ? strategySlides : commercialSlides;
+  const activeSlide = slides[currentSlide] || slides[0];
+
+  const copyPPTOutline = () => {
+    try {
+      const outlineText = slides.map((s, idx) => {
+        return `[Slide ${idx + 1}] ${s.title}\n- ${s.subtitle}\n`;
+      }).join('\n');
+      navigator.clipboard.writeText(outlineText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy outline:', err);
+    }
+  };
+
+  // Reset slide index on deck switch
+  useEffect(() => {
+    setCurrentSlide(0);
+  }, [deckType]);
+
   // Auto-play interval for PPT
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -177,108 +257,73 @@ export default function PresentationView({ lang }: PresentationViewProps) {
     };
   }, [slides.length]);
 
-  // Copy full outline logic
-  const copyPPTOutline = () => {
-    const fullTranscript = `
-========================================================================
-             CULTUREOS 商业路演 PPT 全景大纲与宣讲解说词 (共10页)
-========================================================================
-
-【Slide 1: 公司封面 - Cover Page】
-◆ 标题：CultureOS 全球IP内容增长操作系统
-◆ 副标：让每一个创作者和品牌，都能用 IP 内容撬动全球流量，实现跨文化增长
-◆ 宣讲词：各位评委好！今天我为大家带来 CultureOS 系统的路演。传统的出海面临严重的“水土不服”与“生硬机翻”问题。CultureOS 是新一代全球IP内容增长操作系统，我们通过“IP + 内容结构 + 增长路径”三位一体的方式，让每一个中国文化IP与品牌都能精准破圈海外，撬动指数级全球流量。
-
-【Slide 2: Why Now 市场正在发生根本性变化】
-◆ 核心变革点：
-  1. AI让内容生产进入无限生成时代 (内容成本趋近于0，创作门槛大幅降低)
-  2. 平台分发完全依赖算法 (推荐驱动，内容即流量)
-  3. IP成为唯一流量入口 (用户注意力高度集中，没有IP=没有冷启动能力)
-◆ 结论：内容竞争已经从“创作能力”转向“系统能力”。
-◆ 宣讲词：为什么是现在？内容生产正历经一场结构性巨变。AI使得生成成本几乎降为零，各大社交平台转向100%推荐分发，此时，没有IP的平庸内容很难脱颖而出。谁能率先建立体系化的内容和分发系统，谁就能垄断出海的流量漏斗。
-
-【Slide 3: Who 我们服务的核心用户】
-◆ 用户画像：独立创作者 / 小团队出海内容掘金者
-◆ 核心痛点：
-  1. 不知道做什么内容：缺乏选题和IP方向，没有内容方法论
-  2. 没有IP资源：很难冷启动，难以从0沉淀初始影响力
-  3. 海外表达能力弱：文化与喜好不通，极其水土不服
-  4. 无法获得持续增长：发布即沉没，缺乏反馈闭环
-◆ 结论：核心痛点不是“不会做内容”，而是“没有内容系统”。
-
-【Slide 4: 核心洞察：流量的本质公式】
-◆ 流量增长公式：IP(已有认知的符号) + 内容结构(可复制的模板) + 算法触发(平台信号匹配) = 增长(流量指数级放大)
-◆ 宣讲词：我们的核心洞察极其简单而深刻：流量的本质是“连接认知”与“触发情绪”。我们把这拆解为科学的数学公式。高认知的IP加上标准化的内容结构模板，搭配特定推荐算法的热点触发，即可构成滚雪球般的有机增长。
-
-【Slide 5: Case Matrix IP案例矩阵】
-◆ 迁移矩阵验证：
-  1. 华语IP (周杰伦)：验证情感共鸣、粉丝传播、文化记忆放大。结论：情绪本身就是流量入口。
-  2. 日语二次元IP：验证世界观、二创极强、内容拆解。结论：结构比内容更重要。
-  3. 体育/事件IP：验证强事件触发、高传播速度、算法匹配。结论：热点是算法的入口开关。
-◆ 核心统一结论：所有IP的本质不同，但内容增长机制是统一的，即验证“IP增长结构是否可复制”。
-
-【Slide 6: Product System Architecture 系统架构】
-◆ 五大核心功能层：
-  1. IP 输入层：评估IP价值、洞察画像、行业与竞品扫描。
-  2. 内容结构引擎 (AI驱动)：提供高潜选题、吸引力脚本、AI画面匹配、本地化多语言、风格化合规检测。
-  3. 多平台分发层：一键无缝覆盖 YouTube、TikTok、Instagram、X (Twitter)、Facebook 等。
-  4. 增长反馈层：实时监控播放、互动、完播、ROI，捕获爆款因子。
-  5. 优化迭代层：策略自动调整，大语言模型算法持续进化。
-
-【Slide 7: Demo Flow 产品演示流程】
-◆ 闭环增长五步走：
-  - Step 1: 输入IP (全面分析IP价值与大区机会)
-  - Step 2: 内容生成 (AI创作高质脚本，视频画面，合规评估评分)
-  - Step 3: 多域分发 (一键分发至全球各主要平台渠道)
-  - Step 4: 数据反馈 (一刻钟跟踪监控：1.23M播放、8.7%互动、4.6x ROI)
-  - Step 5: 优化迭代 (大语言模型自动学习，改进下一轮内容选题)
-
-【Slide 8: 风险控制：出海的核心合规红线】
-◆ 痛点剖析：内容出海不只是要写好，还要防止侵权与下架封号。
-◆ 风险象限：
-  1. 版权风险：二创视频、音乐、影视素材、人物肖像侵权。
-  2. 商标风险：国内注册无效，海外商标被恶意抢注，合规分类错误。
-  3. 平台规则风险：违反社区守则，赛事预测误导，引发红牌警告。
-◆ 应对机制：自动合规检测风险点、多平台动态规则库、安全分发与动态预警监控。
-
-【Slide 9: 当前阶段与卡点】
-◆ 现状：0 -> 1 验证阶段，已跑通小闭环。
-◆ 已完成：Demo已搭建、多个大类IP(国潮音乐/日语动漫/体育热点)案例通过迁移验证、多语种方法论沉淀。
-◆ 卡点：数据样本待扩充、平台机制需要更深度API整合、MCN及优质IP获取渠道需扩充。
-◆ 结论：下一步需要更多伙伴支持与资源注入，加速进入规模化阶段。
-
-【Slide 10: 我们的诉求与增长飞轮】
-◆ 价值输出：创作者增长10X+，内容效率20X+，爆款胜率提升5X+。
-◆ 诉求：寻求内容数据、MCN/创作者深度合作、海外平台对接、优质IP资源联名、法务/合规智囊支持。
-◆ 增长飞轮：IP 输入 -> 极低成本高提效生产 -> 推荐算法推流 -> 触达全球海量受众 -> 沉淀效果反馈修正模型。
-========================================================================`;
-    
-    try {
-      navigator.clipboard.writeText(fullTranscript.trim());
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (e) {
-      // Fallback
-    }
-  };
-
-  const activeSlide = slides[currentSlide];
-
   return (
-    <div className="w-full space-y-6" id="roadshow-pitch-container">
-      {/* PPT Control Header with quick outline copying */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900/90 to-slate-950 border border-cyan-500/10 flex flex-col lg:flex-row items-center justify-between gap-4 shadow-xl">
-        <div className="space-y-1 text-center lg:text-left">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#01416e]/20 border border-[#0d6db5]/30 text-xs font-mono font-bold text-cyan-400">
-            <Award className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
-            <span>{isZh ? 'CultureOS 商业路演 PPT' : 'CultureOS VC Pitch Deck'}</span>
+    <div className="space-y-6">
+      {/* Top Horizontal Slides Navigation Bar */}
+      <div className="bg-slate-950 border border-slate-900 p-4 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-lg select-none">
+        {/* Left Side: Deck Type switcher */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-[10px] font-mono font-black text-slate-500 tracking-wider block uppercase mr-1">{isZh ? '路演幻灯片集' : 'BP DECK'}:</span>
+          <div className="flex bg-slate-900/60 p-0.5 rounded-xl border border-slate-800/80">
+            <button
+              onClick={() => {
+                setDeckType('strategy');
+                setCurrentSlide(0);
+              }}
+              className={`py-1.5 px-3 rounded-lg text-xs font-bold transition cursor-pointer ${deckType === 'strategy' ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20 shadow-inner font-extrabold' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              {isZh ? '战略蓝图' : 'Strategic'}
+            </button>
+            <button
+              onClick={() => {
+                setDeckType('commercial');
+                setCurrentSlide(0);
+              }}
+              className={`py-1.5 px-3 rounded-lg text-xs font-bold transition cursor-pointer ${deckType === 'commercial' ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20 shadow-inner font-extrabold' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              {isZh ? '商业路演' : 'Pitch Deck'}
+            </button>
           </div>
-          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">
-            {isZh ? '全球IP内容增长操作系统路演报告' : 'Global IP Content Growth OS Venture Presentation'}
+        </div>
+
+        {/* Middle: Horizontal Scrollable Slides Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 md:pb-0 scrollbar-none flex-1 min-w-0">
+          {slides.map((s, idx) => {
+            const active = currentSlide === idx;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setCurrentSlide(idx)}
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer shrink-0 border flex flex-col items-center justify-center min-w-[85px] ${
+                  active 
+                    ? 'bg-cyan-555/15 border-cyan-500/30 text-cyan-200 shadow shadow-cyan-500/5 scale-[1.01] font-black' 
+                    : 'bg-slate-900/40 border-slate-900/60 text-slate-450 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+              >
+                <span className="text-[9px] font-mono opacity-50 uppercase tracking-wider">{s.tag}</span>
+                <span className="text-[10px] truncate max-w-[110px] mt-0.5">{s.title}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right Side: Keyboard support help / Total page counter */}
+        <div className="hidden lg:flex items-center gap-1.5 font-mono text-[10px] text-slate-500 flex-shrink-0">
+          <BookOpenCheck className="w-3.5 h-3.5 text-slate-500" />
+          <span>{isZh ? '键盘左右键切换' : 'Left/Right keys supported'}</span>
+        </div>
+      </div>
+
+      {/* Description & Export Header Banner */}
+      <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-950 to-[#0a1122] border border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden shadow-2xl">
+        <div className="space-y-1">
+          <h2 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+            <Award className="w-4 h-4 text-cyan-400" />
+            <span>{isZh ? 'CultureOS 全球IP内容增长演示 & BP路演大纲' : 'CultureOS Global IP Content Growth Demo & Pitch Deck'}</span>
           </h2>
-          <p className="text-xs text-slate-400 leading-relaxed max-w-3xl">
-            {isZh
-              ? '按照您的路演框架和 PPT 结构已完美内置。本演示融合了行业调研数据、核心痛点、情感流量公式、可迁移案例矩阵、五层系统架构与直观工作流动画模拟，支持演示和宣讲大纲导出。'
+          <p className="text-xs text-slate-450 max-w-3xl">
+            {isZh 
+              ? '您的路演框架和 PPT 结构已完美内置。本演示融合了行业调研数据、核心痛点、情感流量公式、可迁移案例矩阵、五层系统架构与直观工作流动画模拟，支持演示和宣讲大纲导出。'
               : 'Prepped with an interactive 10-slide roadmap tailored for VC presentations. Explore live simulators, layered structure viewers, and workflow animators.'}
           </p>
         </div>
@@ -296,48 +341,78 @@ export default function PresentationView({ lang }: PresentationViewProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
         {/* Left Interactive Slide Navigation List */}
-        <div className="lg:col-span-3 rounded-2xl bg-slate-950 border border-slate-900/80 p-4 flex flex-col justify-between max-h-[620px] overflow-y-auto space-y-4 shadow-inner">
-          <div className="space-y-4">
-            <h3 className="text-xs uppercase font-mono font-black text-slate-400 tracking-widest pb-2 border-b border-slate-900 flex items-center gap-2">
-              <BookOpenCheck className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{isZh ? '路演幻灯片导航' : 'Slides Directory'}</span>
-            </h3>
+        {!isSidebarCollapsed && (
+          <div className="lg:col-span-3 rounded-2xl bg-slate-950 border border-slate-900/80 p-4 flex flex-col justify-between max-h-[620px] overflow-y-auto space-y-4 shadow-inner transition-all duration-300">
+            <div className="space-y-4">
+              <h3 className="text-xs uppercase font-mono font-black text-slate-400 tracking-widest pb-2 border-b border-slate-900 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <BookOpenCheck className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>{isZh ? '路演幻灯片导航' : 'Slides Directory'}</span>
+                </div>
+                <button
+                  onClick={() => setIsSidebarCollapsed(true)}
+                  className="p-1 rounded hover:bg-slate-900 text-slate-500 hover:text-cyan-400 transition cursor-pointer"
+                  title={isZh ? '收起目录' : 'Collapse Directory'}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              </h3>
 
-            <div className="space-y-1.5 pl-1">
-              {slides.map((s, idx) => {
-                const active = currentSlide === idx;
-                return (
+              {/* Deck selection tab switcher */}
+              <div className="space-y-1.5 p-2 bg-slate-900/40 rounded-xl border border-slate-900/80">
+                <span className="text-[9px] font-mono font-black text-slate-500 tracking-wider block uppercase">{isZh ? '选择路演幻灯片合集' : 'CHOOSE OUTLINE DECK'}</span>
+                <div className="grid grid-cols-2 gap-1.5">
                   <button
-                    key={s.id}
-                    onClick={() => setCurrentSlide(idx)}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition duration-200 flex items-center justify-between cursor-pointer group ${
-                      active 
-                        ? 'bg-cyan-500/10 border border-cyan-500/20 text-cyan-200 font-extrabold shadow-md' 
-                        : 'hover:bg-slate-900/50 text-slate-400 hover:text-slate-200'
-                    }`}
+                    onClick={() => setDeckType('strategy')}
+                    className={`py-1.5 px-2 rounded-lg text-[10px] font-extrabold transition cursor-pointer text-center ${deckType === 'strategy' ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/30 font-black shadow-inner' : 'text-slate-400 hover:text-slate-200 bg-slate-950/20'}`}
                   >
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[9px] font-mono font-black tracking-wider opacity-40 group-hover:opacity-100 uppercase text-cyan-400">
-                        {s.tag}
-                      </span>
-                      <span className="truncate max-w-[170px] mt-0.5">{s.title}</span>
-                    </div>
-                    <ChevronRight className={`w-3.5 h-3.5 transition-transform ${active ? 'text-cyan-400 transform translate-x-0.5' : 'text-slate-700 opacity-0 group-hover:opacity-100'}`} />
+                    {isZh ? '战略蓝图 V1.0' : 'Strategic'}
                   </button>
-                );
-              })}
+                  <button
+                    onClick={() => setDeckType('commercial')}
+                    className={`py-1.5 px-2 rounded-lg text-[10px] font-extrabold transition cursor-pointer text-center ${deckType === 'commercial' ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/30 font-black shadow-inner' : 'text-slate-400 hover:text-slate-200 bg-slate-950/20'}`}
+                  >
+                    {isZh ? '商业路演版' : 'Pitch Deck'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 pl-1">
+                {slides.map((s, idx) => {
+                  const active = currentSlide === idx;
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => setCurrentSlide(idx)}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition duration-200 flex items-center justify-between cursor-pointer group ${
+                        active 
+                          ? 'bg-cyan-500/10 border border-cyan-500/20 text-cyan-200 font-extrabold shadow-md' 
+                          : 'hover:bg-slate-900/50 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-[9px] font-mono font-black tracking-wider opacity-40 group-hover:opacity-100 uppercase text-cyan-400">
+                          {s.tag}
+                        </span>
+                        <span className="truncate max-w-[170px] mt-0.5">{s.title}</span>
+                      </div>
+                      <ChevronRight className={`w-3.5 h-3.5 transition-transform ${active ? 'text-cyan-400 transform translate-x-0.5' : 'text-slate-700 opacity-0 group-hover:opacity-100'}`} />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-900 text-center">
+              <span className="text-[10px] font-mono text-slate-500 tracking-wider">
+                {isZh ? '💡 支持键盘 左右方向键 快捷切换' : '💡 Use Left/Right Arrow Keys'}
+              </span>
             </div>
           </div>
-
-          <div className="pt-4 border-t border-slate-900 text-center">
-            <span className="text-[10px] font-mono text-slate-500 tracking-wider">
-              {isZh ? '💡 支持键盘 左右方向键 快捷切换' : '💡 Use Left/Right Arrow Keys'}
-            </span>
-          </div>
-        </div>
+        )}
 
         {/* Right Active Slide Stage */}
-        <div className="lg:col-span-9 flex flex-col justify-between relative min-h-[580px] lg:min-h-[620px] bg-slate-950 rounded-2xl border border-slate-900/60 overflow-hidden shadow-2xl p-6 md:p-10 lg:p-12 select-none group">
+        <div className={`${isSidebarCollapsed ? 'lg:col-span-12' : 'lg:col-span-9'} flex flex-col justify-between relative min-h-[580px] lg:min-h-[620px] bg-slate-950 rounded-2xl border border-slate-900/60 overflow-hidden shadow-2xl p-6 md:p-10 lg:p-12 select-none group transition-all duration-300`}>
           {/* Subtle grid mesh background */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20 pointer-events-none" />
           
@@ -358,6 +433,16 @@ export default function PresentationView({ lang }: PresentationViewProps) {
               {/* Slide Meta Row */}
               <div className="flex items-center justify-between pb-4 border-b border-slate-900">
                 <div className="flex items-center gap-2">
+                  {isSidebarCollapsed && (
+                    <button
+                      onClick={() => setIsSidebarCollapsed(false)}
+                      className="p-1 rounded bg-cyan-500/10 border border-cyan-500/25 hover:bg-cyan-500/20 text-cyan-400 transition cursor-pointer flex items-center gap-1.5 mr-1 text-[10px] font-bold animate-fade-in"
+                      title={isZh ? '展开导航栏' : 'Expand Sidebar'}
+                    >
+                      <ChevronRight className="w-3.5 h-3.5 animate-pulse" />
+                      <span>{isZh ? '展开目录' : 'Expand Directory'}</span>
+                    </button>
+                  )}
                   <span className="px-2.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-mono tracking-widest text-cyan-400 uppercase font-black">
                     {activeSlide.tag}
                   </span>
@@ -373,6 +458,477 @@ export default function PresentationView({ lang }: PresentationViewProps) {
 
               {/* Main Template Core */}
               <div className="my-auto py-6">
+
+                {/* STRAT 1. STRATEGIC POSITIONING BLUEPRINT VIEW */}
+                {activeSlide.type === 'strat_blueprint' && (
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                        <span className="text-cyan-400">CultureOS</span> {activeSlide.title}
+                      </h2>
+                      <p className="text-sm text-cyan-300/80">{activeSlide.subtitle}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                      {/* Left: 前台 IP (阿琪是我) */}
+                      <motion.div 
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="p-6 rounded-2xl bg-gradient-to-b from-[#0b1329] to-[#040815] border border-cyan-500/20 shadow-lg relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full blur-2xl" />
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 font-bold border border-cyan-500/30">
+                            🎭
+                          </div>
+                          <div>
+                            <h3 className="font-extrabold text-white text-base">{isZh ? '前台：情感 IP (阿琪是我)' : 'Frontstage: Emotional IP'}</h3>
+                            <p className="text-[10px] text-cyan-400 font-mono">EMOTIONAL ANCHOR & SAMPLE ROOM</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 text-xs text-slate-300">
+                          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-900">
+                            <span className="font-black text-white block mb-1">🎯 {isZh ? '定位核心：华语青春记忆短视频' : 'Positioning Core: C-Pop Nostalgia'}</span>
+                            <span className="text-[11px] text-slate-400">{isZh ? '聚焦周杰伦等具有海内外高认知的青春图腾符号，激发全球二代华人与亚裔的深层情感共鸣。' : 'Leveraging high-recognition nostalgia composed of pop icons to awaken cultural roots.'}</span>
+                          </div>
+                          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-900">
+                            <span className="font-black text-white block mb-1">📢 {isZh ? '口号定位：“好听的歌，值得再听一遍”' : 'Vibe Slogan'}</span>
+                            <span className="text-[11px] text-slate-400">{isZh ? '用极致唯美的治愈嗓音和定制影像，将传统怀旧内容包装成具有现代审美的高美学自愈卡片。' : 'Re-packaging nostalgic memories with pristine vocals and responsive visuals.'}</span>
+                          </div>
+                          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-900">
+                            <span className="font-black text-white block mb-1">⚡ {isZh ? '核心价值：流量极强冷启动样板间' : 'Value: cold launch sample'}</span>
+                            <span className="text-[11px] text-slate-400">{isZh ? '自己先跑通 0 到 1 拿到爆款结果，建立创作者和 IP 所有者的深度信任。' : 'First proving the 0-to-1 loop ourselves to build supreme trust.'}</span>
+                          </div>
+                        </div>
+                      </motion.div>
+
+                      {/* Right: 后台 产品 (CultureOS) */}
+                      <motion.div 
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="p-6 rounded-2xl bg-gradient-to-b from-[#110c26] to-[#05030f] border border-purple-500/20 shadow-lg relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl" />
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 font-bold border border-purple-500/30">
+                            ⚙️
+                          </div>
+                          <div>
+                            <h3 className="font-extrabold text-white text-base">{isZh ? '后台：智能内容系统 (CultureOS)' : 'Backstage: AI Growth System'}</h3>
+                            <p className="text-[10px] text-purple-400 font-mono">SCALABLE MULTI-AGENT ARCHITECTURE</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 text-xs text-slate-300">
+                          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-900">
+                            <span className="font-black text-white block mb-1">🔍 {isZh ? '热点信号雷达与选题库' : 'Signal Radar & Topic Discovery'}</span>
+                            <span className="text-[11px] text-slate-400">{isZh ? '自动分钟级监控多大区流量，提取爆款曲目、卡点与高情绪价值评论。' : 'Monitoring regional algorithms to isolate viral melodies, visual templates, and keywords.'}</span>
+                          </div>
+                          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-900">
+                            <span className="font-black text-white block mb-1">🗺️ {isZh ? 'Hofstede 文化度量对位' : 'Hofstede Cultural Matching'}</span>
+                            <span className="text-[11px] text-slate-400">{isZh ? '拒绝冷冰冰的直译，将传统符号重置并转译为当地受众能接受的情感图腾。' : 'Translating raw cultural icons into localized emotional totems.'}</span>
+                          </div>
+                          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-900">
+                            <span className="font-black text-white block mb-1">🔒 {isZh ? '世界级合规体系与数据回吞' : 'Compliance & Vector Feedback'}</span>
+                            <span className="text-[11px] text-slate-400">{isZh ? '秒级扫描版权、商标与平台社区红线，把反馈数据安全回吞进化规则。' : 'Scanning copyrights and trademark boundaries to feed back into RAG evolution.'}</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-cyan-950/10 border border-cyan-500/10 text-center text-xs font-bold text-cyan-300 flex items-center justify-center gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+                      <span>{isZh ? '战略精髓：前台 IP 形成信任屏障与爆款样板，后台 OS 提供可变现、可复用的个人 IP 增长工具' : 'Core Strategy: Frontstage IP builds raw trust, Backstage OS provides monetization/scale tools'}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* STRAT 2. CREATOR PROFIT MODEL MAP VIEW */}
+                {activeSlide.type === 'strat_monetization' && (
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                        <Layers className="w-5 h-5 text-amber-400" />
+                        <span>{activeSlide.title}</span>
+                      </h2>
+                      <p className="text-sm text-amber-300/80">{activeSlide.subtitle}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 pt-2">
+                      {[
+                        {
+                          num: '01',
+                          title: isZh ? '工具产品型' : 'SaaS / Tools',
+                          desc: isZh ? 'CultureOS 生成及转译特定主题内容组件，收取定制 CulturePack 订阅年费。' : 'Providing custom theme components with subscription recurring revenue.',
+                          val: '$199 - $1200 / yr',
+                          color: 'border-cyan-500/20 text-cyan-400'
+                        },
+                        {
+                          num: '02',
+                          title: isZh ? '知识资产型' : 'IP Assets / Info',
+                          desc: isZh ? '向量数据库高维星图与出海路径库授权；社群入场门票与高端实战培训。' : 'Licensing vector databases, star charts, and premium mastermind masterclasses.',
+                          val: isZh ? '星图授权与方法论付费' : 'Star Chart licensing',
+                          color: 'border-amber-500/20 text-amber-400'
+                        },
+                        {
+                          num: '03',
+                          title: isZh ? '广告流量型' : 'Ad Share / traffic',
+                          desc: isZh ? 'YouTube Shorts、TikTok 创作者联盟广告分成；海量二创粉丝带来的高额播放分成。' : 'Unlocking YouTube & TikTok creator fund splits via high-engagement video replication.',
+                          val: isZh ? 'YouTube/TikTok 广告分成' : 'Creator Fund Share',
+                          color: 'border-emerald-500/20 text-emerald-400'
+                        },
+                        {
+                          num: '04',
+                          title: isZh ? '资讯聚合型' : 'Newsletter / Premium',
+                          desc: isZh ? '海外文化出海、地缘偏好及爆款选题动态情报周报，提供高附加值订阅。' : 'Curating elite trend intelligence reports and localized theme analysis.',
+                          val: isZh ? '高净值情报按月订阅' : 'Weekly premium briefs',
+                          color: 'border-purple-500/20 text-purple-400'
+                        },
+                        {
+                          num: '05',
+                          title: isZh ? '品牌商用型' : 'Brand Customization',
+                          desc: isZh ? '帮助国内出海品牌定制海外本土大区定位，通过阿琪等联合 IP 实施精准引流。' : 'Providing bespoke localization branding consultancy and multi-channel campaign runs.',
+                          val: isZh ? '高客单定制咨询与联合分发' : 'Custom high-ticket consulting',
+                          color: 'border-rose-500/20 text-rose-400'
+                        }
+                      ].map((item, idx) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, y: 15 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.08 }}
+                          className={`p-4.5 rounded-2xl bg-[#080d1a]/80 border ${item.color} flex flex-col justify-between h-full space-y-3 hover:scale-[1.02] transition duration-200`}
+                        >
+                          <div>
+                            <span className="text-[10px] font-mono font-bold tracking-wider block opacity-50">{item.num}</span>
+                            <h3 className="text-sm font-extrabold text-white mt-1">{item.title}</h3>
+                            <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">{item.desc}</p>
+                          </div>
+                          <div className="pt-2 border-t border-slate-900/80">
+                            <span className="text-[10px] font-mono font-bold text-slate-300">{item.val}</span>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-center text-xs text-slate-400">
+                      {isZh 
+                        ? '💡 多层收益保障：从最底层的内容广告分成，往上延伸到工具产品与品牌高客单定制，确保个人 IP 不依赖单一变现手段。'
+                        : '💡 Five core layers ensure that personal creator IPs do not suffer from single-source monetization vulnerabilities.'}
+                    </div>
+                  </div>
+                )}
+
+                {/* STRAT 3. BOTTOM SIGNAL SYSTEM MAP VIEW */}
+                {activeSlide.type === 'strat_signal' && (
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                        <Network className="w-5 h-5 text-purple-400" />
+                        <span>{activeSlide.title}</span>
+                      </h2>
+                      <p className="text-sm text-purple-300/80">{activeSlide.subtitle}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                      {/* Left: Five levels concentric stack visualizer */}
+                      <div className="lg:col-span-5 p-5 rounded-2xl bg-[#090b14] border border-purple-500/10 flex flex-col justify-between space-y-3">
+                        <span className="text-[10px] font-mono text-purple-400 font-extrabold block tracking-widest">{isZh ? '五层确定性信号系统架构' : '5-TIER DEEP RADAR SIGNAL SYSTEM'}</span>
+                        
+                        <div className="space-y-2">
+                          {[
+                            { lvl: '1', name: isZh ? '合规级信号 (Compliance Guard)' : 'Compliance Radar', desc: isZh ? '安全防封。秒级扫描版权、敏感词与大区法律' : 'Scanning copyrights, guidelines & restrictions' },
+                            { lvl: '2', name: isZh ? '文化级信号 (Hofstede Match)' : 'Hofstede Alignment', desc: isZh ? '文化重置。不解风情的机翻转为情感图腾' : 'Resonating with Hofstede dimension matching' },
+                            { lvl: '3', name: isZh ? '平台级信号 (Algorithm Trigger)' : 'Platform Algorithm', desc: isZh ? '热点捕获。卡点、鼓点、高完播词、曲风分析' : 'Capturing viral keys, audio ticks & video rhythm' },
+                            { lvl: '4', name: isZh ? '商业级信号 (Conversion Engine)' : 'Conversion Drivers', desc: isZh ? '爆款转化。低成本引流至特定变现工具及服务' : 'Funnels that scale attention to premium SaaS' },
+                            { lvl: '5', name: isZh ? '基因级信号 (Personal Fit)' : 'Genetic Signature', desc: isZh ? '特质匹配。将独特声音或审美锚定到红利赛道' : 'Anchoring creator unique traits to vertical niches' },
+                          ].reverse().map((sig, idx) => (
+                            <motion.div
+                              key={idx}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: idx * 0.08 }}
+                              className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-900 flex items-center gap-3 hover:border-purple-500/20 transition cursor-pointer"
+                            >
+                              <div className="w-6 h-6 rounded bg-purple-500/10 border border-purple-500/20 flex items-center justify-center font-mono text-[11px] font-bold text-purple-300">
+                                L{sig.lvl}
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="text-[11px] font-black text-slate-100 leading-tight">{sig.name}</h4>
+                                <p className="text-[9px] text-slate-400 mt-0.5 truncate">{sig.desc}</p>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Right: Key description details */}
+                      <div className="lg:col-span-7 p-6 rounded-2xl bg-gradient-to-br from-[#0c1020] to-slate-950 border border-slate-900 flex flex-col justify-between space-y-4">
+                        <div className="space-y-3">
+                          <h3 className="text-xs uppercase font-mono text-cyan-400 tracking-wider font-extrabold">{isZh ? '信号系统如何帮助创作者解决增长？' : 'HOW WE TRANSLATE RAW ATTENTION TO REVENUE'}</h3>
+                          <div className="space-y-2 text-xs text-slate-300 leading-relaxed">
+                            <p>
+                              {isZh 
+                                ? '传统的出海自媒体，依靠“碰运气”来做内容。CultureOS 将这种运气用这【五层底层确定性信号】进行彻底解构。'
+                                : 'Classic creators rely heavily on random luck. CultureOS replaces luck with systematic, data-rich filters.'}
+                            </p>
+                            <div className="grid grid-cols-2 gap-3 pt-2">
+                              <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                                <span className="font-bold text-white text-[11px] block mb-1">🛡️ {isZh ? '一票否决权：合规与安全' : 'Universal Red Lines'}</span>
+                                <span className="text-[10px] text-slate-400 leading-normal">{isZh ? '如果内容违反版权或者违反了大区平台政策，再好的选题也是零。L1-L2 信号提供核心防封红线防护。' : 'Copyright and localized bans kill channels. L1 & L2 filters ensure absolute compliance first.'}</span>
+                              </div>
+                              <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                                <span className="font-bold text-white text-[11px] block mb-1">🔥 {isZh ? '增长加速器：文化与特质对位' : 'The Multiplier'}</span>
+                                <span className="text-[10px] text-slate-400 leading-normal">{isZh ? 'L3-L5 信号将周杰伦等华语记忆转化成无语言阻碍的音画图腾，配合个人独特的声音特质，激发指数级二次传播。' : 'Reframing Nostalgia triggers viral loops without linguistic friction.'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-purple-950/20 border border-purple-500/20 text-[10px] text-purple-300 font-mono">
+                          {isZh 
+                            ? '💡 结论：底层信号系统 = CultureOS 向量数据库星图的核心算法，帮助定位和分发提供精细化养分。'
+                            : '💡 Bottom Signal Matrix = The direct algorithmic compass fueling CultureOS vector retrievals.'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* STRAT 4. ECOSYSTEM PLAYER MAP VIEW */}
+                {activeSlide.type === 'strat_players' && (
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                        <Users className="w-5 h-5 text-cyan-400" />
+                        <span>{activeSlide.title}</span>
+                      </h2>
+                      <p className="text-sm text-cyan-300/80">{activeSlide.subtitle}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 pt-2">
+                      {[
+                        {
+                          role: isZh ? '上游 IP 供给方' : 'Upstream IP Owners',
+                          desc: isZh ? '版权音乐人、经典配音、动漫IP版权方等。' : 'Musicians, classic dubs, anime copyright entities.',
+                          coreValue: isZh ? '提供二次激活素材，寻求跨国二次开发与广告分成。' : 'Provides high-value source materials for reactivation.',
+                          icon: '🎵',
+                          tag: 'IP SUPPLY'
+                        },
+                        {
+                          role: isZh ? 'CultureOS 核心中枢' : 'CultureOS Platform',
+                          desc: isZh ? '作为战略核心，提供多智能体 AI 转译、合规度量与星图引擎。' : 'Multi-agent orchestration, RAG database rules and legal checks.',
+                          coreValue: isZh ? '提供自动化工具与特定大区 ContentPack 包，抽取订阅和分成。' : 'Packages bespoke blueprints, taking subscription fees.',
+                          icon: '🪐',
+                          tag: 'CORE ENGINE'
+                        },
+                        {
+                          role: isZh ? 'AI 联盟创作者' : 'Alliance Micro-Creators',
+                          desc: isZh ? '广大使用 CulturePack 快速量产视频、铺排矩阵的中小博主。' : 'Affiliate and organic video creators spreading messages.',
+                          coreValue: isZh ? '一键下载特定主题，快速发布获得播放量、广告联盟与佣金。' : 'Rapid template usage to tap into YouTube and TikTok funds.',
+                          icon: '👥',
+                          tag: 'DISTRIBUTORS'
+                        },
+                        {
+                          role: isZh ? 'To C 情感用户' : 'DTC Emotional Fans',
+                          desc: isZh ? '海外华人二代、亚裔及喜爱复古音画的高情绪价值受众。' : 'Nostalgia-loving overseas diaspora and world fans.',
+                          coreValue: isZh ? '在日常消费视频时获得强烈精神慰藉，转化到高净值社区订阅。' : 'Consumes healing videos, converting to high-value patrons.',
+                          icon: '💖',
+                          tag: 'DTC CONSUMERS'
+                        },
+                        {
+                          role: isZh ? 'To B 出海品牌' : 'To B Global Brands',
+                          desc: isZh ? '需要出海、急需建立当地文化认知的中国新锐实体与科技品牌。' : 'Chinese brands going global who need safe cultural reach.',
+                          coreValue: isZh ? '委托 CultureOS 定制海外大区文化定位与 IP 联合分发。' : 'Bespoke corporate consulting, targeting massive local ROIs.',
+                          icon: '🏢',
+                          tag: 'B2B CLIENTS'
+                        },
+                      ].map((p, idx) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: idx * 0.08 }}
+                          className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-col justify-between h-full space-y-3.5 hover:border-cyan-500/30 transition"
+                        >
+                          <div className="space-y-2">
+                            <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 tracking-wider">
+                              {p.tag}
+                            </span>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xl">{p.icon}</span>
+                              <h3 className="text-xs font-bold text-white">{p.role}</h3>
+                            </div>
+                            <p className="text-[10px] text-slate-400 leading-normal">{p.desc}</p>
+                          </div>
+                          <div className="pt-2 border-t border-slate-850 text-[10px] text-slate-300">
+                            <span className="font-bold text-slate-200 block mb-0.5">{isZh ? '利益交换点：' : 'Core Exchange:'}</span>
+                            {p.coreValue}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-cyan-950/20 border border-cyan-500/10 text-center text-xs text-cyan-300">
+                      {isZh 
+                        ? '💡 合作生态网路：CultureOS 不仅是一个工具，更是串联版权方、独立博主、大区品牌与终端粉丝的超级协同路由器。'
+                        : '💡 Platform Synergy: CultureOS acts as a router linking IP rights holders, organic creators, global brands, and fans.'}
+                    </div>
+                  </div>
+                )}
+
+                {/* STRAT 5. STRATEGY METHOD MAP VIEW */}
+                {activeSlide.type === 'strat_strategy' && (
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                        <Compass className="w-5 h-5 text-cyan-400" />
+                        <span>{activeSlide.title}</span>
+                      </h2>
+                      <p className="text-sm text-cyan-300/80">{activeSlide.subtitle}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                      {[
+                        {
+                          phase: 'PHASE 1',
+                          title: isZh ? '样板示范（阿琪是我冷启动）' : 'Phase 1: Proof of Concept',
+                          details: [
+                            isZh ? '跑通 0 到 1：用周杰伦等青春情感音画视频自测大区。' : 'Isolate high-impact, easy-compliance C-pop nostalgic tracks.',
+                            isZh ? '验证底层信号：调整卡点、音质、画面，完成大区冷启动。' : 'Refine audio-visual synchronicity to unlock massive regional seed loops.',
+                            isZh ? '完成种子积累：不打硬广，以极致的情感治愈快速积攒数十万精准粉丝。' : 'Accumulate organic seed users strictly via aesthetic, zero-ad coziness.'
+                          ],
+                          status: isZh ? '进行中 & 效果极佳' : 'Active & Validated',
+                          color: 'border-cyan-500/30 bg-cyan-950/5'
+                        },
+                        {
+                          phase: 'PHASE 2',
+                          title: isZh ? '两翼齐飞（组件产品化与变现）' : 'Phase 2: SaaS Componentization',
+                          details: [
+                            isZh ? '左翼 AI 系统化：把选题、视频渲染、版权合规扫描沉淀为 SaaS 模板。' : 'Left Wing: Package trend prediction, auto-rendering and legal sweeps.',
+                            isZh ? '右翼产品化输出：发布特定赛道「CulturePack」内容组件订阅。' : 'Right Wing: Roll out modular ContentPack subscriptions for creators.',
+                            isZh ? '打通五大变现：授权向量数据库高维星图，收取联盟创作者订阅。' : 'Formally initiate Database Star Chart licenses and course Masterminds.'
+                          ],
+                          status: isZh ? '启动产品化中' : 'Initiating SaaS Productization',
+                          color: 'border-amber-500/20 bg-amber-950/5'
+                        },
+                        {
+                          phase: 'PHASE 3',
+                          title: isZh ? '生态协同（全域联盟协作网路）' : 'Phase 3: Creator Alliance network',
+                          details: [
+                            isZh ? '构建创作者联盟：联合全球数千名中小 MCN 与博主。' : 'Scale and empower thousands of micro-creators using our ContentPacks.',
+                            isZh ? '海量版权二次激活：上游引入更多传统华语、日漫版权持有方，实现三方分成。' : 'Divert copyright revenue directly back to classic rights holders.',
+                            isZh ? 'To B 品牌联名投放：承接国内出海大品牌定位咨询，以联盟博主作为触角分发。' : 'Unleash high-ticket To B campaign distribution across the alliance matrix.'
+                          ],
+                          status: isZh ? '未来远景' : 'Long-term Horizon',
+                          color: 'border-purple-500/20 bg-purple-950/5'
+                        },
+                      ].map((p, idx) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.1 }}
+                          className={`p-5 rounded-2xl border ${p.color} flex flex-col justify-between h-full space-y-4`}
+                        >
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono text-xs font-black text-slate-400">{p.phase}</span>
+                              <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-cyan-400">{p.status}</span>
+                            </div>
+                            <h3 className="text-sm font-extrabold text-white">{p.title}</h3>
+                            <ul className="space-y-2 pl-4 list-disc text-xs text-slate-300">
+                              {p.details.map((det, i) => <li key={i}>{det}</li>)}
+                            </ul>
+                          </div>
+
+                          <div className="text-[10px] font-mono text-slate-400">
+                            {idx === 0 && (isZh ? '一体两翼：“一体”指阿琪样板，“两翼”指 AI 系统量产与出海定位 SaaS 产品。' : '一体两翼: Frontstage IP body with Left AI & Right SaaS wings.')}
+                            {idx === 1 && (isZh ? '核心节点：此阶段完成将知识和数据库进行产品化转让变现。' : 'Core pivot: Converting internal data systems to public subscriptions.')}
+                            {idx === 2 && (isZh ? '网络效应：创作者越多，版权库利用率和分发网路抗封能力越强。' : 'Network effect: Scale compounds as legal security increases.')}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* STRAT 6. RESOURCE ASSETIZATION & DIAGNOSIS VIEW */}
+                {activeSlide.type === 'strat_assets' && (
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                        <Award className="w-5 h-5 text-amber-400 animate-pulse" />
+                        <span>{activeSlide.title}</span>
+                      </h2>
+                      <p className="text-sm text-slate-300/80">{activeSlide.subtitle}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
+                      {/* Left: Four Core Asset Systems */}
+                      <div className="p-5 rounded-2xl bg-[#080c18] border border-cyan-500/15 space-y-4">
+                        <h3 className="text-xs uppercase font-mono text-cyan-400 tracking-wider font-extrabold block border-b border-slate-900 pb-2">
+                          {isZh ? '🛠️ 四大资源资产化核心变现机制' : 'FOUR RESOURCE ASSETIZATION ENGINES'}
+                        </h3>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-900 space-y-1.5">
+                            <span className="text-xs font-black text-white block">01 {isZh ? '能力资产化' : 'Skills to SaaS'}</span>
+                            <span className="text-[10px] text-slate-400 leading-normal">{isZh ? '将独特的音乐二创、唯美嗓音和画面审美，封装为自动化选题、音效调校、视频渲染模版。' : 'Converting design choices and vocal parameters into system presets.'}</span>
+                          </div>
+                          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-900 space-y-1.5">
+                            <span className="text-xs font-black text-white block">02 {isZh ? '案例资产化' : 'Case Study RAG'}</span>
+                            <span className="text-[10px] text-slate-400 leading-normal">{isZh ? '把每一次爆款视频、成功的海外大区冷启动策略沉淀并反哺回向量数据库，使 RAG 越用越聪明。' : 'Re-feeding custom hits directly back to the database.'}</span>
+                          </div>
+                          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-900 space-y-1.5">
+                            <span className="text-xs font-black text-white block">03 {isZh ? '关系资产化' : 'Syndicate Network'}</span>
+                            <span className="text-[10px] text-slate-400 leading-normal">{isZh ? '上游签下华语/日漫经典歌曲版权持有者，下游构建成千上万的中小创作者分发同盟，三方获利。' : 'Securing upstream catalogs and linking downstream creators.'}</span>
+                          </div>
+                          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-900 space-y-1.5">
+                            <span className="text-xs font-black text-white block">04 {isZh ? '数据资产化' : 'Data Dataset'}</span>
+                            <span className="text-[10px] text-slate-400 leading-normal">{isZh ? '独家沉淀不同大区（北美、拉美）对华人国潮音乐/动漫的情感共鸣曲线、算法阀值，打造稀缺壁垒。' : 'Creating high-barrier datasets tracking emotional triggers across regions.'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Core Strategic Diagnosis */}
+                      <div className="p-5 rounded-2xl bg-[#11081a] border border-purple-500/15 flex flex-col justify-between space-y-4">
+                        <div className="space-y-3">
+                          <h3 className="text-xs uppercase font-mono text-purple-400 tracking-wider font-extrabold block border-b border-slate-900 pb-2">
+                            {isZh ? '🔬 CultureOS 赛道全景战略诊断结论' : 'CORE STRATEGIC DIAGNOSIS REPORT'}
+                          </h3>
+
+                          <div className="space-y-3 text-xs text-slate-300">
+                            <div className="flex items-start gap-2.5">
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold mt-0.5">PROS</span>
+                              <div>
+                                <h4 className="font-bold text-slate-200">{isZh ? '华语青春记忆海外的情绪蓝海红利' : 'Blue Ocean Value in C-Pop Nostalgia'}</h4>
+                                <p className="text-[11px] text-slate-400 mt-0.5">{isZh ? '海外亚裔及华人二代存在极强的情感空窗期。周杰伦等青春音乐自带强劲共鸣，以唯美、温暖、纯粹的高治愈音画包装，极其容易在不带商业痕迹下撬动推荐推流，冷启动成本极低。' : 'Massive demand for emotional healing loops. Highly resonant and extremely low cold launch costs.'}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-start gap-2.5">
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 font-mono font-bold mt-0.5">RISK</span>
+                              <div>
+                                <h4 className="font-bold text-slate-200">{isZh ? '预防地缘/法律红牌与前后台合理区隔' : 'Global compliance protection'}</h4>
+                                <p className="text-[11px] text-slate-400 mt-0.5">{isZh ? '必须借助 CultureOS 的合规信号扫描(L1-L2)严控海外版权和商标注册被抢注风险。同时，阿琪是我 IP 必须要和 CultureOS 后台技术服务合理隐蔽，保证 IP 的人本纯粹性，不冲淡情感黏性。' : 'Must employ L1-L2 filters to sweep copyrights. Keep frontstage IP and backend platform decoupled to preserve genuine organic appeal.'}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-[#140b22] border border-purple-500/20 text-center text-xs text-purple-300 font-bold">
+                          {isZh 
+                            ? '🎯 诊断结论：极其成立！“阿琪是我”主攻前台，CultureOS 主攻后台，形成牢固的出海内容增长闭环。'
+                            : '🎯 Verdict: Highly Viable! Coupling Frontstage IP and Backstage OS creates an unbreakable business loop.'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* 1. COVER PAGE VIEW */}
                 {activeSlide.type === 'cover' && (

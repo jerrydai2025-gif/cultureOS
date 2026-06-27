@@ -1,0 +1,6 @@
+id,category_zh,category_en,rule_code,description_zh,description_en,severity,active
+risk_copyright,版权风险,Copyright Compliance,DMCA-1998,严厉拦截并熔断一切未经出海商用买断授权、有潜在被诉风险的自媒体背景音频。,Detects and blocks background audio that is not fully cleared or licensed for global commercial use.,high,true
+risk_medical,医疗及功效宣称,Medical / Therapeutic Claims,FTC-16-CFR-255,严厉拦截护肤/香薰中出现“抗抑郁、根治失眠、抗焦虑”等医疗诊疗性质的越界功效暗示词。,Blocks therapeutic claims like "anti-anxiety" or "curing insomnia" to prevent regulatory FTC fines.,high,true
+risk_religion,宗教与文化误读,Religious sensitivity,REL-CATHOLIC-01,规避将任何暖金光环做成类似于天主教圣人画像的环形后置光，以防止保守地区消费者反感。,Avoids using perfect glowing halos directly behind figures to prevent religious saint caricature concerns.,medium,true
+risk_gambling,盲盒博彩红线,Gambling Risk,GMB-BOX-02,严格清理任何带投机、抽签暴富、极低中签率的博彩式诱导词，包装必须偏重设计师艺术价值。,Purges speculative gambling terms in blind boxes. Marketing must highlight original designer artistic value.,high,true
+risk_privacy,数据隐私合规,Privacy GDPR,GDPR-EU-2016,欧洲地区严厉拦截在未获得用户授权同意的前提下，提取、发布带有肖像和具体地理定位的信息。,Restricts capturing or publishing personal portraits and GPS coordinates without explicit consent in Europe.,high,true

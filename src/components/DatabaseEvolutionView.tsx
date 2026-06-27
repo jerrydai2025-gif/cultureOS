@@ -3,10 +3,25 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Database, Sparkles, RefreshCw, Layers, History, Check, AlertTriangle, 
   ArrowRight, Tag, HelpCircle, Flame, Plus, Play, ChevronRight, CheckCircle2, FileText,
-  Edit, Save, X, Trash2
+  Edit, Save, X, Trash2, Orbit, Compass
 } from 'lucide-react';
 import { RagEntry, RagFeedback, EvolutionTrace } from '../types';
 import { INITIAL_RAG_ENTRIES } from '../data/rag_presets';
+import StrategicStarChart from './StrategicStarChart';
+import {
+  CATEGORIES_PRESETS,
+  TARGET_MARKETS_PRESETS,
+  AUDIENCES_PRESETS,
+  CULTURE_NARRATIVES_PRESETS,
+  PLATFORMS_PRESETS,
+  RISK_RULES_PRESETS,
+  CONTENT_TEMPLATES_PRESETS,
+  KPI_PRESETS,
+  CATEGORY_NARRATIVE_MAPS,
+  CATEGORY_PLATFORM_MAPS,
+  MARKET_PLATFORM_MAPS,
+  CASES_PRESETS
+} from '../data/csv_presets';
 
 const GLOBAL_BRAND_CASES = [
   {
@@ -87,16 +102,33 @@ const GLOBAL_BRAND_CASES = [
   }
 ];
 
+const CSV_DATABASES = [
+  { id: 'categories', nameZh: '产品品类行业 categories.csv', nameEn: 'categories.csv', data: CATEGORIES_PRESETS, description: '产品行业分类预设，包含品类代号、中英文标识与核心场景定位描述。' },
+  { id: 'target_markets', nameZh: '目标国家大区 target_markets.csv', nameEn: 'target_markets.csv', data: TARGET_MARKETS_PRESETS, description: '全球主要地区大区霍夫斯泰德(Hofstede)文化维度、心理防线与合规审查红线库。' },
+  { id: 'audiences', nameZh: '核心受众用户 audiences.csv', nameEn: 'audiences.csv', data: AUDIENCES_PRESETS, description: '出海营销的核心用户人群模型，包含年轻偏好与感官正念倾向。' },
+  { id: 'culture_narratives', nameZh: '文化自愈叙事 culture_narratives.csv', nameEn: 'culture_narratives.csv', data: CULTURE_NARRATIVES_PRESETS, description: '预置情感主线库，提取手作ASMR微距、非遗情谊与民俗符号等美学。' },
+  { id: 'platforms', nameZh: '投放媒体平台 platforms.csv', nameEn: 'platforms.csv', data: PLATFORMS_PRESETS, description: '主流渠道规范，包括TikTok、Reels、YouTube Shorts的视频时长和声学授权边界。' },
+  { id: 'risk_rules', nameZh: '合规法律安全 risk_rules.csv', nameEn: 'risk_rules.csv', data: RISK_RULES_PRESETS, description: '跨境出海雷区拦截熔断表，包含FDA药用主张红线、GDPR数据和盲盒博彩监管。' },
+  { id: 'content_templates', nameZh: '交付成果模板 content_templates.csv', nameEn: 'content_templates.csv', data: CONTENT_TEMPLATES_PRESETS, description: '多语言卡点脚本、标题矩阵分裂和Midjourney高清特写摄影提示词模板。' },
+  { id: 'case_presets', nameZh: '示例场景案例 case_presets.csv', nameEn: 'case_presets.csv', data: CASES_PRESETS, description: '针对性出海优秀案例（阿琪是我 / 一鹿繁花）的详细元配置预案。' },
+  { id: 'kpi_presets', nameZh: '效果考核指标 kpi_presets.csv', nameEn: 'kpi_presets.csv', data: KPI_PRESETS, description: '各维度的千次曝光CPM成本、加购率及法律诉讼驳回目标。' },
+  { id: 'category_narrative_map', nameZh: '行业-叙事推荐推荐矩阵 category_narrative_map.csv', nameEn: 'category_narrative_map.csv', data: CATEGORY_NARRATIVE_MAPS, description: '行业品类代码到最兼容文化故事体系的情绪匹配分值图。' },
+  { id: 'category_platform_map', nameZh: '行业-社交平台推荐 category_platform_map.csv', nameEn: 'category_platform_map.csv', data: CATEGORY_PLATFORM_MAPS, description: '行业品类至核心发布社媒大区受众契合度冷启动分值图。' },
+  { id: 'market_platform_map', nameZh: '大区-平台投放关联 market_platform_map.csv', nameEn: 'market_platform_map.csv', data: MARKET_PLATFORM_MAPS, description: '大区文化消费粘性与社媒选择的相关矩阵。' }
+];
+
 interface DatabaseEvolutionViewProps {
   lang: 'zh' | 'en';
   currentUser?: any;
   onConsumeQuota?: (actionName: string) => boolean;
+  onFeedbackSimulated?: () => void;
 }
 
 export default function DatabaseEvolutionView({
   lang,
   currentUser,
-  onConsumeQuota
+  onConsumeQuota,
+  onFeedbackSimulated
 }: DatabaseEvolutionViewProps) {
   const isZh = lang === 'zh';
 
@@ -113,7 +145,9 @@ export default function DatabaseEvolutionView({
     return INITIAL_RAG_ENTRIES;
   });
   const [selectedEntryId, setSelectedEntryId] = useState<string>('rag-001');
-  const [subTab, setSubTab] = useState<'evolution' | 'cases'>('evolution');
+  const [subTab, setSubTab] = useState<'starchart' | 'evolution' | 'cases' | 'csv-database'>('starchart');
+  const [selectedCsvDbId, setSelectedCsvDbId] = useState<string>('categories');
+  const [csvSearchTerm, setCsvSearchTerm] = useState<string>('');
 
   // Startup brand customizer states
   const [startupCategory, setStartupCategory] = useState<string>('pet_tech');
@@ -136,6 +170,17 @@ export default function DatabaseEvolutionView({
   const [mutatedEntryData, setMutatedEntryData] = useState<any | null>(null);
   const [showDiff, setShowDiff] = useState(false);
   const [evolutionSuccess, setEvolutionSuccess] = useState(false);
+
+  // Non-blocking in-app custom notification and confirmation overlay states
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const showNotification = (msg: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
+    setToast({ message: msg, type });
+    setTimeout(() => {
+      setToast(prev => prev?.message === msg ? null : prev);
+    }, 4500);
+  };
 
   // Direct editing states
   const [isEditingActive, setIsEditingActive] = useState(false);
@@ -170,16 +215,20 @@ export default function DatabaseEvolutionView({
   const handleDeleteCustomCard = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (id === 'rag-001' || id === 'rag-002' || id === 'rag-003') {
-      alert(isZh ? '系统置顶示例卡片不能删除。请仅删除自定义创建的卡片。' : 'Built-in template cards cannot be deleted.');
+      showNotification(isZh ? '系统置顶示例卡片不能删除。请仅删除自定义创建的卡片。' : 'Built-in template cards cannot be deleted.', 'error');
       return;
     }
-    if (!confirm(isZh ? '确认要永久删除这个自定义基因规章卡吗？' : 'Are you sure you want to delete this custom card?')) {
-      return;
-    }
-    const updated = entries.filter(item => item.id !== id);
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDeleteCustomCard = () => {
+    if (!deleteConfirmId) return;
+    const updated = entries.filter(item => item.id !== deleteConfirmId);
     setEntries(updated);
     localStorage.setItem('cultureos_rag_entries', JSON.stringify(updated));
     setSelectedEntryId('rag-001');
+    setDeleteConfirmId(null);
+    showNotification(isZh ? '🎉 自定义基因规章卡删除成功！' : '🎉 Custom card deleted successfully!', 'success');
   };
 
   const activeEntry = entries.find(e => e.id === selectedEntryId) || entries[0];
@@ -217,7 +266,7 @@ export default function DatabaseEvolutionView({
 
   const handleSaveEdit = () => {
     if (!editName.trim()) {
-      alert(isZh ? '请输入 RAG 规章名称' : 'Please input a name.');
+      showNotification(isZh ? '请输入 RAG 规章名称' : 'Please input a name.', 'error');
       return;
     }
 
@@ -263,7 +312,7 @@ export default function DatabaseEvolutionView({
 
   const handleCreateNew = () => {
     if (!newName.trim()) {
-      alert(isZh ? '请输入 RAG 规章名称' : 'Please input a name.');
+      showNotification(isZh ? '请输入 RAG 规章名称' : 'Please input a name.', 'error');
       return;
     }
 
@@ -483,13 +532,16 @@ export default function DatabaseEvolutionView({
     setEntries(updatedList);
     localStorage.setItem('cultureos_rag_entries', JSON.stringify(updatedList));
 
+    // Notify onboarding guide of the RAG evolution commitment
+    onFeedbackSimulated?.();
+
     // Reset loop states
     setMutatedEntryData(null);
     setCustomFeedback('');
     setShowDiff(false);
     setEvolutionSuccess(false);
 
-    alert(isZh ? '🎉 新规则已成功确立合并并写入自进化 RAG 数据库！出海创意管线将实时加载此版新规规避红线。' : '🎉 New evolved directives successfully committed and saved to your RAG store! The campaign desk will instantly read this schema for compliance audits.');
+    showNotification(isZh ? '🎉 新规则已成功确立合并并写入自进化 RAG 数据库！出海创意管线将实时加载此版新规规避红线。' : '🎉 New evolved directives successfully committed and saved to your RAG store! The campaign desk will instantly read this schema for compliance audits.', 'success');
   };
 
   const handleGenerateBranding = async () => {
@@ -725,12 +777,15 @@ export default function DatabaseEvolutionView({
     localStorage.setItem('cultureos_rag_entries', JSON.stringify(updatedList));
     setSelectedEntryId(newRagEntry.id);
     
+    // Notify onboarding system of RAG update
+    onFeedbackSimulated?.();
+    
     // Switch to evolution view to show their entry dynamically selected in full glory!
     setSubTab('evolution');
 
-    alert(isZh 
+    showNotification(isZh 
       ? `🎉 出海定制成功！品牌【${customBrandResult.brandName}】已作为全新 RAG 规章单元正式写入系统自进化数据库中心！创意生成器现已加载该合规过滤边界。` 
-      : `🎉 Custom success! Outbound rules for [${customBrandResult.brandName}] have been merged into your active system RAG database.`
+      : `🎉 Custom success! Outbound rules for [${customBrandResult.brandName}] have been merged into your active system RAG database.`, 'success'
     );
   };
 
@@ -784,6 +839,20 @@ export default function DatabaseEvolutionView({
         <div className="flex gap-4">
           <button
             onClick={() => {
+              setSubTab('starchart');
+              setIsCreatingNew(false);
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              subTab === 'starchart'
+                ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20 shadow shadow-cyan-500/5'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Orbit className="w-4 h-4 text-cyan-400" />
+            <span>{isZh ? 'CultureOS 战略星图图谱' : 'Strategic Star Chart'}</span>
+          </button>
+          <button
+            onClick={() => {
               setSubTab('evolution');
               setIsCreatingNew(false);
             }}
@@ -807,6 +876,20 @@ export default function DatabaseEvolutionView({
             <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
             <span>{isZh ? '出海名企案例与定位定制库' : 'Brand Cases & Slogan Generator'}</span>
           </button>
+          <button
+            onClick={() => {
+              setSubTab('csv-database');
+              setIsCreatingNew(false);
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              subTab === 'csv-database'
+                ? 'bg-[#14233c] text-indigo-300 border border-indigo-500/30 shadow shadow-indigo-500/5'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Database className="w-4 h-4 text-indigo-400 animate-pulse" />
+            <span>{isZh ? '出海预设标签关系数据库' : 'DTC Outbound Preset Databases'}</span>
+          </button>
         </div>
 
         {subTab === 'evolution' && (
@@ -827,7 +910,17 @@ export default function DatabaseEvolutionView({
         )}
       </div>
 
-      {subTab === 'evolution' ? (
+      {subTab === 'starchart' ? (
+        <StrategicStarChart 
+          isZh={isZh}
+          entries={entries}
+          setEntries={setEntries}
+          selectedEntryId={selectedEntryId}
+          setSelectedEntryId={setSelectedEntryId}
+          setSubTab={setSubTab}
+          onFeedbackSimulated={onFeedbackSimulated}
+        />
+      ) : subTab === 'evolution' ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Modules List & Detail preview */}
         <div className="lg:col-span-7 space-y-6">
@@ -1526,7 +1619,7 @@ export default function DatabaseEvolutionView({
           )}
         </div>
       </div>
-      ) : (
+      ) : subTab === 'cases' ? (
         <div className="space-y-8 animate-fade-in">
           {/* Top segment: Case Explorer cards */}
           <div className="space-y-4">
@@ -1864,7 +1957,303 @@ export default function DatabaseEvolutionView({
             </div>
           </div>
         </div>
+      ) : (
+        /* subTab === 'csv-database' */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fade-in text-left">
+          {/* Left Column: Databases List */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-lg space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-800/80">
+                <Database className="w-5 h-5 text-indigo-400" />
+                <div>
+                  <h4 className="text-sm font-bold text-slate-200">{isZh ? 'DTC 预设关系数据表' : 'DTC Relational Databases'}</h4>
+                  <p className="text-[10px] text-slate-500 font-sans">{isZh ? '包含 12 个预置 CSV 数据文件' : 'Browse raw preset CSV data tables'}</p>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 max-h-[600px] overflow-y-auto pr-1">
+                {CSV_DATABASES.map(db => {
+                  const isActive = selectedCsvDbId === db.id;
+                  return (
+                    <div
+                      key={db.id}
+                      onClick={() => {
+                        setSelectedCsvDbId(db.id);
+                        setCsvSearchTerm('');
+                      }}
+                      className={`p-3 rounded-xl border cursor-pointer transition flex items-start gap-2.5 text-left ${
+                        isActive
+                          ? 'bg-indigo-950/20 border-indigo-500/40 text-indigo-200'
+                          : 'bg-slate-900/20 border-slate-800/50 hover:bg-slate-900/40 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <FileText className={`w-4 h-4 shrink-0 mt-0.5 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
+                      <div className="space-y-0.5 text-left">
+                        <h5 className="text-xs font-bold font-sans tracking-wide">{isZh ? db.nameZh : db.nameEn}</h5>
+                        <p className="text-[10px] text-slate-500 line-clamp-1 leading-normal font-sans text-left">{db.description}</p>
+                        <span className="text-[9px] px-1.5 py-0.2 bg-slate-950 text-slate-400 rounded-md font-mono border border-slate-850 font-extrabold block w-fit mt-1">
+                          {db.data.length} {isZh ? '行数据' : 'Rows'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Manifest reference */}
+            <div className="p-4 rounded-2xl bg-[#090e1a] border border-slate-850 space-y-2 text-left">
+              <span className="text-[9px] text-indigo-400 font-black tracking-widest uppercase block">📂 MANIFEST INDEX 元数据目录 (manifest.csv)</span>
+              <p className="text-[11px] text-slate-400 leading-relaxed font-sans text-left">
+                {isZh
+                  ? '系统已成功将 14 个关系型数据存储文件挂载于项目根目录 /csv/ 路径下。各表间通过映射表（例如 category_narrative_map）智能推荐配对，实现了完整的自动化出海推荐闭环。'
+                  : 'The system has successfully mapped the database topology index using physical CSV tables under /csv/ directory, forming a highly integrated relational loop.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Right Column: Database Table Spreadsheet Grid */}
+          <div className="lg:col-span-8 space-y-4 text-left">
+            {(() => {
+              const activeDb = CSV_DATABASES.find(d => d.id === selectedCsvDbId);
+              if (!activeDb) return null;
+
+              // Filter rows by search term
+              const filteredData = activeDb.data.filter(row => {
+                if (!csvSearchTerm) return true;
+                const search = csvSearchTerm.toLowerCase();
+                return Object.values(row).some(val => 
+                  String(val).toLowerCase().includes(search)
+                );
+              });
+
+              // Extract columns
+              const columns = activeDb.data.length > 0 ? Object.keys(activeDb.data[0]) : [];
+
+              return (
+                <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-lg space-y-4 text-left">
+                  {/* Table Header and Metadata */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-800/80 text-left">
+                    <div className="space-y-1 text-left">
+                      <div className="flex items-center gap-2 text-left">
+                        <span className="text-sm font-black text-white font-sans">{isZh ? activeDb.nameZh : activeDb.nameEn}</span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 bg-indigo-500/10 text-indigo-300 rounded-md border border-indigo-500/20 font-extrabold">
+                          csv/{activeDb.id}.csv
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-450 leading-relaxed font-sans text-left">{activeDb.description}</p>
+                    </div>
+
+                    {/* Row count pill */}
+                    <div className="flex items-center gap-1.5 self-start sm:self-center font-mono">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isZh ? '搜索结果' : 'ROWS'}:</span>
+                      <span className="text-xs bg-indigo-500/15 text-indigo-400 font-extrabold px-2 py-0.5 rounded-full border border-indigo-500/10">
+                        {filteredData.length} / {activeDb.data.length}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Search bar */}
+                  <div className="flex items-center gap-3 bg-slate-950/80 border border-slate-850 px-3 py-2 rounded-xl">
+                    <Compass className="w-4 h-4 text-slate-500 shrink-0" />
+                    <input
+                      type="text"
+                      placeholder={isZh ? '搜索表中任意列数据（如："tiktok" 或 "美妆"）...' : 'Search any column values in this table...'}
+                      value={csvSearchTerm}
+                      onChange={(e) => setCsvSearchTerm(e.target.value)}
+                      className="w-full bg-transparent text-xs font-bold text-slate-200 border-none outline-none focus:ring-0 placeholder-slate-600 font-sans"
+                    />
+                    {csvSearchTerm && (
+                      <button onClick={() => setCsvSearchTerm('')} className="text-slate-500 hover:text-slate-300 transition">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Data Table */}
+                  <div className="border border-slate-850 rounded-xl overflow-hidden bg-slate-950/40 text-left">
+                    <div className="overflow-x-auto max-h-[480px]">
+                      <table className="w-full text-left border-collapse text-[11px]">
+                        <thead>
+                          <tr className="bg-[#0b1220] border-b border-slate-850">
+                            {columns.map(col => {
+                              // Friendly title mapping
+                              const friendlyName: Record<string, string> = {
+                                id: 'ID',
+                                nameZh: isZh ? '名称 (CN)' : 'Name (CN)',
+                                nameEn: 'Name (EN)',
+                                descriptionZh: isZh ? '描述 (CN)' : 'Description (CN)',
+                                descriptionEn: 'Description (EN)',
+                                active: isZh ? '状态' : 'Active',
+                                hofstedeIdv: isZh ? '霍氏个人主义指数' : 'Hofstede IDV',
+                                categoryId: 'Category ID',
+                                narrativeId: 'Narrative ID',
+                                platformId: 'Platform ID',
+                                marketId: 'Market ID',
+                                caseId: 'Case ID',
+                                fitScore: 'Fit Score',
+                                categoryZh: isZh ? '类别 (CN)' : 'Category (CN)',
+                                categoryEn: 'Category (EN)',
+                                ruleCode: 'Rule Code',
+                                severity: isZh ? '严重度' : 'Severity',
+                                formatZh: isZh ? '渠道特征' : 'Format (CN)',
+                                formatEn: 'Format (EN)',
+                                templateBodyZh: isZh ? '模板主体' : 'Template Body (CN)',
+                                templateBodyEn: 'Template Body (EN)',
+                                metricZh: isZh ? '评估维度' : 'Metric (CN)',
+                                metricEn: 'Metric (EN)',
+                                targetValue: isZh ? '度量目标' : 'Target Value',
+                                briefJson: 'Brief JSON Configuration',
+                                culturePackJson: 'Culture Pack JSON Payload'
+                              };
+                              return (
+                                <th key={col} className="px-4 py-3 font-bold font-sans text-slate-400 border-r border-slate-850/60 uppercase tracking-wider select-none shrink-0 whitespace-nowrap">
+                                  {friendlyName[col] || col}
+                                </th>
+                              );
+                            })}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-850/60 font-mono">
+                          {filteredData.length > 0 ? (
+                            filteredData.map((row: any, rIdx) => (
+                              <tr key={rIdx} className="hover:bg-indigo-500/[0.02] transition">
+                                {columns.map(col => {
+                                  const cellValue = row[col];
+                                  return (
+                                    <td key={col} className="px-4 py-2.5 text-slate-300 border-r border-slate-850/40 align-top max-w-[250px] truncate-cell leading-relaxed font-sans text-[11px] text-left">
+                                      {typeof cellValue === 'boolean' ? (
+                                        cellValue ? (
+                                          <span className="inline-flex items-center gap-1 text-green-400 font-bold bg-green-500/10 px-1.5 py-0.5 rounded-full text-[9px] font-sans border border-green-500/10">
+                                            <Check className="w-3 h-3" /> ACTIVE
+                                          </span>
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1 text-slate-500 font-bold bg-slate-800 px-1.5 py-0.5 rounded-full text-[9px] font-sans border border-slate-700">
+                                            DISABLED
+                                          </span>
+                                        )
+                                      ) : col === 'severity' ? (
+                                        cellValue === 'high' ? (
+                                          <span className="inline-flex items-center gap-1 text-red-400 font-black bg-red-500/10 px-1.5 py-0.5 rounded-full text-[9px] font-sans border border-red-500/10 uppercase">
+                                            ⚠️ High Risk
+                                          </span>
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1 text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded-full text-[9px] font-sans border border-amber-500/10 uppercase">
+                                            Medium Risk
+                                          </span>
+                                        )
+                                      ) : col === 'fitScore' ? (
+                                        <div className="flex items-center gap-1 font-mono">
+                                          <span className="text-green-400 font-black font-sans">{cellValue}%</span>
+                                          <div className="w-8 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                            <div className="bg-green-500 h-full" style={{ width: `${cellValue}%` }}></div>
+                                          </div>
+                                        </div>
+                                      ) : String(cellValue).startsWith('{') || String(cellValue).startsWith('[') ? (
+                                        <div className="max-h-[100px] overflow-y-auto bg-slate-950 p-2 rounded border border-slate-900 font-mono text-[9px] text-indigo-300 leading-snug whitespace-pre-wrap text-left">
+                                          {JSON.stringify(JSON.parse(cellValue), null, 2)}
+                                        </div>
+                                      ) : (
+                                        <span className="line-clamp-4 leading-normal text-left">{String(cellValue)}</span>
+                                      )}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={columns.length} className="px-4 py-8 text-center text-slate-500 text-xs font-sans">
+                                {isZh ? '没有找到符合搜索条件的记录数据。' : 'No rows match search filter.'}
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
       )}
+
+      {/* Dynamic Toast System */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="fixed bottom-6 right-6 z-[120] flex items-center gap-3 px-4 py-3.5 rounded-xl border bg-slate-950/95 backdrop-blur-md shadow-2xl max-w-md"
+            style={{
+              borderColor: toast.type === 'error' ? 'rgba(239, 68, 68, 0.4)' : toast.type === 'warning' ? 'rgba(245, 158, 11, 0.4)' : 'rgba(6, 182, 212, 0.4)',
+              boxShadow: toast.type === 'error' ? '0 10px 30px -10px rgba(239, 68, 68, 0.15)' : toast.type === 'warning' ? '0 10px 30px -10px rgba(245, 158, 11, 0.15)' : '0 10px 30px -10px rgba(6, 182, 212, 0.15)'
+            }}
+          >
+            {toast.type === 'error' ? (
+              <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-5 h-5 text-cyan-400 shrink-0" />
+            )}
+            <div className="text-xs font-sans text-slate-100 pr-4 leading-relaxed font-medium">
+              {toast.message}
+            </div>
+            <button 
+              onClick={() => setToast(null)}
+              className="text-slate-450 hover:text-slate-200 transition p-0.5 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal Overlay */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-[#0b1220] border border-red-500/25 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl p-5 space-y-4 text-left"
+            >
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 shrink-0">
+                  <AlertTriangle className="w-5 h-5 animate-pulse" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-black text-slate-100 uppercase tracking-wider font-sans">
+                    {isZh ? '确认要永久删除吗？' : 'Confirm Permanent Deletion'}
+                  </h3>
+                  <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
+                    {isZh 
+                      ? '此操作是不可逆的。删除后，此自定义品牌/大区合规基因规章将从系统知识库中永久抹除。' 
+                      : 'This action is completely irreversible. This custom ruleset card will be removed permanently from the RAG store.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-900 text-xs">
+                <button
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="px-3.5 py-1.5 rounded-lg border border-slate-800 hover:text-white text-slate-400 cursor-pointer transition font-sans"
+                >
+                  {isZh ? '取消' : 'Cancel'}
+                </button>
+                <button
+                  onClick={confirmDeleteCustomCard}
+                  className="px-4 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 font-extrabold text-white cursor-pointer transition font-sans shadow-md shadow-red-500/10"
+                >
+                  {isZh ? '确认删除' : 'Delete Now'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

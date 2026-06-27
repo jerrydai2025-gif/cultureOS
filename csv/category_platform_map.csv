@@ -1,0 +1,9 @@
+category_id,platform_id,fit_score,active
+personal_ip,tiktok,98,true
+personal_ip,instagram,92,true
+personal_ip,xiaohongshu,85,true
+cosmetics,instagram,95,true
+cosmetics,tiktok,90,true
+tourism,youtube,94,true
+ai_tools,tiktok,92,true
+b2b_services,reddit,90,true

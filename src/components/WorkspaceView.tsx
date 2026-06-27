@@ -8,6 +8,20 @@ import {
 import { CampaignBrief, AgentNode, TraceLog, CulturePack } from '../types';
 import { PRESETS } from '../data/presets';
 import { INITIAL_RAG_ENTRIES } from '../data/rag_presets';
+import {
+  CATEGORIES_PRESETS,
+  TARGET_MARKETS_PRESETS,
+  AUDIENCES_PRESETS,
+  CULTURE_NARRATIVES_PRESETS,
+  PLATFORMS_PRESETS,
+  RISK_RULES_PRESETS,
+  CONTENT_TEMPLATES_PRESETS,
+  KPI_PRESETS,
+  CATEGORY_NARRATIVE_MAPS,
+  CATEGORY_PLATFORM_MAPS,
+  MARKET_PLATFORM_MAPS,
+  CASES_PRESETS
+} from '../data/csv_presets';
 
 interface WorkspaceViewProps {
   lang: 'zh' | 'en';
@@ -32,6 +46,7 @@ export default function WorkspaceView({
 
   // State managers
   const [selectedPreset, setSelectedPreset] = useState<string>('lucky_deer');
+  const [ipType, setIpType] = useState<'brand' | 'personal'>('brand');
   const [ipName, setIpName] = useState('');
   const [cultureAsset, setCultureAsset] = useState('');
   const [businessGoal, setBusinessGoal] = useState('');
@@ -41,6 +56,12 @@ export default function WorkspaceView({
   const [brandTone, setBrandTone] = useState('');
   const [targetRegions, setTargetRegions] = useState<string[]>([]);
   const [targetPlatforms, setTargetPlatforms] = useState<string[]>([]);
+
+  // DTC Preset Database states
+  const [dbCategory, setDbCategory] = useState<string>('cosmetics');
+  const [dbMarket, setDbMarket] = useState<string>('north_america');
+  const [dbAudience, setDbAudience] = useState<string>('female_consumers');
+  const [isDbPanelOpen, setIsDbPanelOpen] = useState<boolean>(true);
 
   // Selected RAG active card
   const [ragList, setRagList] = useState<any[]>([]);
@@ -92,6 +113,67 @@ export default function WorkspaceView({
   const logConsoleRef = useRef<HTMLDivElement>(null);
   const stepIntervalRef = useRef<any>(null);
 
+  // Inject Custom Brief from the preloaded relational CSV database
+  const injectDatabasePreset = () => {
+    // If they selected 'personal_ip', let's load 'aqi_isme' preset directly to make it super high fidelity!
+    if (dbCategory === 'personal_ip') {
+      loadPreset('aqi_isme');
+      setSelectedPreset('aqi_isme');
+      return;
+    }
+    // If they selected 'cosmetics', let's load 'lucky_deer' preset directly!
+    if (dbCategory === 'cosmetics') {
+      loadPreset('lucky_deer');
+      setSelectedPreset('lucky_deer');
+      return;
+    }
+
+    // Otherwise, generate a super polished customized brief on-the-fly!
+    const catObj = CATEGORIES_PRESETS.find(c => c.id === dbCategory);
+    const marObj = TARGET_MARKETS_PRESETS.find(m => m.id === dbMarket);
+    const audObj = AUDIENCES_PRESETS.find(a => a.id === dbAudience);
+
+    const narrativeId = CATEGORY_NARRATIVE_MAPS.find(m => m.categoryId === dbCategory)?.narrativeId || 'oriental_aesthetics';
+    const narrative = CULTURE_NARRATIVES_PRESETS.find(n => n.id === narrativeId);
+
+    const platformId = CATEGORY_PLATFORM_MAPS.find(m => m.categoryId === dbCategory)?.platformId || 'tiktok';
+    const platform = PLATFORMS_PRESETS.find(p => p.id === platformId);
+
+    const activeRisk = RISK_RULES_PRESETS.find(r => 
+      (dbCategory === 'cosmetics' && r.id === 'risk_medical') ||
+      (dbCategory === 'ai_tools' && r.id === 'risk_copyright') ||
+      (dbMarket === 'europe' && r.id === 'risk_privacy') ||
+      r.id === 'risk_copyright'
+    );
+
+    setIpName(isZh ? `${catObj?.nameZh || '出海品牌'}·出海${marObj?.nameZh || '项目'}` : `${catObj?.nameEn || 'Brand'} - ${marObj?.nameEn || 'Outbound'}`);
+    setCultureAsset(isZh ? `「${narrative?.nameZh || '东方意境'}」跨文化视觉元素及生活方式代言` : `"${narrative?.nameEn || 'Oriental Aesthetics'}" localized cultural motif`);
+    setBusinessGoal(isZh ? `在${marObj?.nameZh || '海外'}市场确立品类心智并打通转化漏斗` : `Establish category mindshare and hit outbound conversion KPIs`);
+    setEmotionalKernelText(`${narrativeId}, ${dbAudience}, mindfulness, companionship`);
+
+    setMustHaveText(isZh 
+      ? `结合 [${platform?.nameZh || 'TikTok'}] 卡点，融入 [${narrative?.nameZh || '东方意境'}] 独特视觉符号; 保持低姿态平视交流` 
+      : `Sync with [${platform?.nameEn || 'TikTok'}] audio pacing, embed [${narrative?.nameEn || 'Oriental Aesthetics'}] symbolic markers; maintain direct peer tone`
+    );
+
+    setMustNotText(isZh
+      ? `严禁触碰 [${activeRisk?.categoryZh || '版权'}] 规则（规避代码: ${activeRisk?.ruleCode || 'DMCA'}）; 严禁进行任何夸大药理功效宣称`
+      : `Strictly avoid [${activeRisk?.categoryEn || 'Copyright'}] violations (Code: ${activeRisk?.ruleCode || 'DMCA'}); no medical drug claims`
+    );
+
+    setBrandTone(isZh ? `${narrative?.nameZh || '怀旧'}、舒缓、富有匠心温度` : `${narrative?.nameEn || 'Nostalgic'}, soothing, highly tactile`);
+    
+    // Map dbMarket to UI regions
+    if (dbMarket === 'latin_america') {
+      setTargetRegions(['Latin America']);
+    } else {
+      setTargetRegions(['North America']);
+    }
+
+    setTargetPlatforms([platform?.nameEn || 'TikTok']);
+    setSelectedPreset('custom');
+  };
+
   // Load preset fields
   const loadPreset = (presetId: string) => {
     const p = PRESETS[presetId];
@@ -106,6 +188,11 @@ export default function WorkspaceView({
     setTargetRegions(p.brief.targetRegions);
     setTargetPlatforms(p.brief.targetPlatforms);
     setSelectedPreset(presetId);
+    if (presetId === 'aqi_isme') {
+      setIpType('personal');
+    } else {
+      setIpType('brand');
+    }
   };
 
   // Prefill default preset on outer component mounting
@@ -248,6 +335,7 @@ export default function WorkspaceView({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           brief: currentBrief,
+          ipType,
           customApiKey: parsedCreds.customApiKey,
           customApiBase: parsedCreds.customApiBase
         })
@@ -351,11 +439,224 @@ export default function WorkspaceView({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column - Configurations Form */}
         <div className="lg:col-span-7 space-y-6">
+          {/* DTC Category Relational Database Panel */}
+          <div className="border border-indigo-500/20 rounded-2xl bg-[#0d1527]/90 p-5 space-y-4 shadow-lg shadow-indigo-950/10">
+            <div className="flex items-center justify-between cursor-pointer" onClick={() => setIsDbPanelOpen(!isDbPanelOpen)}>
+              <div className="flex items-center gap-2">
+                <div className="bg-indigo-500/10 p-1.5 rounded-lg border border-indigo-500/25">
+                  <Database className="w-4 h-4 text-indigo-400 animate-pulse" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
+                    <span>{isZh ? 'DTC 出海预设关系型数据库' : 'DTC Outbound Tag Database'}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 bg-indigo-500/10 text-indigo-300 rounded-full font-mono border border-indigo-500/20 font-extrabold">14 CSV Loaded</span>
+                  </h4>
+                  <p className="text-[10px] text-slate-500 font-sans leading-none mt-0.5">
+                    {isZh ? '产品行业分类 ➔ 目标大区 ➔ 自动推荐文化叙事及投放平台' : 'Select category and target market to dynamically match custom narratives and platforms.'}
+                  </p>
+                </div>
+              </div>
+              <button className="text-xs text-indigo-400 hover:text-indigo-300 font-mono font-bold">
+                {isDbPanelOpen ? (isZh ? '[-] 收起数据库' : '[-] Collapse DB') : (isZh ? '[+] 展开数据库' : '[+] Expand DB')}
+              </button>
+            </div>
+
+            {isDbPanelOpen && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="space-y-4 pt-2 border-t border-slate-800/60"
+              >
+                {/* selectors */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{isZh ? '行业分类 (categories.csv)' : 'Category'}</label>
+                    <select
+                      value={dbCategory}
+                      onChange={(e) => setDbCategory(e.target.value)}
+                      className="w-full bg-slate-950/95 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-200 px-3 py-2 rounded-lg cursor-pointer outline-none focus:border-indigo-500"
+                    >
+                      {CATEGORIES_PRESETS.map(c => (
+                        <option key={c.id} value={c.id}>{c.nameZh} ({c.nameEn})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{isZh ? '目标市场 (target_markets.csv)' : 'Target Market'}</label>
+                    <select
+                      value={dbMarket}
+                      onChange={(e) => setDbMarket(e.target.value)}
+                      className="w-full bg-slate-950/95 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-200 px-3 py-2 rounded-lg cursor-pointer outline-none focus:border-indigo-500"
+                    >
+                      {TARGET_MARKETS_PRESETS.map(m => (
+                        <option key={m.id} value={m.id}>{m.nameZh} ({m.nameEn})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{isZh ? '目标人群 (audiences.csv)' : 'Audience'}</label>
+                    <select
+                      value={dbAudience}
+                      onChange={(e) => setDbAudience(e.target.value)}
+                      className="w-full bg-slate-950/95 border border-slate-800 hover:border-slate-700 text-xs font-bold text-slate-200 px-3 py-2 rounded-lg cursor-pointer outline-none focus:border-indigo-500"
+                    >
+                      {AUDIENCES_PRESETS.map(a => (
+                        <option key={a.id} value={a.id}>{a.nameZh} ({a.nameEn})</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Recommended Dynamic Matching Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                  {/* Recommended Narrative Card */}
+                  {(() => {
+                    const matchedNarrativeId = CATEGORY_NARRATIVE_MAPS.find(m => m.categoryId === dbCategory)?.narrativeId;
+                    const fitScore = CATEGORY_NARRATIVE_MAPS.find(m => m.categoryId === dbCategory)?.fitScore || 95;
+                    const narrative = CULTURE_NARRATIVES_PRESETS.find(n => n.id === matchedNarrativeId);
+                    if (!narrative) return null;
+                    return (
+                      <div className="bg-indigo-950/15 border border-indigo-500/10 p-3 rounded-xl flex flex-col justify-between space-y-1.5">
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-mono font-bold text-indigo-400 uppercase">{isZh ? '推荐叙事 (culture_narratives.csv)' : 'Narrative Recommendation'}</span>
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 bg-green-500/10 text-green-400 rounded-full font-black border border-green-500/15">{fitScore}% Fit</span>
+                          </div>
+                          <h5 className="text-xs font-black text-slate-200 flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            <span>{isZh ? narrative.nameZh : narrative.nameEn}</span>
+                          </h5>
+                          <p className="text-[10px] text-slate-450 font-medium leading-relaxed font-sans">
+                            {isZh ? narrative.descriptionZh : narrative.descriptionEn}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Recommended Platform Card */}
+                  {(() => {
+                    const matchedPlatformId = CATEGORY_PLATFORM_MAPS.find(m => m.categoryId === dbCategory)?.platformId;
+                    const fitScore = CATEGORY_PLATFORM_MAPS.find(m => m.categoryId === dbCategory)?.fitScore || 95;
+                    const platform = PLATFORMS_PRESETS.find(p => p.id === matchedPlatformId);
+                    if (!platform) return null;
+                    return (
+                      <div className="bg-indigo-950/15 border border-indigo-500/10 p-3 rounded-xl flex flex-col justify-between space-y-1.5">
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-mono font-bold text-indigo-400 uppercase">{isZh ? '推荐渠道 (platforms.csv)' : 'Platform Recommendation'}</span>
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 bg-green-500/10 text-green-400 rounded-full font-black border border-green-500/15">{fitScore}% Fit</span>
+                          </div>
+                          <h5 className="text-xs font-black text-slate-200 flex items-center gap-1">
+                            <Activity className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                            <span>{platform.nameEn}</span>
+                          </h5>
+                          <p className="text-[10px] text-slate-450 font-medium leading-relaxed font-sans">
+                            {isZh ? platform.formatZh : platform.formatEn}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* KPI goals and Rules */}
+                <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-900 grid grid-cols-1 sm:grid-cols-2 gap-3 text-[10px] font-mono">
+                  <div className="space-y-1">
+                    <span className="text-[9px] text-indigo-400 font-extrabold uppercase block">🎯 {isZh ? '度量指标 (kpi_presets.csv)' : 'Target Outbound KPIs'}</span>
+                    <ul className="list-disc list-inside text-slate-450 font-sans space-y-0.5 leading-snug">
+                      {KPI_PRESETS.map(k => (
+                        <li key={k.id} className="truncate">
+                          <span className="font-bold text-slate-300">[{isZh ? k.nameZh : k.nameEn}]:</span> {k.targetValue}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[9px] text-rose-400 font-extrabold uppercase block">🛡️ 合规审查红线 (risk_rules.csv)</span>
+                    <ul className="list-disc list-inside text-slate-450 font-sans space-y-0.5 leading-snug">
+                      {RISK_RULES_PRESETS.filter(r => 
+                        r.id === 'risk_copyright' || 
+                        (dbCategory === 'cosmetics' && r.id === 'risk_medical') ||
+                        (dbMarket === 'europe' && r.id === 'risk_privacy')
+                      ).map(r => (
+                        <li key={r.id} className="truncate text-rose-300/90 font-medium">
+                          <span className="font-bold text-rose-400">[{r.ruleCode}]:</span> {isZh ? r.categoryZh : r.categoryEn}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Inject Action Button */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-indigo-500/5 p-3 rounded-xl border border-indigo-500/10">
+                  <span className="text-[10px] font-sans font-medium text-slate-400 leading-normal">
+                    {isZh 
+                      ? '💡 一键注入后，系统将加载 categories、target_markets 推荐映射，自动填入名称、文化资产、商业目标、必须与禁止等表单配置。如果选择个人IP（阿琪是我）或美妆（一鹿繁花）案例，将自动读取 pre-baked 完美大包。' 
+                      : 'Load chosen matching matrix to overwrite Campaign Brief forms. If personal IP or cosmetics is selected, full preset package loads automatically.'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={injectDatabasePreset}
+                    className="bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-black px-4 py-2 rounded-lg text-xs transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-indigo-500/10 shrink-0 w-full sm:w-auto justify-center"
+                  >
+                    <Database className="w-3.5 h-3.5" />
+                    <span>{isZh ? '一键注入品类数据库' : 'Inject Selected Preset'}</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
           <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-lg space-y-5">
             <h3 className="text-lg font-bold text-slate-200 border-b border-slate-850 pb-3 flex items-center gap-2">
               <Settings className="w-5 h-5 text-cyan-400" />
               <span>{isZh ? '配置出海 Brief' : 'Configure Campaign Brief'}</span>
             </h3>
+
+            {/* IP Type Selection Toggle */}
+            <div className="border border-slate-800/60 p-4 rounded-xl bg-slate-950/40 space-y-3">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block">
+                {isZh ? '🔍 IP 诊断分类与适配维度' : 'IP Diagnosis Classification'}
+              </label>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  id="ip-type-brand"
+                  disabled={isRunning}
+                  onClick={() => setIpType('brand')}
+                  className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black border transition-all duration-150 flex flex-col items-start gap-1 cursor-pointer text-left ${
+                    ipType === 'brand'
+                      ? 'bg-gradient-to-r from-blue-950 to-indigo-950/80 border-indigo-500 text-white shadow-lg'
+                      : 'bg-slate-950/60 border-slate-850 text-slate-450 hover:text-slate-300 hover:bg-slate-900/40'
+                  }`}
+                >
+                  <span className={`text-xs font-extrabold flex items-center gap-1.5 ${ipType === 'brand' ? 'text-cyan-400' : 'text-slate-400'}`}>🏢 {isZh ? '公司品牌 IP (Company Brand)' : 'Company Brand IP'}</span>
+                  <span className="text-[10px] font-medium text-slate-400 line-normal leading-normal">
+                    {isZh ? '开展企业级合规校验（关注FDA药用宣称防线、商标专利与法律诉讼保护）' : 'For corporate-level compliance (regulatory claims, trademarking, class-actions)'}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  id="ip-type-personal"
+                  disabled={isRunning}
+                  onClick={() => setIpType('personal')}
+                  className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black border transition-all duration-150 flex flex-col items-start gap-1 cursor-pointer text-left ${
+                    ipType === 'personal'
+                      ? 'bg-gradient-to-r from-amber-950/80 to-orange-950/80 border-amber-500 text-white shadow-lg'
+                      : 'bg-slate-950/60 border-slate-850 text-slate-450 hover:text-slate-300 hover:bg-slate-900/40'
+                  }`}
+                >
+                  <span className={`text-xs font-extrabold flex items-center gap-1.5 ${ipType === 'personal' ? 'text-amber-400' : 'text-slate-400'}`}>🎨 {isZh ? '个人 IP (Personal IP / Influencer)' : 'Personal IP / Influencer'}</span>
+                  <span className="text-[10px] font-medium text-slate-400 line-normal leading-normal">
+                    {isZh ? '开展博主真实性体验校验（关注FTC利益披露条例、女性手艺、Vlog心流温度）' : 'For individual creator authenticity (FTC endorsement guides, personal story, vlog ASMR)'}
+                  </span>
+                </button>
+              </div>
+            </div>
 
             {/* RAG tag / card selection panel */}
             <div className="border border-cyan-500/15 rounded-xl bg-cyan-950/20 p-4 space-y-3.5">

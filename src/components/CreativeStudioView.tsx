@@ -5,7 +5,7 @@ import {
   ArrowRight, Radio, HelpCircle, RefreshCw, Compass, ShieldAlert, BadgeInfo,
   Settings, Eye, EyeOff, Sliders, Server, HardDrive, ShieldCheck, Copy,
   Video, Filter, VolumeX, Plus, Terminal, Minus,
-  Folder, FolderOpen, Search, Maximize2, ChevronRight, ChevronDown, Scissors, FileVideo, MoreHorizontal, Cpu
+  Folder, FolderOpen, Search, Maximize2, ChevronLeft, ChevronRight, ChevronDown, Scissors, FileVideo, MoreHorizontal, Cpu
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { MUSIC_PRESETS, MusicPreset } from "../data/music_presets";
@@ -574,6 +574,7 @@ export default function CreativeStudioView({
 }: CreativeStudioViewProps) {
   const isZh = lang === "zh";
   const [activeTab, setActiveTab] = useState<"canvas" | "chatbot" | "intelligence" | "visuals" | "audio" | "media" | "settings">("canvas");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
 
   // Multi-Media Experience Hub States
   const [activeMediaSubTab, setActiveMediaSubTab] = useState<"video" | "audio" | "image">("video");
@@ -1785,138 +1786,175 @@ export default function CreativeStudioView({
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       
       {/* Sidebar Tool Selection Card */}
-      <div className="lg:col-span-3 space-y-3">
-        <div className="p-4 rounded-2xl bg-[#0c1322]/90 border border-[#1e2f4d]/60 shadow-xl">
-          <h4 className="text-xs font-mono uppercase font-black text-slate-500 tracking-wider mb-3">
-            {isZh ? "💎 创意工具套件" : "💎 Creative Toolkits"}
-          </h4>
-          <div className="space-y-1.5">
-            
-            <button
-              onClick={() => setActiveTab("canvas")}
-              className={`w-full px-4 py-3 rounded-xl text-xs font-bold text-left transition flex items-center gap-3 cursor-pointer ${
-                activeTab === "canvas"
-                  ? "bg-gradient-to-r from-cyan-500/15 to-cyan-500/5 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/5 animate-pulse"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-[#14233c]/60 border border-transparent"
-              }`}
-            >
-              <Cpu className="w-4.5 h-4.5 text-cyan-400" />
-              <div className="flex-1">
-                <p className="font-extrabold leading-tight">{isZh ? "海螺智能画板" : "MiniMax Canvas Hub"}</p>
-                <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Visual Board & Co-Pilot</p>
-              </div>
-            </button>
+      {!isSidebarCollapsed && (
+        <div className="lg:col-span-3 space-y-3 animate-fade-in">
+          <div className="p-4 rounded-2xl bg-[#0c1322]/90 border border-[#1e2f4d]/60 shadow-xl">
+            <div className="flex items-center justify-between mb-3 border-b border-[#1e2f4d]/30 pb-2">
+              <h4 className="text-xs font-mono uppercase font-black text-slate-500 tracking-wider">
+                {isZh ? "💎 创意工具套件" : "💎 Creative Toolkits"}
+              </h4>
+              <button
+                onClick={() => setIsSidebarCollapsed(true)}
+                className="p-1 rounded bg-[#14233c]/80 hover:bg-[#1e2f4d] border border-[#1e2f4d]/50 text-slate-400 hover:text-slate-200 transition cursor-pointer flex items-center justify-center"
+                title={isZh ? "收起工具栏" : "Collapse Sidebar"}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              
+              <button
+                onClick={() => setActiveTab("canvas")}
+                className={`w-full px-4 py-3 rounded-xl text-xs font-bold text-left transition flex items-center gap-3 cursor-pointer ${
+                  activeTab === "canvas"
+                    ? "bg-gradient-to-r from-cyan-500/15 to-cyan-500/5 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/5 animate-pulse"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-[#14233c]/60 border border-transparent"
+                }`}
+              >
+                <Cpu className="w-4.5 h-4.5 text-cyan-400" />
+                <div className="flex-1">
+                  <p className="font-extrabold leading-tight">{isZh ? "海螺智能画板" : "MiniMax Canvas Hub"}</p>
+                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Visual Board & Co-Pilot</p>
+                </div>
+              </button>
 
-            <button
-              onClick={() => setActiveTab("chatbot")}
-              className={`w-full px-4 py-3 rounded-xl text-xs font-bold text-left transition flex items-center gap-3 cursor-pointer ${
-                activeTab === "chatbot"
-                  ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-[#14233c]/60 border border-transparent"
-              }`}
-            >
-              <MessageSquare className="w-4.5 h-4.5" />
-              <div className="flex-1">
-                <p className="font-bold leading-tight">{isZh ? "出海咨询顾问" : "Multiverse Advisor"}</p>
-                <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Gemini Roleplay Chat</p>
-              </div>
-            </button>
+              <button
+                onClick={() => setActiveTab("chatbot")}
+                className={`w-full px-4 py-3 rounded-xl text-xs font-bold text-left transition flex items-center gap-3 cursor-pointer ${
+                  activeTab === "chatbot"
+                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-[#14233c]/60 border border-transparent"
+                }`}
+              >
+                <MessageSquare className="w-4.5 h-4.5" />
+                <div className="flex-1">
+                  <p className="font-bold leading-tight">{isZh ? "出海咨询顾问" : "Multiverse Advisor"}</p>
+                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Gemini Roleplay Chat</p>
+                </div>
+              </button>
 
-            <button
-              onClick={() => setActiveTab("intelligence")}
-              className={`w-full px-4 py-3 rounded-xl text-xs font-bold text-left transition flex items-center gap-3 cursor-pointer ${
-                activeTab === "intelligence"
-                  ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-[#14233c]/60 border border-transparent"
-              }`}
-            >
-              <Sparkles className="w-4.5 h-4.5" />
-              <div className="flex-1">
-                <p className="font-bold leading-tight">{isZh ? "爆款内容洞察" : "Copy Gen Intelligence"}</p>
-                <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Content & Taboos Auditor</p>
-              </div>
-            </button>
+              <button
+                onClick={() => setActiveTab("intelligence")}
+                className={`w-full px-4 py-3 rounded-xl text-xs font-bold text-left transition flex items-center gap-3 cursor-pointer ${
+                  activeTab === "intelligence"
+                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-[#14233c]/60 border border-transparent"
+                }`}
+              >
+                <Sparkles className="w-4.5 h-4.5" />
+                <div className="flex-1">
+                  <p className="font-bold leading-tight">{isZh ? "爆款内容洞察" : "Copy Gen Intelligence"}</p>
+                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Content & Taboos Auditor</p>
+                </div>
+              </button>
 
-            <button
-              onClick={() => setActiveTab("visuals")}
-              className={`w-full px-4 py-3 rounded-xl text-xs font-bold text-left transition flex items-center gap-3 cursor-pointer ${
-                activeTab === "visuals"
-                  ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-[#14233c]/60 border border-transparent"
-              }`}
-            >
-              <ImageIcon className="w-4.5 h-4.5" />
-              <div className="flex-1">
-                <p className="font-bold leading-tight">{isZh ? "视觉创意画布" : "Image Visual Studio"}</p>
-                <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Image Generator / Editor</p>
-              </div>
-            </button>
+              <button
+                onClick={() => setActiveTab("visuals")}
+                className={`w-full px-4 py-3 rounded-xl text-xs font-bold text-left transition flex items-center gap-3 cursor-pointer ${
+                  activeTab === "visuals"
+                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-[#14233c]/60 border border-transparent"
+                }`}
+              >
+                <ImageIcon className="w-4.5 h-4.5" />
+                <div className="flex-1">
+                  <p className="font-bold leading-tight">{isZh ? "视觉创意画布" : "Image Visual Studio"}</p>
+                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Image Generator / Editor</p>
+                </div>
+              </button>
 
-            <button
-              onClick={() => setActiveTab("audio")}
-              className={`w-full px-4 py-3 rounded-xl text-xs font-bold text-left transition flex items-center gap-3 cursor-pointer ${
-                activeTab === "audio"
-                  ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-[#14233c]/60 border border-transparent"
-              }`}
-            >
-              <Music className="w-4.5 h-4.5" />
-              <div className="flex-1">
-                <p className="font-bold leading-tight">{isZh ? "流配乐作曲家" : "Folk Sound Composer"}</p>
-                <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Lyria Soundtrack Generator</p>
-              </div>
-            </button>
+              <button
+                onClick={() => setActiveTab("audio")}
+                className={`w-full px-4 py-3 rounded-xl text-xs font-bold text-left transition flex items-center gap-3 cursor-pointer ${
+                  activeTab === "audio"
+                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-[#14233c]/60 border border-transparent"
+                }`}
+              >
+                <Music className="w-4.5 h-4.5" />
+                <div className="flex-1">
+                  <p className="font-bold leading-tight">{isZh ? "流配乐作曲家" : "Folk Sound Composer"}</p>
+                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Lyria Soundtrack Generator</p>
+                </div>
+              </button>
 
-            <button
-              onClick={() => setActiveTab("media")}
-              className={`w-full px-4 py-3 rounded-xl text-xs font-bold text-left transition flex items-center gap-3 cursor-pointer ${
-                activeTab === "media"
-                  ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-[#14233c]/60 border border-transparent"
-              }`}
-            >
-              <Video className="w-4.5 h-4.5 text-cyan-400 animate-pulse" />
-              <div className="flex-1">
-                <p className="font-bold leading-tight">{isZh ? "多媒体体验舱" : "Interactive Media Hub"}</p>
-                <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">{isZh ? "视频、音频及图像物料" : "Upload, Preview & Playback"}</p>
-              </div>
-            </button>
+              <button
+                onClick={() => setActiveTab("media")}
+                className={`w-full px-4 py-3 rounded-xl text-xs font-bold text-left transition flex items-center gap-3 cursor-pointer ${
+                  activeTab === "media"
+                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-[#14233c]/60 border border-transparent"
+                }`}
+              >
+                <Video className="w-4.5 h-4.5 text-cyan-400 animate-pulse" />
+                <div className="flex-1">
+                  <p className="font-bold leading-tight">{isZh ? "多媒体体验舱" : "Interactive Media Hub"}</p>
+                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">{isZh ? "视频、音频及图像物料" : "Upload, Preview & Playback"}</p>
+                </div>
+              </button>
 
-            <button
-              onClick={() => setActiveTab("settings")}
-              className={`w-full px-4 py-3 rounded-xl text-xs font-bold text-left transition flex items-center gap-3 cursor-pointer ${
-                activeTab === "settings"
-                  ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-[#14233c]/60 border border-transparent"
-              }`}
-            >
-              <Settings className="w-4.5 h-4.5 text-amber-400" />
-              <div className="flex-1">
-                <p className="font-bold leading-tight text-amber-300">{isZh ? "多模型配置中心" : "Model Registry Settings"}</p>
-                <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">DeepSeek, OpenAI, GLM Setup</p>
-              </div>
-            </button>
+              <button
+                onClick={() => setActiveTab("settings")}
+                className={`w-full px-4 py-3 rounded-xl text-xs font-bold text-left transition flex items-center gap-3 cursor-pointer ${
+                  activeTab === "settings"
+                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-[#14233c]/60 border border-transparent"
+                }`}
+              >
+                <Settings className="w-4.5 h-4.5 text-amber-400" />
+                <div className="flex-1">
+                  <p className="font-bold leading-tight text-amber-300">{isZh ? "多模型配置中心" : "Model Registry Settings"}</p>
+                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">DeepSeek, OpenAI, GLM Setup</p>
+                </div>
+              </button>
 
+            </div>
+          </div>
+
+          {/* Informative model constraints block */}
+          <div className="p-4 rounded-xl bg-[#090f1e]/80 border border-[#1e2f4d]/40 text-left">
+            <h5 className="text-[10px] font-mono font-bold text-amber-400 tracking-wider flex items-center gap-1.5 mb-1.5 uppercase">
+              <BadgeInfo className="w-3.5 h-3.5" />
+              <span>{isZh ? "多端运行与配额说明" : "Dynamic Model Registry"}</span>
+            </h5>
+            <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
+              {isZh 
+                ? "系统支持跨厂牌大语言模型（Gemini/DeepSeek/OpenAI/智谱），部分高级多模态 tasks（如 Imagen 生成、Lyria 作曲）仍需绑定生效的 Gemini API Key 进行处理。" 
+                : "The suite supports multi-label upstream LLM engines (Gemini, DeepSeek, OpenAI, GLM). Note that specialized modal creation (Imagen/Lyria) utilizes your default Gemini key credentials."}
+            </p>
           </div>
         </div>
-
-        {/* Informative model constraints block */}
-        <div className="p-4 rounded-xl bg-[#090f1e]/80 border border-[#1e2f4d]/40 text-left">
-          <h5 className="text-[10px] font-mono font-bold text-amber-400 tracking-wider flex items-center gap-1.5 mb-1.5 uppercase">
-            <BadgeInfo className="w-3.5 h-3.5" />
-            <span>{isZh ? "多端运行与配额说明" : "Dynamic Model Registry"}</span>
-          </h5>
-          <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-            {isZh 
-              ? "系统支持跨厂牌大语言模型（Gemini/DeepSeek/OpenAI/智谱），部分高级多模态任务（如 Imagen 生成、Lyria 作曲）仍需绑定生效的 Gemini API Key 进行处理。" 
-              : "The suite supports multi-label upstream LLM engines (Gemini, DeepSeek, OpenAI, GLM). Note that specialized modal creation (Imagen/Lyria) utilizes your default Gemini key credentials."}
-          </p>
-        </div>
-      </div>
+      )}
 
       {/* Main Tool Content Panel */}
-      <div className="lg:col-span-9">
+      <div className={isSidebarCollapsed ? "lg:col-span-12 transition-all duration-300" : "lg:col-span-9 transition-all duration-300"}>
         <div className="p-6 rounded-2xl bg-[#0c1322]/85 border border-[#1e2f4d]/50 shadow-2xl relative min-h-[520px] flex flex-col justify-between">
+          
+          {/* Top Utility Bar for Collapsed State */}
+          {isSidebarCollapsed && (
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[#1e2f4d]/40 animate-fade-in">
+              <button
+                onClick={() => setIsSidebarCollapsed(false)}
+                className="px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/25 hover:bg-cyan-500/20 text-cyan-400 transition cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                title={isZh ? "展开工具套件" : "Expand Toolkits"}
+              >
+                <ChevronRight className="w-3.5 h-3.5 animate-pulse" />
+                <span>{isZh ? "展开工具套件" : "Expand Toolkits"}</span>
+              </button>
+              <div className="h-4 w-px bg-[#1e2f4d]/60" />
+              <span className="text-xs text-slate-400 font-mono">
+                {isZh ? "当前工具" : "Active Tool"}: <span className="text-cyan-300 font-bold">{
+                  activeTab === "canvas" ? (isZh ? "海螺智能画板" : "Canvas Hub") :
+                  activeTab === "chatbot" ? (isZh ? "出海咨询顾问" : "Multiverse Advisor") :
+                  activeTab === "intelligence" ? (isZh ? "爆款内容洞察" : "Copy Gen Intelligence") :
+                  activeTab === "visuals" ? (isZh ? "视觉创意画布" : "Image Visual Studio") :
+                  activeTab === "audio" ? (isZh ? "流配乐作曲家" : "Folk Sound Composer") :
+                  activeTab === "media" ? (isZh ? "多媒体体验舱" : "Interactive Media Hub") :
+                  (isZh ? "多模型配置中心" : "Model Registry Settings")
+                }</span>
+              </span>
+            </div>
+          )}
           
           <AnimatePresence mode="wait">
             

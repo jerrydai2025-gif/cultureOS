@@ -1,0 +1,6 @@
+id,name_zh,name_en,description_zh,description_en,hofstede_idv,active
+north_america,北美,North America,高个人主义(IDV 91)和低权力距离，对自愈心流、FDA/FTC健康功效广告限制极度敏感。,High individualism (91) & low power distance. Extremely sensitive to emotional self-care and strict FDA/FTC regulatory fine lines.,91,true
+latin_america,拉美,Latin America,低个人主义(IDV 30)与亲切温情，热捧高饱和色彩、大家庭聚会、现场节奏感以及节日欢歌。,Low individualism (30) & high warmth. Prefers high-saturation visuals, family unions, acoustic rhythms, and holiday festivities.,30,true
+europe,欧洲,Europe,倡导可持续发展(ESG)、绿色低碳及严苛的GDPR个人隐私数据合规。,Highly values sustainability (ESG), green carbon offset standards, and strict GDPR privacy regulations.,67,true
+southeast_asia,东南亚,Southeast Asia,多元文化共生、高度移动化社交及网红主导，对宗教清真、地缘俚语具有极多规约。,Multicultural co-existence with mobile-first influencer drive. Requires high compliance around Halal and religious sensitivities.,25,true
+japan_korea,日韩,East Asia,极致细节控、强调集体社会认同与低调含蓄的极简视觉，偏好极其精美的手作伴手礼包装。,Exquisite detail focus. Emphasizes social validation and subtle aesthetics. Prefers highly refined packaging design.,46,true

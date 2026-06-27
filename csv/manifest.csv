@@ -1,0 +1,15 @@
+file_path,row_count,description
+csv/categories.csv,6,行业品类入口数据表
+csv/target_markets.csv,6,目标市场预设数据表
+csv/audiences.csv,5,目标用户人群数据表
+csv/culture_narratives.csv,6,文化叙事预设数据表
+csv/platforms.csv,6,社交媒体平台与交付形态数据表
+csv/risk_rules.csv,6,合规及出海红线熔断拦截表
+csv/content_templates.csv,5,内容产出模块与分镜模板表
+csv/case_presets.csv,3,名企出海DTC及博主优秀示例表
+csv/kpi_presets.csv,5,多维投放复盘核心度量指标表
+csv/culturepack_presets.csv,3,预置策略包JSON成品导出表
+csv/category_narrative_map.csv,9,行业品类与文化叙事推荐推荐矩阵
+csv/category_platform_map.csv,9,行业品类与社交推荐矩阵
+csv/market_platform_map.csv,9,市场大区与推荐平台关联表
+csv/manifest.csv,15,数据库索引及元数据总览清单

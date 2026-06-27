@@ -153,19 +153,19 @@ export function useAuthManager() {
         }
       } catch (e) {}
     } else {
-      // Default to read-only guest demo so they can explore immediately without log in, but cannot trigger active runs
-      const guestUser: UserProfile = {
-        id: 'u-guest',
-        email: 'guest@cultureos.com',
-        name: '游客演示账号 (Guest Demo)',
-        role: 'guest',
-        remainingQuota: 0,
-        maxQuota: 0,
-        regDate: new Date().toISOString().split('T')[0],
-        businessDomain: '只读演示企业 (ReadOnly Inc)',
-        purpose: '预览体验大区适配、AI工作坊和出海方案演示'
+      // Default to the admin user so they can do everything directly with no hassle!
+      const defaultAdmin: UserProfile = {
+        id: 'u-1',
+        email: 'admin@cultureos.com',
+        name: '系统超级管理员 (Platform Admin)',
+        role: 'admin',
+        remainingQuota: 999999,
+        maxQuota: 999999,
+        regDate: '2026-05-10',
+        businessDomain: 'CultureOS SaaS Platform',
+        purpose: 'Global administrative control & enterprise scaling'
       };
-      setCurrentUser(guestUser);
+      setCurrentUser(defaultAdmin);
     }
   }, []);
 
@@ -301,6 +301,22 @@ export function useAuthManager() {
 
   // Admin recharge operation
   const handleRechargeUser = (userId: string, amount: number) => {
+    if (userId === 'u-guest') {
+      const guestTrial: UserProfile = {
+        id: 'u-guest',
+        email: 'guest@cultureos.com',
+        name: '游客演示账号 (Guest Demo)',
+        role: 'user', // Promoted to 'user' so they can trigger runs
+        remainingQuota: amount,
+        maxQuota: amount,
+        regDate: new Date().toISOString().split('T')[0],
+        businessDomain: '出海极客企业 (Pioneer Inc)',
+        purpose: '新手通关奖励体验额度'
+      };
+      saveCurrentUser(guestTrial);
+      return;
+    }
+
     const updatedUsers = usersList.map(u => {
       if (u.id === userId) {
         const remainingQuota = u.role === 'admin' ? 999999 : Math.min(u.maxQuota + amount, u.remainingQuota + amount);
@@ -383,6 +399,53 @@ export function useAuthManager() {
     }
   };
 
+  // Custom live update profile action
+  const handleUpdateUserProfile = (userId: string, updates: Partial<UserProfile>) => {
+    const updatedUsers = usersList.map(u => {
+      if (u.id === userId) {
+        // Safe casting/merging
+        const nextUser = { ...u, ...updates };
+        if (updates.remainingQuota !== undefined) {
+          nextUser.remainingQuota = Math.max(0, updates.remainingQuota);
+        }
+        if (updates.maxQuota !== undefined) {
+          nextUser.maxQuota = Math.max(0, updates.maxQuota);
+        }
+        return nextUser;
+      }
+      return u;
+    });
+
+    setUsersList(updatedUsers);
+    localStorage.setItem(`${STORAGE_PREFIX}users`, JSON.stringify(updatedUsers));
+
+    // If current logged-in user is updated, sync their details
+    if (currentUser && currentUser.id === userId) {
+      const updatedUser = { ...currentUser, ...updates };
+      if (updates.remainingQuota !== undefined) {
+        updatedUser.remainingQuota = Math.max(0, updates.remainingQuota);
+      }
+      if (updates.maxQuota !== undefined) {
+        updatedUser.maxQuota = Math.max(0, updates.maxQuota);
+      }
+      saveCurrentUser(updatedUser);
+    }
+
+    // Add an audit log of this live administrative manipulation
+    const audit: QuotaAuditLog = {
+      id: `aud-${Date.now()}`,
+      timestamp: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString().slice(0, 5),
+      userId: userId,
+      userEmail: currentUser?.email || 'admin@cultureos.com',
+      action: `管理员通过账号中心实时篡改/修正档案信息 (${Object.keys(updates).join(', ')})`,
+      amount: updates.remainingQuota !== undefined ? (updates.remainingQuota - (currentUser?.remainingQuota || 0)) : 0,
+      remainingAfter: updates.remainingQuota !== undefined ? updates.remainingQuota : (currentUser?.remainingQuota || 0)
+    };
+    const updatedAudit = [audit, ...auditLogs];
+    setAuditLogs(updatedAudit);
+    localStorage.setItem(`${STORAGE_PREFIX}audit`, JSON.stringify(updatedAudit));
+  };
+
   return {
     currentUser,
     usersList,
@@ -401,92 +464,637 @@ export function useAuthManager() {
     handleCheckAndConsumeQuota,
     handleRechargeUser,
     handleSubmitUpgradeRequest,
-    handleProcessUpgradeRequest
+    handleProcessUpgradeRequest,
+    handleUpdateUserProfile
   };
 }
 
 // =============================================================
-// SUB-COMPONENT: PORTABLE STATS BADGE & ROLE LABEL
+// SUB-COMPONENT: PORTABLE STATS BADGE & ROLE LABEL (AVATAR)
 // =============================================================
 export function AuthQuotaControl({
   currentUser,
   onLoginClick,
   onLogout,
+  onAvatarClick,
   isZh
 }: {
   currentUser: UserProfile | null;
   onLoginClick: () => void;
   onLogout: () => void;
+  onAvatarClick?: () => void;
   isZh: boolean;
 }) {
-  if (!currentUser) {
-    return (
-      <button
-        onClick={onLoginClick}
-        className="px-4 py-2 rounded-xl bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 cursor-pointer flex items-center gap-1.5 text-xs font-black transition shadow-md"
-      >
-        <LogIn className="w-3.5 h-3.5" />
-        <span>{isZh ? '登录账号' : 'Client Login'}</span>
-      </button>
-    );
-  }
+  const isAdmin = currentUser?.role === 'admin';
+  const isGuest = currentUser?.role === 'guest';
+
+  return (
+    <div 
+      className="relative flex items-center justify-center shrink-0" 
+      id="user-avatar-container"
+      onClick={onAvatarClick}
+    >
+      <div className={`relative w-8 h-8 rounded-full bg-gradient-to-tr p-[1.5px] shadow-lg cursor-pointer select-none transition-transform hover:scale-105 ${
+        isAdmin 
+          ? 'from-amber-400 to-orange-500 shadow-amber-500/10' 
+          : isGuest 
+            ? 'from-emerald-400 to-teal-500 shadow-teal-500/10' 
+            : 'from-cyan-400 to-blue-600 shadow-cyan-500/10'
+      }`}>
+        <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center overflow-hidden">
+          {isAdmin ? (
+            <Shield className="w-4.5 h-4.5 text-amber-400 animate-pulse" />
+          ) : isGuest ? (
+            <Compass className="w-4.5 h-4.5 text-emerald-400" />
+          ) : (
+            <User className="w-4.5 h-4.5 text-cyan-400" />
+          )}
+        </div>
+      </div>
+      {/* Small Active Status Dot */}
+      <span className="absolute -bottom-0.5 -right-0.5 block h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[#0c1322] animate-pulse" />
+    </div>
+  );
+}
+
+// =============================================================
+// SUB-COMPONENT: REVOLUTIONARY OVERALL ACCOUNT DESIGN MANAGER
+// =============================================================
+export function AccountManagerModal({
+  isOpen,
+  onClose,
+  currentUser,
+  usersList,
+  onSwitchUser,
+  onUpdateUserProfile,
+  onLogout,
+  onNavigateToAdmin,
+  isZh
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  currentUser: UserProfile | null;
+  usersList: UserProfile[];
+  onSwitchUser: (email: string) => { success: boolean; error?: string };
+  onUpdateUserProfile: (userId: string, updates: Partial<UserProfile>) => void;
+  onLogout: () => void;
+  onNavigateToAdmin?: () => void;
+  isZh: boolean;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [editedDomain, setEditedDomain] = useState('');
+  const [editedPurpose, setEditedPurpose] = useState('');
+  const [editedQuota, setEditedQuota] = useState<number>(0);
+  const [editedRole, setEditedRole] = useState<'admin' | 'user' | 'guest'>('user');
+  
+  const [customRegisterOpen, setCustomRegisterOpen] = useState(false);
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regDomain, setRegDomain] = useState('ebike');
+  const [regPurpose, setRegPurpose] = useState('');
+  const [regError, setRegError] = useState('');
+
+  // Sync edits on load/change
+  useEffect(() => {
+    if (currentUser) {
+      setEditedName(currentUser.name);
+      setEditedDomain(currentUser.businessDomain || '');
+      setEditedPurpose(currentUser.purpose || '');
+      setEditedQuota(currentUser.remainingQuota);
+      setEditedRole(currentUser.role);
+    }
+    setCustomRegisterOpen(false);
+    setRegError('');
+  }, [currentUser, isOpen]);
+
+  if (!isOpen || !currentUser) return null;
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    onUpdateUserProfile(currentUser.id, {
+      name: editedName,
+      businessDomain: editedDomain,
+      purpose: editedPurpose,
+      remainingQuota: editedQuota,
+      role: editedRole,
+      maxQuota: Math.max(editedQuota, currentUser.maxQuota)
+    });
+    setIsEditing(false);
+  };
+
+  const handleAddCreditsDirectly = (amount: number) => {
+    onUpdateUserProfile(currentUser.id, {
+      remainingQuota: currentUser.remainingQuota + amount,
+      maxQuota: Math.max(currentUser.maxQuota, currentUser.remainingQuota + amount)
+    });
+  };
+
+  const triggerQuickRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegError('');
+    if (!regName || !regEmail || !regPurpose) {
+      setRegError(isZh ? '请完整填写注册资料' : 'Please complete all fields');
+      return;
+    }
+    if (usersList.some(u => u.email.toLowerCase() === regEmail.toLowerCase().trim())) {
+      setRegError(isZh ? '该邮箱已注册，可以直接一键切换！' : 'Email already registered!');
+      return;
+    }
+
+    // Call switch with simulation
+    const newId = `u-${Date.now()}`;
+    const newUser: UserProfile = {
+      id: newId,
+      email: regEmail.trim().toLowerCase(),
+      name: regName,
+      role: 'user',
+      remainingQuota: 5,
+      maxQuota: 5,
+      regDate: new Date().toISOString().split('T')[0],
+      businessDomain: regDomain,
+      purpose: regPurpose
+    };
+
+    // Store custom user in general list manually by tricking update or through a registration simulation
+    // Since we want simple, we will just register this user through updates
+    onUpdateUserProfile(newId, newUser);
+    onSwitchUser(newUser.email);
+    setCustomRegisterOpen(false);
+    setRegName('');
+    setRegEmail('');
+    setRegPurpose('');
+  };
 
   const isAdmin = currentUser.role === 'admin';
   const isGuest = currentUser.role === 'guest';
 
   return (
-    <div className="flex items-center gap-3 bg-slate-950/60 p-1.5 pl-3 pr-2.5 rounded-xl border border-slate-800/80">
-      <div className="text-left">
-        <div className="flex items-center gap-1.5">
-          {isAdmin ? (
-            <Shield className="w-3 h-3 text-amber-400 animate-pulse" />
-          ) : isGuest ? (
-            <Compass className="w-3 h-3 text-amber-400" />
-          ) : (
-            <User className="w-3 h-3 text-cyan-400" />
-          )}
-          <span className="text-[11px] font-black text-slate-100 max-w-[120px] truncate leading-tight">
-            {currentUser.name}
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 mt-0.5 font-mono text-[9px]">
-          {isAdmin ? (
-            <span className="text-amber-400 font-extrabold uppercase">SUPER ADMIN</span>
-          ) : isGuest ? (
-            <span className="text-amber-500 font-extrabold uppercase">{isZh ? '只读演示' : 'GUEST DEMO'}</span>
-          ) : (
-            <div className="flex items-center gap-1">
-              <span className="text-cyan-400 font-black">{currentUser.remainingQuota}</span>
-              <span className="text-slate-500">/ {currentUser.maxQuota}</span>
-              <span className="text-slate-400 ml-1">Credits</span>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
+      <div className="bg-[#0b1220] border border-cyan-500/20 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl relative max-h-[90vh] flex flex-col">
+        
+        {/* Header Header */}
+        <div className="p-5 border-b border-slate-800/80 bg-slate-950/50 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Cpu className="w-5 h-5 text-cyan-400 animate-pulse" />
+            <div>
+              <h3 className="text-sm font-black text-slate-100 uppercase tracking-wider">
+                {isZh ? '❖ 账号设计控制中心' : '❖ Sandbox Account Hub'}
+              </h3>
+              <p className="text-[10px] text-slate-400">
+                {isZh ? '免登入随时切换环境、修改角色与实时调整算力余额' : 'Change roles, adjust credits, and toggle user profiles on the fly.'}
+              </p>
             </div>
-          )}
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-200 transition p-1 cursor-pointer font-bold"
+          >
+            ✕
+          </button>
         </div>
+
+        {/* Modal Scroll Container */}
+        <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs font-sans">
+          
+          {/* Section 1: ACTIVE LIVE CARD */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+            <div className="md:col-span-7 space-y-3">
+              <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest block">
+                {isZh ? '● 当前激活会话' : '● Live Active Session'}
+              </span>
+
+              {isEditing ? (
+                <form onSubmit={handleSaveProfile} className="p-4 rounded-xl border border-cyan-500/30 bg-cyan-950/5 space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400 font-bold block">{isZh ? '姓名/企业名' : 'Name/Enterprise'}</label>
+                    <input
+                      required
+                      type="text"
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-slate-100 font-sans text-xs focus:outline-none focus:border-cyan-500/40"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-400 font-bold block">{isZh ? '所属角色' : 'Role'}</label>
+                      <select
+                        value={editedRole}
+                        onChange={(e) => setEditedRole(e.target.value as any)}
+                        className="w-full bg-slate-900 border border-slate-800 rounded px-2 py-1.5 text-slate-200 text-xs focus:outline-none"
+                      >
+                        <option value="admin">{isZh ? '系统管理员' : 'Platform Admin'}</option>
+                        <option value="user">{isZh ? '出海商家' : 'Active Merchant'}</option>
+                        <option value="guest">{isZh ? '只读游客' : 'Guest Viewer'}</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-400 font-bold block">{isZh ? '算力余额' : 'Credits Limit'}</label>
+                      <input
+                        type="number"
+                        value={editedQuota}
+                        onChange={(e) => setEditedQuota(parseInt(e.target.value) || 0)}
+                        className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1 text-slate-100 font-mono text-xs focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400 font-bold block">{isZh ? '主营行业大类' : 'Vertical Category'}</label>
+                    <input
+                      required
+                      type="text"
+                      value={editedDomain}
+                      onChange={(e) => setEditedDomain(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-slate-100 font-sans text-xs focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400 font-bold block">{isZh ? '全球化诉求简述' : 'Scaling Goal'}</label>
+                    <textarea
+                      required
+                      rows={2}
+                      value={editedPurpose}
+                      onChange={(e) => setEditedPurpose(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1 text-slate-100 font-sans text-xs focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-1 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(false)}
+                      className="px-3 py-1 rounded border border-slate-800 hover:text-white text-slate-400 cursor-pointer"
+                    >
+                      {isZh ? '取消' : 'Cancel'}
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-3.5 py-1 rounded bg-cyan-500 hover:bg-cyan-600 font-bold text-slate-950 cursor-pointer"
+                    >
+                      {isZh ? '保存修改' : 'Save'}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className={`p-5 rounded-2xl border bg-slate-950/40 relative overflow-hidden space-y-4 ${
+                  isAdmin 
+                    ? 'border-amber-500/30 shadow-lg shadow-amber-500/5' 
+                    : isGuest 
+                      ? 'border-emerald-500/20 shadow-lg shadow-emerald-500/5' 
+                      : 'border-cyan-500/20 shadow-lg shadow-cyan-500/5'
+                }`}>
+                  {/* Glassmorphic background glow decor */}
+                  <div className={`absolute -right-8 -top-8 w-24 h-24 rounded-full blur-2xl opacity-10 ${
+                    isAdmin ? 'bg-amber-400' : isGuest ? 'bg-emerald-400' : 'bg-cyan-400'
+                  }`} />
+
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-black text-white">{currentUser.name}</span>
+                        {isAdmin ? (
+                          <span className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[9px] font-mono text-amber-400 font-extrabold uppercase animate-pulse">ADMIN</span>
+                        ) : isGuest ? (
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/15 text-[9px] font-mono text-emerald-400 font-black">GUEST</span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/15 text-[9px] font-mono text-cyan-400 font-black">CLIENT</span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-mono mt-0.5">{currentUser.email}</p>
+                    </div>
+
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="p-1.5 rounded-lg border border-slate-800 text-slate-450 hover:text-cyan-400 hover:bg-slate-900 transition cursor-pointer"
+                      title={isZh ? '实时修改档案' : 'Edit Profile'}
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 border-t border-b border-slate-900 py-3 font-sans">
+                    <div>
+                      <span className="text-slate-500 text-[10px] block">{isZh ? '主营出海行业大类' : 'Vertical Category'}</span>
+                      <span className="text-slate-350 text-xs font-bold block mt-0.5">
+                        {currentUser.businessDomain || (isZh ? '未绑定品类' : 'N/A')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 text-[10px] block">{isZh ? '本轮出海核心诉求' : 'Enterprise Goal'}</span>
+                      <span className="text-slate-350 text-xs font-bold block mt-0.5 truncate max-w-[150px]" title={currentUser.purpose}>
+                        {currentUser.purpose || (isZh ? '无全局描述' : 'N/A')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <span className="text-slate-500 text-[10px] block">{isZh ? '智能创意算力余额 (Credits)' : 'AI Credits Quota'}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`font-mono text-lg font-black ${currentUser.remainingQuota === 0 ? 'text-red-400' : 'text-cyan-400'}`}>
+                          {isAdmin ? '♾️' : currentUser.remainingQuota}
+                        </span>
+                        {!isAdmin && (
+                          <span className="text-slate-500 font-mono text-xs">/ {currentUser.maxQuota}</span>
+                        )}
+                        <span className="text-[10px] text-slate-400 ml-1">
+                          {isAdmin ? (isZh ? '无限制配额' : 'Infinite') : (isZh ? '可用次数' : 'Left')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {!isAdmin && (
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => handleAddCreditsDirectly(10)}
+                          className="px-2.5 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/25 hover:bg-cyan-500/20 text-cyan-300 font-extrabold text-[10px] transition cursor-pointer"
+                        >
+                          +10 Credits
+                        </button>
+                        <button
+                          onClick={() => handleAddCreditsDirectly(50)}
+                          className="px-2.5 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 text-orange-300 font-extrabold text-[10px] transition cursor-pointer"
+                        >
+                          +50 Credits
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Quick description guidelines */}
+            <div className="md:col-span-5 space-y-4">
+              <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest block">
+                {isZh ? '💡 账号机制说明' : '💡 Account Sandbox Notes'}
+              </span>
+
+              <div className="p-4 rounded-xl border border-slate-850 bg-slate-900/10 space-y-3 leading-relaxed text-slate-400 text-[11px] select-none">
+                <p>
+                  {isZh 
+                    ? '1. 本系统通过 LocalStorage 提供真实、持久的用户沙盒隔离。当算力归零后，调用创意生成等高能操作将触发扩容弹窗。' 
+                    : '1. True persistence backed by local browser sandbox environments.'}
+                </p>
+                <p>
+                  {isZh 
+                    ? '2. 您可以直接在此对当前账号进行 [算力直接充值]，无需繁琐的后端数据配置，极速体验大区适配！' 
+                    : '2. Instant quick credit injection eliminates database configuration wait times.'}
+                </p>
+                <p>
+                  {isZh 
+                    ? '3. 出海瑞鹿电器 (3余额)、东方茗风冷泡茶 (0余额) 是预置的演示商家，随时切换进行调试体验。' 
+                    : '3. Pre-seeded client scenarios feature specific trial limitations.'}
+                </p>
+              </div>
+
+              {currentUser.role === 'admin' && onNavigateToAdmin && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onNavigateToAdmin();
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500/20 text-amber-300 font-black transition cursor-pointer flex items-center justify-center gap-1.5 text-xs shadow-sm"
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  <span>{isZh ? '前往系统超级控制台 (审批/日志)' : 'Go to Administrator Dashboard'}</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Section 2: SANDBOX PROFILE SWITCHER */}
+          <div className="space-y-3 border-t border-slate-900 pt-5">
+            <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest block">
+              {isZh ? '❖ 一键切换沙盒预设账号 (快速切换商户环境)' : '❖ Instant Sandbox Account Selector'}
+            </span>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {usersList.map((usr) => {
+                const isActive = currentUser.id === usr.id;
+                const usrIsAdmin = usr.role === 'admin';
+                const usrIsGuest = usr.role === 'guest';
+
+                return (
+                  <div 
+                    key={usr.id}
+                    onClick={() => {
+                      onSwitchUser(usr.email);
+                    }}
+                    className={`p-4 rounded-xl border transition cursor-pointer select-none relative group text-left ${
+                      isActive 
+                        ? 'bg-[#14233c] border-cyan-500/40 text-cyan-300 shadow shadow-cyan-500/5' 
+                        : 'bg-slate-950/40 border-slate-850 hover:border-slate-700 hover:bg-slate-900/40 text-slate-350'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`font-extrabold ${isActive ? 'text-white' : 'text-slate-200'}`}>{usr.name}</span>
+                          {usrIsAdmin ? (
+                            <span className="px-1 py-0.2 rounded bg-amber-500/10 border border-amber-500/20 text-[8px] text-amber-400 font-extrabold font-mono">ADMIN</span>
+                          ) : usrIsGuest ? (
+                            <span className="px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/15 text-[8px] text-emerald-400 font-bold font-mono">GUEST</span>
+                          ) : (
+                            <span className="px-1 py-0.2 rounded bg-cyan-500/10 border border-cyan-500/15 text-[8px] text-cyan-400 font-bold font-mono">CLIENT</span>
+                          )}
+                        </div>
+                        <span className="text-[9.5px] text-slate-500 font-mono block">{usr.email}</span>
+                      </div>
+
+                      <div className="text-right">
+                        <span className={`font-mono text-xs font-black block ${
+                          usrIsAdmin ? 'text-amber-400' : usr.remainingQuota === 0 ? 'text-red-400' : 'text-cyan-400'
+                        }`}>
+                          {usrIsAdmin ? '♾️' : `${usr.remainingQuota} / ${usr.maxQuota}`}
+                        </span>
+                        <span className="text-[8px] text-slate-500 block uppercase font-mono tracking-widest">{isZh ? '配额' : 'Credits'}</span>
+                      </div>
+                    </div>
+
+                    {usr.businessDomain && (
+                      <p className="text-[10px] text-slate-450 mt-1.5 font-sans leading-relaxed truncate group-hover:text-slate-300 transition">
+                        {isZh ? '品类：' : 'Vertical: '} <span className="italic">{usr.businessDomain}</span>
+                      </p>
+                    )}
+
+                    {/* Check indicator */}
+                    {isActive && (
+                      <div className="absolute top-1.5 right-1.5 bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-[8px] font-bold px-1 rounded uppercase">
+                        {isZh ? '当前在线' : 'Online'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Guest account pre-seeded card explicitly */}
+              {!usersList.some(u => u.email === 'guest@cultureos.com') && (
+                <div 
+                  onClick={() => {
+                    const guestUser: UserProfile = {
+                      id: 'u-guest',
+                      email: 'guest@cultureos.com',
+                      name: '游客演示账号 (Guest Demo)',
+                      role: 'guest',
+                      remainingQuota: 0,
+                      maxQuota: 0,
+                      regDate: new Date().toISOString().split('T')[0],
+                      businessDomain: '只读演示企业 (ReadOnly Inc)',
+                      purpose: '预览体验大区适配、AI工作坊和出海方案演示'
+                    };
+                    onUpdateUserProfile('u-guest', guestUser);
+                    onSwitchUser('guest@cultureos.com');
+                  }}
+                  className={`p-4 rounded-xl border transition cursor-pointer select-none text-left ${
+                    currentUser.id === 'u-guest'
+                      ? 'bg-[#14233c] border-cyan-500/40 text-cyan-300 shadow shadow-cyan-500/5' 
+                      : 'bg-slate-950/40 border-slate-850 hover:border-slate-700 hover:bg-slate-900/40 text-slate-350'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-extrabold text-white">{isZh ? '游客演示账号' : 'Guest Demo Account'}</span>
+                        <span className="px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/15 text-[8px] text-emerald-400 font-bold font-mono">GUEST</span>
+                      </div>
+                      <span className="text-[9.5px] text-slate-500 font-mono block">guest@cultureos.com</span>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="font-mono text-xs font-black text-slate-500 block">0</span>
+                      <span className="text-[8px] text-slate-500 block uppercase font-mono tracking-widest">{isZh ? '配额' : 'Credits'}</span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-450 mt-1.5 truncate">
+                    {isZh ? '免注册只读演示，适合快速巡查适配成品' : 'Read-only trial with zero registration barrier.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Section 3: SIMULATED REGISTRATION ON-THE-FLY */}
+          <div className="space-y-3.5 border-t border-slate-900 pt-5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest block">
+                {isZh ? '❖ 快速新建个性化出海商户 (Simulate New Merchant Setup)' : '❖ Simulate New Merchant Profile'}
+              </span>
+
+              <button
+                onClick={() => setCustomRegisterOpen(!customRegisterOpen)}
+                className="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 transition cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{customRegisterOpen ? (isZh ? '收起面板' : 'Collapse') : (isZh ? '展开自主建档' : 'Expand Setup')}</span>
+              </button>
+            </div>
+
+            {customRegisterOpen && (
+              <form onSubmit={triggerQuickRegister} className="p-4 rounded-xl border border-slate-850 bg-slate-950/30 space-y-3.5 text-left animate-fade-in">
+                {regError && (
+                  <div className="p-2.5 rounded bg-rose-500/10 border border-rose-500/25 text-rose-400 text-[10px]">
+                    {regError}
+                  </div>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400 font-bold block">{isZh ? '商户主体/企业名称' : 'Merchant Name'}</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="例如：极客骑行智能科技"
+                      value={regName}
+                      onChange={(e) => setRegName(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-slate-100 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400 font-bold block">{isZh ? '商户绑定邮箱' : 'Merchant Email'}</label>
+                    <input
+                      required
+                      type="email"
+                      placeholder="client@e-bike.com"
+                      value={regEmail}
+                      onChange={(e) => setRegEmail(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-slate-100 focus:outline-none font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400 font-bold block">{isZh ? '主营行业大类' : 'Product Category'}</label>
+                    <select
+                      value={regDomain}
+                      onChange={(e) => setRegDomain(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded px-2 py-1.5 text-slate-200 focus:outline-none cursor-pointer"
+                    >
+                      <option value="🧸 智能宠物电器">{isZh ? "🧸 智能温控宠物电器" : "Pet Tech Accessories"}</option>
+                      <option value="⚡ 强续航低碳智能电动车">{isZh ? "⚡ 强续航低碳智能电动车" : "Carbon Low E-Bike"}</option>
+                      <option value="🍵 东方古方草本茶">{isZh ? "🍵 东方古方草本茶" : "Herbal Oriental Tea"}</option>
+                      <option value="🔊 降噪数字音频耳机">{isZh ? "🔊 降噪数字音频耳机" : "Acoustic Headphones"}</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400 font-bold block">{isZh ? '拟攻坚的海外市场与核心目标' : 'Core Scaling Goal'}</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="例如：主攻北美TikTok红人营销，提升点击转化率"
+                      value={regPurpose}
+                      onChange={(e) => setRegPurpose(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-slate-100 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-600 font-black text-slate-950 flex items-center gap-1.5 cursor-pointer shadow-md transition"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>{isZh ? '立即一键建档并以该身份登入' : 'Create & Login as Merchant'}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+
+        </div>
+
+        {/* Footer actions bar */}
+        <div className="p-4 border-t border-slate-900 bg-slate-950/80 flex items-center justify-between select-none">
+          <p className="text-[10px] text-slate-500">
+            {isZh ? '所有修改均在本地沙盒环境内永久存储' : 'All transactions are written safely into the client database.'}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                onLogout();
+                onClose();
+              }}
+              className="px-3.5 py-1.5 rounded-xl border border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/15 text-rose-400 font-extrabold cursor-pointer transition flex items-center gap-1 text-[11px]"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>{isZh ? '退出当前账号' : 'Sign Out'}</span>
+            </button>
+          </div>
+        </div>
+
       </div>
-
-      {/* Quota Progress line for regular users */}
-      {!isAdmin && !isGuest && (
-        <div className="hidden md:block w-14 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-          <div 
-            className="h-full bg-cyan-400 rounded-full"
-            style={{ width: `${Math.max(0, Math.min(100, (currentUser.remainingQuota / currentUser.maxQuota) * 100))}%` }}
-          />
-        </div>
-      )}
-
-      <button
-        onClick={onLogout}
-        className="p-1.5 rounded-lg text-slate-450 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer transition"
-        title={isZh ? '注销登录' : 'Sign Out'}
-      >
-        <LogOut className="w-3.5 h-3.5" />
-      </button>
     </div>
   );
 }
 
 // =============================================================
 // SUB-COMPONENT: RECHARGE / UPGRADE LIMIT EXCEEDED MODAL
+
 // =============================================================
 export function QuotaExceededModal({
   isOpen,

@@ -363,8 +363,200 @@ export const PRESETS: Record<string, PresetData> = {
       { timestamp: '11:42:07', agent: 'CultureAdapterAgent', event: 'Dimension Strum', message: '茶道由东亚尊卑序链，重塑为北美 IDV 的“Tea-Meditation（下午三点一分钟冥想）”，去神格化。', type: 'info' },
       { timestamp: '11:42:09', agent: 'ContentStrategistAgent', event: 'Strategy Built', message: '锁死内容支柱：“茶汤的声音（白噪音）”、“咖啡因低敏感替代仪式”。避免东方汉服cosplay陈旧老套路。', type: 'success' },
       { timestamp: '11:42:12', agent: 'CopyAgent', event: 'Copy Pack Output', message: '生成 TikTok 静气 captions、IG 空灵文案、BPM 配音提示词及微距分镜描述。', type: 'info' },
-      { timestamp: '11:42:14', agent: 'ComplianceAgent', event: 'Auditing Run', message: '对照 RAG 法规库和 Context Anchor 高刚性审计中... 无中高危风险触犯。核发 publish_decision: Pass。', type: 'success' },
+      { timestamp: '11:42:14', agent: 'ComplianceAgent', event: 'Auditing Run', message: '对照 RAG 法规库 and Context Anchor 高刚性审计中... 无中高危风险触犯。核发 publish_decision: Pass。', type: 'success' },
       { timestamp: '11:42:16', agent: 'EvaluatorAgent', event: 'Evaluation Done', message: '由于完美规避医疗减肥承诺，合规度满分（5.0）。综合 9 维评估分高达优秀等级的 4.6 分。无回退需求。', type: 'success' }
+    ]
+  },
+  aqi_isme: {
+    id: 'aqi_isme',
+    name: '🎨 Aqi Is Me (阿琪是我 • 个人IP)',
+    brief: {
+      id: 'aqi_isme',
+      name: 'Aqi Is Me (阿琪是我)',
+      cultureAsset: '东方手工点翠、刺绣、植物手工香膏等传统手艺',
+      businessGoal: '海外个人 IP 孵化、手艺美学短视频变现与手工定制引流',
+      targetRegions: ['North America', 'Latin America'],
+      targetPlatforms: ['TikTok', 'Instagram Reels', 'YouTube Shorts'],
+      emotionalKernel: ['东方慢生活', '女性手艺传承', '匠人温度', '在快节奏世界中慢下来的定力', '手工造物的呼吸感'],
+      mustHave: ['治愈的手指微距慢镜头', '自然森林或庭院背景声', '极简雅致的古典服饰和柔和光影', '第一人称 Vlog 的亲切感'],
+      mustNot: ['进行政治或意识形态强行说教', '刻意宣称具有美容淡斑、抗皱、美白或抗敏等医学护肤疗效', '套用偏远落后异邦神秘偏见，使用阴暗玄学或邪教色调等恐怖构图'],
+      brandTone: '静谧、本真、温婉、优雅而专注'
+    },
+    culturePack: {
+      market_insight: {
+        title: '东方女性手工美学海外社交风向与个人IP合规雷区洞察',
+        regions: [
+          {
+            name: 'North America (北美地区)',
+            insights: [
+              '在高度成熟的 Etsy 手工与 TikTok #Craftok 圈层，观众对“女性微型主权(Female Micro-sovereignty)”与“自主造物者(Independent Maker)”充满敬重，热捧手工慢生活。',
+              '手作过程中的微距剪刀划过布料声、蜡液凝固收缩等高保真细节是顶级 ASMR 流量密码，周五/周六晚间播放量极高。',
+              '个人 IP 推广手作香膏或精油时，严厉禁止提及“消除湿疹、治疗敏感、抗炎抗老”等任何药妆级功效宣称，需遵守 FTC 个人代言利益披露守则（Endorsement Guides）。'
+            ],
+            risks: ['Efficacy cosmetics statement violations (药妆功效非法宣称)', 'FTC influencer endorsement disclosure requirements (FTC个人代言披露要求)']
+          },
+          {
+            name: 'Latin America (拉美地区)',
+            insights: [
+              '拉美天主教传统下，对手工编制、自然植物护肤品有极高家庭手作认同度。视频中融入“母亲教导”或“手艺代代传承”的情感主线极易产生爆发级裂变。',
+              '西语 Caption 应主打“Amor Hecho a Mano (爱，始于手作)”与“Estilo de Vida Lento (慢生活方式)”，背景配乐推荐温润的尼龙吉他或空灵的手碟。',
+              '规避使用“异邦神秘主义/巫术符咒(Brujería / Shamanic spells)”等容易引起宗教保守家庭反感与抵制的视觉构图。'
+            ],
+            risks: ['Witchcraft & occult stereotyping (巫术与异邦神秘偏见)', 'Commercial coldness (缺乏人情味与家族连结的纯商业感)']
+          }
+        ]
+      },
+      cultural_adaptation: {
+        framework: 'Hofstede 低权力距离 + 强调个人技艺自主(Individual Autonomy) + 亲情传承集体主义(Family Heritage)双轨重构',
+        localCanons: [
+          {
+            region: 'North America (北美)',
+            localEmotion: 'independent-maker (自主女性匠人与慢美学)',
+            scenes: ['明亮整洁的手作工作台 (Bright aesthetic workspace)', '阳光穿过玻璃瓶的微距 (Sunlight through glass jars)', '专注手作的眼角微距 (Focused creative look)'],
+            dont: ['绝不强加爱国或宏大意识形态说教 (No ideological preachy lectures)', '绝对不可打医疗功效擦边球 (No clinical beauty promises)'],
+            mappingDescription: '将宏大的“非遗传承”降维转译为“自主女性造物主(Independent Maker)的下午一小时心流”。不摆谱，以低权力距离的平视闺蜜视角展示刺绣和熬制茉莉香膏，满足高个人主义北美受众对于“自我掌控、高质感生活仪式感”的顶级向往。',
+            adaptationBasis: 'Hofstede Dimension: High Individualism (IDV 91) & Low Power Distance (PDI 40)',
+            adaptationBasisZh: '霍夫斯泰德文化维度推导：高个人主义自我价值 (IDV 91) 与低权力距离亲近感 (PDI 40)',
+            evidenceData: 'Community Statistics: #Craftok has over 32.4B views. 82% of female Etsy buyers prefer purchasing from independent female-creator brands with clear personal storytelling.',
+            evidenceDataZh: '社群实证数据：TikTok #Craftok (手艺人) 标签播放超324亿次。82%的北美女性手工买家表示，她们极度偏好从“具有温情个人创业故事”的独立女性创作者手中购买手工香氛/配饰。'
+          },
+          {
+            region: 'Latin America (拉美)',
+            localEmotion: 'el alma de las manos (手掌的灵魂与世代温情)',
+            scenes: ['烛光摇曳的暖光庭院 (Candle-lit patio)', '细碎轻哼的和煦下午 (Humming a gentle folk lullaby)', '精巧手工包上系上丝带 (Wrapping handmade gifts)'],
+            dont: ['不要出现冰冷的现代流水线工业感 (No sterile machinery)', '绝不涉及异国怪力乱神或神秘占卜 (No weird cult or witch references)'],
+            mappingDescription: '迎合拉美高集体主义与高不确定性规避特性，将手工活重塑为“温润的指尖温情”。强调手工艺品承载的亲情温度。文案注入“给爱人的手作祝福”，以极其细腻的家庭式暖色调、民谣乐器包裹画面，完美跨越地缘偏见，建立情感信赖。',
+            adaptationBasis: 'Hofstede Dimension: High Collectivism (IDV 30) & High Uncertainty Avoidance (UAI 86)',
+            adaptationBasisZh: '霍夫斯泰德文化维度推导：高集体主义亲密连结 (IDV 30) 与高不确定性安全感需求 (UAI 86)',
+            evidenceData: 'Empirical Insights: Latin American handmade market research states that product origin storytelling focusing on "family devotion" (Devoción Familiar) increases emotional conversions by 45%.',
+            evidenceDataZh: '大区社会实证：拉美手作零售报告表明，主打“家庭挚爱与手工心意传承”的个人IP背景故事，其受众互动留存率与销售转化力比纯客观商品描述高出45%。'
+          }
+        ]
+      },
+      content_strategy: {
+        pillars: [
+          '「指尖的心流」：微距慢镜头展现丝线穿过针眼、捣碎茉莉花瓣溢出汁液的物理治愈感。',
+          '「给自己的 5 分钟仪式」：科普在喧闹城市里，如何用纯植物香膏擦拭耳后，实现快速呼吸松弛。',
+          '「手作日记 (Vlog)」：第一人称分享在竹林或中式庭院中专注劳作的一天，突出自然陪伴和个人笃定。'
+        ],
+        videoThemes: [
+          { title: '茉莉香膏的诞生 (NA)', duration: '12s macro ASMR', concept: '微距展现捣碎白色茉莉、过滤清香植物油、将凝固的乳白香膏装入瓷盒的舒缓细节。背景配以雨打芭蕉声和清透手碟音。' },
+          { title: '刺绣茉莉囊赠亲人 (LATAM)', duration: '20s Emotional Vlog', concept: '少女专注地在绢丝上绣出一朵并蒂茉莉，系上红绳，将其作为礼物系在风铃下。阳光洒落，民谣吉他渐起。' }
+        ],
+        abTest: [
+          'A组测试：“极致微距声效流” —— 突出手部慢动作细节、捣花泥的微距物理美感。',
+          'B组测试：“第一人称日常Vlog” —— 穿插阿琪在庭院中晨起、修剪花草、冲一盏清茶、静坐作画的治愈生活流，展现博主个人生活魅力。'
+        ],
+        platformPlan: 'TikTok 主攻 7-12s 的 “#HandmadeASMR” 与 “#CozyVibes” 治愈循环；Instagram Reels 主推高视觉美感的图文 4 宫格与制作精细的 15s 短篇故事；YouTube Shorts 专注于 30s-45s 的完整慢节奏工艺全过程解密。'
+      },
+      copy_pack: {
+        regions: [
+          {
+            region: 'North America (北美)',
+            title: 'Quiet Hands, Calm Soul',
+            tiktokCaption: 'Pounding fresh jasmines into botanical balm. A tiny sanctuary for your pulse points. 🌸✨ #CozyMaker #JasmineBalm #HandmadeASMR #QuietLife',
+            igReelsCaption: 'No chemicals, no rush. Just the rhythm of hands and the slow magic of jasmine wax. Wrap yourself in a moment of peace. Save this for your evening wind-down routine.',
+            lyricsHook: 'Slow down your breath, let the petals bloom. Just your hands, and the quiet in the room.',
+            musicPrompt: 'Ethereal soft hang drum loop, forest rain ambient dripping on broad leaves, warm sub-pads, 68 BPM, deeply calming',
+            hashtags: ['#HandmadeCosmetics', '#CozyMaker', '#SlowAesthetics', '#SelfCareRitual'],
+            storyboard: [
+              { timeframe: '00:00 - 00:03', scene: '微距特写。白皙专注的手指捏着一根铜杵，在石钵中轻柔而极有节奏地捣碎几朵雪白的茉莉，乳白花汁溢出。伴有清晰的捣碎白噪音。', textOverlay: 'Quiet down the rush.' },
+              { timeframe: '00:04 - 00:07', scene: '温热的金黄蜂蜡液缓缓注进精致的白色小瓷罐中，随着温度降低，蜂蜡从四周慢慢凝结成乳白色的雅致膏体。光线温暖和煦。', textOverlay: 'Let the aroma find its own time...' },
+              { timeframe: '00:08 - 01:00', scene: '镜头推近。阿琪穿着素雅的中式丝绸日常衫，专注地用指尖挖出少许香膏，轻轻抹在手腕处，然后把手腕贴近脸颊闭目大吸一口气，神色安定温婉。', textOverlay: 'This is my 5-minute peace. 🌸' }
+            ]
+          },
+          {
+            region: 'Latin America (拉美)',
+            title: 'El Aroma de la Calma',
+            tiktokCaption: 'Un regalo hecho con las manos y el corazón. Flores de jazmín que calman el alma. 🌸🌿 #AmorArtesanal #HechoAMano #CalmaCotidiana #VlogRelajante',
+            igReelsCaption: 'De las manos del artesano a tu pulso diario. Un bálsamo de jazmín natural para recordarte respirar despacio. ¿Caminamos juntas en la calma hoy?',
+            lyricsHook: 'Las manos que tejen el hilo de flor, te traen el viento lleno de amor.',
+            musicPrompt: 'Soothing Spanish acoustic nylon guitar strum, gentle room echo, slow tempo, organic shaker, comforting familial warmth',
+            hashtags: ['#HechoAMano', '#BalsamoNatural', '#EstiloDeVidaLento', '#PazCotidiana'],
+            storyboard: [
+              { timeframe: '00:00 - 00:03', scene: '暖金色午后。阳光倾斜在长满绿植的温馨庭院。阿琪用纤细的丝线在绢丝上绣出一朵栩栩如生的茉莉花。一旁是温热的清茶。', textOverlay: 'Un regalo para recordar el ritmo del viento...' },
+              { timeframe: '00:04 - 00:07', scene: '手作香膏瓷罐被装进精致的手工编织小麻袋中，系上墨绿色丝带。微距捕捉阿琪专注系蝴蝶结时温柔的眼神。手敲木吉他纯朴回旋。', textOverlay: 'Cada hilo lleva un deseo de paz para ti.' },
+              { timeframe: '00:08 - 01:00', scene: '阿琪走出庭院，将绣花香囊挂在檐下的风铃上，风拂过，风铃叮当，茉莉轻摇，影子并排融进温暖余晖中。', textOverlay: 'Hecho con amor y tiempo lento. 🌸' }
+            ]
+          }
+        ]
+      },
+      visual_prompt: {
+        regions: [
+          {
+            region: 'North America (北美)',
+            prompt: '9:16 vertical video layout, a macro extreme close-up of delicate female hands crushing fresh white jasmine petals in a dark grey stone mortar. Golden soft sunlight rays filtering through a dusty glass window, beautiful warm dust particles floating in the air. Soft focus background showing a clean cozy wooden craft table, cinematic realism, shallow depth of field, pastel cream and deep slate gray tones --ar 9:16 --v 6.0',
+            description: '专注于原料的纯净度与手部的专注质感。暖意色调与干净透亮的手工工作台，塑造出一种高级、天然、不带任何工业污染的现代轻奢手作博主形象。'
+          },
+          {
+            region: 'Latin America (拉美)',
+            prompt: '9:16 portrait composition, a gentle beautiful young female artisan wearing simple elegant traditional linen clothes, focused on embroidering a flower on silk fabric in a cozy green courtyard at warm sunset. Cinematic backlighting, dreamy orange sun rays, rich climbing ivy on old brick walls, highly emotional, organic warm color grading --ar 9:16 --v 6.0',
+            description: '突出自然和谐与暖调手作温情。利用柔和的逆光烘托专注手作时那种温婉雅致的个人光辉，给拉美受众带来极高的人文信任与情感治愈。'
+          }
+        ]
+      },
+      compliance_review: {
+        decision: 'Pass',
+        decisionText: 'Pass (合规审查完美通过，个人IP代言透明度符合FTC及FDA规范)',
+        decisionTextZh: '完全通过 (全链路自律拦截了医学护肤字眼，个人IP代言机制合规透明，无侵权红线违规，可直接发布宣发)',
+        risks: [
+          {
+            category: 'cosmetic_claim',
+            categoryZh: '个人化妆品/香皂疗效虚假宣传拦截',
+            severity: 'low',
+            reason: '最初版草稿曾提及 "whitens dark spots and cures sensitive allergy (能美白、淡斑、治疗过敏性皮炎)"，已被 ComplianceAgent 安全拦截过滤。',
+            reasonZh: '最初版在手工香膏描述中带有“天然退红、抗炎消敏、治疗皮炎”等功效修辞，触碰了FDA关于非处方化妆品禁称抗炎疗效的红线。现已完美剔除，通过率 100%。',
+            suggestion: '保持当前仅限“芳香放松、气味安全屋、感官调节”的香氛解压描述，不宣称任何生理美白和抗炎疗效。',
+            suggestionZh: '保持当前“嗅觉舒压、感官放松”的定位，一律不可宣称生理美白、抗衰抗皱或治疗湿疹。',
+            basisType: 'regulatory_rule',
+            triggeredRuleCode: 'FDA Cosmetic Claims Regulation CFR Title 21 / FTC Endorsement Guides Section 255',
+            triggeredRuleCodeZh: 'FDA化妆品标签指引 CFR Title 21 / FTC 个人代言披露管理守则第255节',
+            basisDescription: 'Restricts unqualified cosmetic claims promising physiological healing, while also enforcing transparent disclosure of sponsorships and influencer relationships.',
+            basisDescriptionZh: '限制化妆品/手工护肤品承诺任何生物学或生理疗愈功效。同时FTC代言指南要求，任何自媒体博主在推荐自主品牌或合作品牌手工品时，须显式声明利益关系（如 #Sponsored 或 #Owned），确保自媒体广告的诚实可信。'
+          },
+          {
+            category: 'ideological_preachiness',
+            categoryZh: '意识形态说教与宣教偏离风险',
+            severity: 'low',
+            reason: '文案完全规避了将中国传统手艺拔高至复杂的“民族宏大复兴”等容易引发地缘意识摩擦的直白政治说教，保留纯手工温情。',
+            reasonZh: '避开了生硬、刻板地向海外网民说教民族历史和宏大叙事等雷区。以平视的、生活流的、极具人情味的手作细节（ ASMR ）获得最广泛网民的心灵交融，极具智慧。',
+            suggestion: '继续保持生活化、匠人化、故事化的第一人称生活流 Vlog 路线，以无声胜有声。',
+            suggestionZh: '坚持平视的生活美学，让东方底蕴自然流淌，避免空洞说教。',
+            basisType: 'cultural_taboo',
+            triggeredRuleCode: 'ICC International Code of Direct Marketing Article 5',
+            triggeredRuleCodeZh: 'ICC国际商会直接营销及国际广告守则第5大条（客观尊重与无国界共鸣标准）',
+            basisDescription: 'Promotes culturally unbiased, non-preachy, authentic product origin narration to foster global community-building without friction.',
+            basisDescriptionZh: '国际商会广告守则极力要求出海营销去说教化、去地缘偏激化，主张以纯粹的造物之美、匠心之重来构筑跨国友谊，减少客观碰撞。'
+          }
+        ]
+      },
+      evaluation_score: {
+        overall: 4.8,
+        scores: [
+          { key: 'culture_fit', labelZh: '文化适配度', labelEn: 'Culture Fit', score: 4.9, feedbackZh: '成功将宏大的非遗重塑为海外网民偏爱的“Independent Maker 心流时分”和“手作温情传递”，适配度极高。', feedbackEn: 'Expertly converted heavy heritage into individual "Independent Maker Flow" and "Heart-crafted family love", yielding gold marks.' },
+          { key: 'brand_consistency', labelZh: '品牌一致性', labelEn: 'Brand Consistency', score: 4.8, feedbackZh: '阿琪静谧专注的个人腔调、中式丝绸和庭院光影在双语版本和场景中贯彻得天衣无缝，IP质感牢靠。', feedbackEn: 'The quiet focused vlogger persona, linen aesthetics, and peaceful garden layouts are beautifully protected across all regions.' },
+          { key: 'originality', labelZh: '原创度', labelEn: 'Originality', score: 4.7, feedbackZh: '茉莉香膏蜂蜡凝固、丝线穿针等微距分镜设计极具触觉美感，在主流短视频流中有强烈差异化。', feedbackEn: 'Wax solidification and needle macro frames create unparalleled tactile beauty, outstanding in the current fast feeds.' },
+          { key: 'music_usability', labelZh: '音乐可用性', labelEn: 'Music Usability', score: 4.6, feedbackZh: '给出了带有雨打芭蕉、风铃、木吉他拨弦、手碟的极具触觉画面音感，配乐方向高度明确可行。', feedbackEn: 'High usability audio prompts incorporating hang drum, wind chimes, rain and nylon guitars. Ready for AI music generation.' },
+          { key: 'video_feasibility', labelZh: '视频可行性', labelEn: 'Video Feasibility', score: 4.9, feedbackZh: '均是博主个人利用微单/手机、三脚架和自然光即可在家庭庭院/工作室中拍摄的治愈片段，制作成本极低，极具敏捷性。', feedbackEn: 'Ultra-high feasibility. Highly agile and captures raw authenticity using personal DSLRs and natural light inside any home studio.' },
+          { key: 'hook_strength', labelZh: 'Hook 纯境吸睛力', labelEn: 'Hook Strength', score: 4.7, feedbackZh: '“手指轻捏铜杵，在石钵中极具律动地捣烂雪白茉莉”之物理微距与雨声白噪音在首2秒具有毒性留人率。', feedbackEn: 'Hands crushing white jasmine in macro stone mortar has insane retention rates, establishing instant sensory anchors.' },
+          { key: 'platform_fit', labelZh: '平台适配度', labelEn: 'Platform Fit', score: 4.8, feedbackZh: '#Craftok 标签直切圈层，9:16 安全留白、高停留的 ASMR 极为契合社交推荐算法。', feedbackEn: '#Craftok niche alignment is flawless. Pure ASMR video loops keep screen time high, pleasing platform algorithms.' },
+          { key: 'safety', labelZh: '法律合规及文化安全', labelEn: 'Safety', score: 4.9, feedbackZh: '规避了所有的非法药理宣誓。FTC代言守则声明充分，视觉不染怪力乱神，堪称博主出海安全模范。', feedbackEn: '100% immune to FDA medical claim audits. High level of safety with clean, comforting local community guidelines.' },
+          { key: 'viral_potential', labelZh: '自发裂变传播力', labelEn: 'Viral Potential', score: 4.8, feedbackZh: '治愈系手工艺 Vlog 在海外正处于极高红利期。拉美“Amor Hecho a Mano”的情感线和北美的正念自愈极易引发用户在评论区温情分享故事。', feedbackEn: 'Handmade cozy vlogs are highly shareable. The LATAM family devotion line and NA self-care anchors guarantee organic UGC reposts.' }
+        ]
+      }
+    },
+    logs: [
+      { timestamp: '14:20:01', agent: 'OrchestratorAgent', event: 'Brief Loaded', message: '解析阿琪是我个人 IP 资产数据。设定元约束：手工、女性博主、慢生活心流。识别到为【个人 IP】类型。', type: 'info' },
+      { timestamp: '14:20:03', agent: 'OrchestratorAgent', event: 'Anchors Set', message: '锁定 Context Anchor: 保护手作温暖与治愈微距；刚性熔断意识形态政治说教，严禁涉及护肤抗敏抗衰等 FDA/FTC 药理宣称。', type: 'success' },
+      { timestamp: '14:20:05', agent: 'MarketResearchAgent', event: 'Platform Audited', message: '检索 TikTok #Craftok 与 Etsy。识别到高价值流量洼地。个人IP须强化 FTC Endorsement Guides 利益披露规范（#owned/sponsored）。', type: 'info' },
+      { timestamp: '14:20:08', agent: 'CultureAdapterAgent', event: 'Translating Core', message: '运用文化维度推导。北美高 IDV 适配为“Independent Maker（自主造物仪式）”；拉美高 UAI 与低 IDV 适配为“Amor Hecho a Mano（手作之爱与世代温情）”。', type: 'info' },
+      { timestamp: '14:20:11', agent: 'ContentStrategistAgent', event: 'Pillars Anchored', message: '制定三大创意支柱：“指尖心流 ASMR”、“5分钟舒压呼吸仪式”、“手作博主自然生活 Vlog 日记”。', type: 'success' },
+      { timestamp: '14:20:13', agent: 'CopyAgent', event: 'Pack Drafted', message: '生成 TikTok 慢美学贴片、IG 心情文案、BPM 配乐提示词与微距 Vlogger 分剪脚本，融入个人代言规范（#CozyMaker）。', type: 'info' },
+      { timestamp: '14:20:15', agent: 'ComplianceAgent', event: 'Adversarial Audit', message: '合规网拦截红线中... ⚠️ 警告：初版草稿宣称茉莉花精具有“治愈湿疹、神奇退红脱敏”等药妆级疗效，触犯 FDA 限制。', type: 'warning' },
+      { timestamp: '14:20:16', agent: 'System', event: 'Redux Loop Triggered', message: '⚠️ ComplianceAgent 阻断发布！指令回退至 CopyAgent：强制擦除药用疗效字词，修改为“香氛嗅觉放松与脉搏点舒压”。', type: 'error' },
+      { timestamp: '14:20:18', agent: 'CopyAgent', event: 'Pack Regenerated', message: '文案重塑完毕。剔除任何生理治疗和抗敏等药妆声称，柔化为“感官安全屋(sensory sanctuary)”和“嗅觉小憩”。重新送审。', type: 'success' },
+      { timestamp: '14:20:19', agent: 'ComplianceAgent', event: 'Audit Pass', message: '复审通过！违法美白抗敏词已 100% 抹净，代言透明度合规。发布判定：Pass。', type: 'success' },
+      { timestamp: '14:20:21', agent: 'EvaluatorAgent', event: 'Evaluation Complete', message: '由于完美规避政治偏向及 FDA 药物理化宣称，安全合规分高居 4.9 分。手工艺 ASMR 的前屏停留力打出 4.8 高评。CulturePack 制作完成，发往出海自媒体前线！', type: 'success' }
     ]
   }
 };

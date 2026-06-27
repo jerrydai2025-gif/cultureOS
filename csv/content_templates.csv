@@ -1,0 +1,15 @@
+id,name_zh,name_en,format_zh,format_en,template_body_zh,template_body_en,active
+title_matrix,标题矩阵,Headline Matrix,双排中英文裂变短字数,Short highly punchy bilingual formats,"### 适配版高点击标题:
+- **English Translated**: [英译点击标题]
+- **Localized / Regional**: [针对性大区文案]","### Adapted Headlines:
+- **English Translated**: [Punchy English headline]
+- **Localized / Regional**: [Targeted regional text]",true
+video_script,短视频脚本,Video Script,15秒多帧卡点画面对齐,15s multi-frame sync with audio,"- **00:00 - 00:03**: 资产微距放大 + ASMR声效
+- **00:03 - 00:10**: 人物慢动作心流制作场景
+- **00:10 - 00:15**: 情感升华，静谧暖光烘托。","- **00:00 - 00:03**: Core asset close-up + ASMR sound effects
+- **00:03 - 00:10**: Focused handcrafting scene in slow motion
+- **00:10 - 00:15**: Emotional branding climax with glowing backlights.",true
+visual_prompt,视觉提示词,Visual Prompt,Midjourney 8k 相机格式,Midjourney photorealistic formats,"A high-fidelity hyper-realistic photography: [核心资产描述], soft gold backlights, photorealistic camera depth of field, 8k, warm cozy lighting, aspect ratio --ar 16:9","A high-fidelity hyper-realistic photography: [Core asset], soft gold backlights, photorealistic camera depth of field, 8k, warm cozy lighting, aspect ratio --ar 16:9",true
+bilingual_sub,双语字幕,Bilingual Subtitles,母语配音+英语字幕对齐,Bilingual subtitles over screen,"[中文原声旁白]
+[对照出海翻译英语字幕]","[Original localized vocal track]
+[Aligned translated English overlay]",true

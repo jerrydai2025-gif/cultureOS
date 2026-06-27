@@ -14,15 +14,58 @@ import { AgentNode, CulturePack, CampaignBrief, TraceLog } from './types';
 import { PRESETS } from './data/presets';
 import { prdMarkdown, designMarkdown, adapterMarkdown, evalMarkdown } from './data/prd_content';
 import { 
-  useAuthManager, AuthQuotaControl, AuthModal, QuotaExceededModal, AdminDashboardView 
+  useAuthManager, AuthQuotaControl, AuthModal, QuotaExceededModal, AdminDashboardView, AccountManagerModal 
 } from './components/AuthManager';
 import { Shield } from 'lucide-react';
 
 export default function App() {
   const [view, setView] = useState<'landing' | 'workspace' | 'studio' | 'docs' | 'database' | 'ppt' | 'admin'>('landing');
   const [lang, setLang] = useState<'zh' | 'en'>('zh');
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
+
+  // Onboarding States
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('cultureos-show-onboarding');
+      if (saved !== null) return saved === 'true';
+    } catch (e) {}
+    return true; // Default to visible for new users
+  });
+
+  const [milestones, setMilestones] = useState<{
+    runPipeline: boolean;
+    exploreCases: boolean;
+    injectFeedback: boolean;
+    readPPT: boolean;
+  }>(() => {
+    try {
+      const saved = localStorage.getItem('cultureos-onboarding-milestones');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      runPipeline: false,
+      exploreCases: false,
+      injectFeedback: false,
+      readPPT: false,
+    };
+  });
+
+  const [rewardClaimed, setRewardClaimed] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('cultureos-onboarding-reward-claimed');
+      return saved === 'true';
+    } catch (e) {}
+    return false;
+  });
+
+  // Persist Onboarding open/close selection
+  useEffect(() => {
+    try {
+      localStorage.setItem('cultureos-show-onboarding', String(showOnboarding));
+    } catch (e) {}
+  }, [showOnboarding]);
 
   const {
     currentUser,
@@ -42,7 +85,8 @@ export default function App() {
     handleCheckAndConsumeQuota,
     handleRechargeUser,
     handleSubmitUpgradeRequest,
-    handleProcessUpgradeRequest
+    handleProcessUpgradeRequest,
+    handleUpdateUserProfile
   } = useAuthManager();
 
   // Theme support
@@ -98,6 +142,53 @@ export default function App() {
     setCurrentLogs(finalLogs);
     setCurrentBrief(brief);
     setHasRun(true);
+  };
+
+  // Onboarding Roadmap Auto-Observers
+  useEffect(() => {
+    if (hasRun && !milestones.runPipeline) {
+      setMilestones(prev => {
+        const next = { ...prev, runPipeline: true };
+        localStorage.setItem('cultureos-onboarding-milestones', JSON.stringify(next));
+        return next;
+      });
+    }
+  }, [hasRun, milestones.runPipeline]);
+
+  useEffect(() => {
+    if (view === 'database' && !milestones.exploreCases) {
+      setMilestones(prev => {
+        const next = { ...prev, exploreCases: true };
+        localStorage.setItem('cultureos-onboarding-milestones', JSON.stringify(next));
+        return next;
+      });
+    } else if (view === 'ppt' && !milestones.readPPT) {
+      setMilestones(prev => {
+        const next = { ...prev, readPPT: true };
+        localStorage.setItem('cultureos-onboarding-milestones', JSON.stringify(next));
+        return next;
+      });
+    }
+  }, [view, milestones.exploreCases, milestones.readPPT]);
+
+  const handleFeedbackSimulated = () => {
+    if (!milestones.injectFeedback) {
+      setMilestones(prev => {
+        const next = { ...prev, injectFeedback: true };
+        localStorage.setItem('cultureos-onboarding-milestones', JSON.stringify(next));
+        return next;
+      });
+    }
+  };
+
+  const handleClaimOnboardingReward = () => {
+    if (!currentUser) return;
+    setRewardClaimed(true);
+    try {
+      localStorage.setItem('cultureos-onboarding-reward-claimed', 'true');
+    } catch (e) {}
+    // Call standard recharge system to provide 50 free credits
+    handleRechargeUser(currentUser.id, 50);
   };
 
   const handleCopyMarkdown = (text: string) => {
@@ -261,6 +352,7 @@ export default function App() {
                 setIsAuthModalOpen(true);
               }}
               onLogout={handleLogout}
+              onAvatarClick={() => setIsAccountModalOpen(true)}
               isZh={isZh}
             />
 
@@ -301,94 +393,83 @@ export default function App() {
 
         {/* Navigation Tabs - swipeable/scrollable horizontally on mobile, spacious but compact on desktop */}
         <div className="w-full md:w-auto overflow-x-auto scrollbar-none flex-1 max-w-full md:max-w-none">
-          <nav className="flex items-center gap-1.5 md:gap-2 px-0.5 py-0.5">
+          <nav className="flex items-center gap-1.5 md:gap-2.5 px-0.5 py-0.5">
             <button
               id="nav-home"
               onClick={() => setView('landing')}
               className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
                 view === 'landing' 
-                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm' 
+                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm shadow-cyan-500/10' 
                   : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
               }`}
             >
-              <span>{isZh ? '指南首页' : 'Hub'}</span>
+              <span>{isZh ? '首页' : 'Hub'}</span>
             </button>
             
             <button
                id="nav-workspace"
                onClick={() => setView('workspace')}
-               className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
+               className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
                  view === 'workspace' 
-                   ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm' 
+                   ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm shadow-cyan-500/10' 
                    : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
                }`}
             >
-              <span>{isZh ? '工作台' : 'Adapt Desk'}</span>
-            </button>
-
-            <button
-              id="nav-studio"
-              onClick={() => setView('studio')}
-              className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
-                view === 'studio' 
-                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm' 
-                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{isZh ? 'AI工坊' : 'AI Studio'}</span>
+              <span>{isZh ? '创意工作台' : 'Workspace'}</span>
             </button>
 
             <button
               id="nav-database"
               onClick={() => setView('database')}
-              className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
+              className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
                 view === 'database' 
-                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm' 
+                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm shadow-cyan-500/10' 
                   : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
               }`}
             >
-              <Globe className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{isZh ? '自进化' : 'Evolution'}</span>
+              <Globe className={`w-3.5 h-3.5 ${view === 'database' ? 'text-cyan-300' : 'text-slate-450'}`} />
+              <span>{isZh ? '自进化库' : 'Evolution DB'}</span>
             </button>
 
             <button
-              id="nav-docs"
-              onClick={() => setView('docs')}
-              className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
-                view === 'docs' 
-                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm' 
+              id="nav-studio"
+              onClick={() => setView('studio')}
+              className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
+                view === 'studio' 
+                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm shadow-cyan-500/10' 
                   : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
               }`}
             >
-              <BookOpenCheck className="w-3.5 h-3.5 text-cyan-450" />
-              <span>{isZh ? '系统文档' : 'Docs'}</span>
+              <Sparkles className={`w-3.5 h-3.5 ${view === 'studio' ? 'text-cyan-300' : 'text-slate-450'}`} />
+              <span>{isZh ? 'AI 译配' : 'AI Studio'}</span>
             </button>
 
             <button
               id="nav-ppt"
               onClick={() => setView('ppt')}
-              className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
+              className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
                 view === 'ppt' 
-                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm' 
+                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm shadow-cyan-500/10' 
                   : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
               }`}
             >
-              <Award className="w-3.5 h-3.5 text-amber-500" />
-              <span>{isZh ? '演示PPT' : 'Deck'}</span>
+              <Award className={`w-3.5 h-3.5 ${view === 'ppt' ? 'text-cyan-300' : 'text-slate-450'}`} />
+              <span>{isZh ? '路演PPT' : 'Pitch Deck'}</span>
             </button>
+
+
 
             {currentUser?.role === 'admin' && (
               <button
                 id="nav-admin"
                 onClick={() => setView('admin')}
-                className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
+                className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
                   view === 'admin' 
-                    ? 'bg-[#1e2518] text-amber-300 border-amber-500/50 shadow-sm' 
-                    : 'text-amber-450 border-transparent hover:text-amber-300 hover:bg-amber-500/10'
+                    ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm shadow-cyan-500/10' 
+                    : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
                 }`}
               >
-                <Shield className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                <Shield className={`w-3.5 h-3.5 ${view === 'admin' ? 'text-cyan-300 animate-pulse' : 'text-slate-450'}`} />
                 <span>{isZh ? '控制台' : 'Admin'}</span>
               </button>
             )}
@@ -404,6 +485,7 @@ export default function App() {
               setIsAuthModalOpen(true);
             }}
             onLogout={handleLogout}
+            onAvatarClick={() => setIsAccountModalOpen(true)}
             isZh={isZh}
           />
 
@@ -443,7 +525,7 @@ export default function App() {
       </header>
 
       {/* Main View Port Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8 space-y-6">
         <AnimatePresence mode="wait">
           {view === 'landing' && (
             <motion.div
@@ -497,13 +579,7 @@ export default function App() {
                       </p>
                     </div>
 
-                    <button
-                      onClick={() => setView('docs')}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-cyan-300 border border-cyan-500/25 bg-cyan-500/5 hover:bg-cyan-500/10 cursor-pointer flex items-center gap-1.5 transition"
-                    >
-                      <BookOpenCheck className="w-3.5 h-3.5" />
-                      <span>{isZh ? '查看系统架构规范' : 'Check System Specs'}</span>
-                    </button>
+
                   </div>
 
                   <CulturePackView 
@@ -543,6 +619,7 @@ export default function App() {
                 lang={lang}
                 currentUser={currentUser}
                 onConsumeQuota={handleCheckAndConsumeQuota}
+                onFeedbackSimulated={handleFeedbackSimulated}
               />
             </motion.div>
           )}
@@ -753,6 +830,19 @@ export default function App() {
         onLogin={handleLogin}
         onRegister={handleRegister}
         onGuestLogin={handleGuestLogin}
+        isZh={isZh}
+      />
+
+      {/* Account Manager Control Center */}
+      <AccountManagerModal
+        isOpen={isAccountModalOpen}
+        onClose={() => setIsAccountModalOpen(false)}
+        currentUser={currentUser}
+        usersList={usersList}
+        onSwitchUser={handleLogin}
+        onUpdateUserProfile={handleUpdateUserProfile}
+        onLogout={handleLogout}
+        onNavigateToAdmin={() => setView('admin')}
         isZh={isZh}
       />
 

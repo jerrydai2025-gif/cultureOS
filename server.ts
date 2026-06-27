@@ -593,7 +593,7 @@ ${isAntiAnxietyFeedback
  */
 app.post("/api/campaign/generate", checkApiKey, async (req, res) => {
   try {
-    const { brief, provider, model, customApiKey, customApiBase } = req.body;
+    const { brief, ipType, provider, model, customApiKey, customApiBase } = req.body;
     const timestampStr = new Date().toLocaleTimeString();
     if (!brief) {
       return res.status(400).json({ error: "Missing campaign brief details." });
@@ -675,60 +675,48 @@ You MUST respond with a strictly parsable JSON object of the exact format below 
     "compliance_review": {
       "decision": "Pass",
       "decisionText": "Skepticism audit completed. Compliance boundary checks passed smoothly with strict local regulations.",
-      "decisionTextZh": "无偏向规约审查完毕。对宣称字词和视觉符号执行高严苛验证，均符合当地合规边界。",
-      "risks": [
-        {
-          "category": "Regulatory Claims Compliance",
-          "categoryZh": "监管宣称合规度",
-          "severity": "low",
-          "reason": "Brand describes pure sensory aesthetics instead of diagnostic healing promises. Zero risk.",
-          "reasonZh": "品牌描述采用纯物理感官美学，未涉及特定诊疗承诺。合规安全。",
-          "suggestion": "Keep focusing on aesthetic/sensory terms.",
-          "suggestionZh": "保持当前非诊断性软装语境描述。",
-          "basisType": "regulatory_rule",
-          "triggeredRuleCode": "FTC-16-CFR-255",
-          "triggeredRuleCodeZh": "FTC第16号联邦规章第255条",
-          "basisDescription": "Guides Concerning the Use of Endorsements and Testimonials in Advertising under FTC.",
-          "basisDescriptionZh": "FTC联合执法准则关于虚假及误导性广告、诊疗宣誓的监督指令。"
-        }
-      ]
-    },
-    "evaluation_score": {
-      "overall": 4.7,
-      "final_recommendation": "Go-to-market approved. Excellent alignment with regional individualist preferences and complete regulatory shield.",
-      "scores": [
-        { "key": "culture_fit", "labelZh": "文化适配度", "labelEn": "Culture Fit", "score": 4.8, "feedbackZh": "完美适配当地审美，消除对异域文化的排斥心理。", "feedbackEn": "Tailored expertly to regional preferences, removing sense of foreignness." }
-      ]
+      "decisionTextZh": "无偏向规约审查完毕。对宣称字词进行合规审查。"
     }
   }
 }
 `;
-       // Map input fields to formulate customized insights
-    const customName = brief.name || "My IP Campaign";
-    const customAsset = brief.cultureAsset || "Classic craft";
-    const customGoal = brief.businessGoal || "Achieve high user traction";
-    const customTone = brief.brandTone || "Energetic and warm";
-    const customRegions = brief.targetRegions && brief.targetRegions.length > 0 ? brief.targetRegions : ["North America", "Latin America"];
-    const customPlatforms = brief.targetPlatforms && brief.targetPlatforms.length > 0 ? brief.targetPlatforms : ["TikTok", "Instagram Reels"];
 
-    const hostMustHave = brief.mustHave && brief.mustHave.length > 0 ? brief.mustHave : [];
-    const hostMustNot = brief.mustNot && brief.mustNot.length > 0 ? brief.mustNot : [];
+    const customName = brief.name || "Default Brand";
+    const customAsset = brief.cultureAsset || "Default Asset";
+    const customRegions = brief.targetRegions || ["North America"];
+    const customPlatforms = brief.targetPlatforms || ["TikTok"];
+    const customTone = brief.brandTone || "peaceful";
+    const customGoal = brief.businessGoal || "Brand growth";
+    const hostMustHave = brief.mustHave || [];
+    const hostMustNot = brief.mustNot || [];
+    const isPersonal = ipType === "personal" || customName.includes("阿琪") || customName.includes("Aqi");
 
-    const mockCulturePack = {
+const mockCulturePack = {
       market_insight: {
-        title: `“${customAsset}”的微度假氛围感出海突破策略`,
+        title: isPersonal 
+          ? `东方女性手工美学海外社交风向与个人IP合规雷区洞察`
+          : `“${customAsset}”的微度假氛围感出海突破策略`,
         regions: customRegions.map(reg => {
-          const defaultInsight = reg === "North America" 
-            ? `在北美，年轻白领极度匮乏专属自愈空间，将“${customAsset}”定位为“每日感官安全屋(Sensory Sanctuary)”远比夸张的虚假宣传更能打动人心。`
-            : `在拉丁美洲，人际情感黏性处于高位，将“${customAsset}”包装为“家庭相聚的欢乐瞬间或亲友互赠的情感表达键”，极其符合集体主义偏好。`;
+          const isNA = reg.includes("North America") || reg.includes("北美");
+          const defaultInsight = isPersonal
+            ? (isNA
+              ? `在高度成熟的 Etsy 手工与 TikTok #Craftok 圈层，观众对“女性微型主权”与“自主造物者”充满敬重，热捧手工慢生活。微距剪刀声、蜂蜡凝固等细节是顶级 ASMR 流量密码。`
+              : `拉美天主教传统下，对手工编制、自然植物护肤品有极高家庭手作认同度。视频中融入“母亲教导”或“手艺代代传承”的情感主线极易产生爆发级裂变。`)
+            : (reg === "North America" 
+              ? `在北美，年轻白领极度匮乏专属自愈空间，将“${customAsset}”定位为“每日感官安全屋(Sensory Sanctuary)”远比夸张的虚假宣传更能打动人心。`
+              : `在拉丁美洲，人际情感黏性处于高位，将“${customAsset}”包装为“家庭相聚的欢乐瞬间或亲友互赠的情感表达键”，极其符合集体主义偏好。`);
           
           const customMustHaveInsight = hostMustHave.length > 0 
             ? `（智算引擎已深度适配自定义基因约束：【${hostMustHave.join(" | ")}】并已融合于本次生成）` 
             : "";
             
-          const defaultRisk = reg === "North America"
-            ? "严防医疗及诊疗功效宣誓红线，规避任何可能引导消费者产生FDA处方药物联想的修辞。"
-            : "避免使用极调阴暗孤僻、过于生硬刻板的异邦文化视觉标签，防止产生疏离感。";
+          const defaultRisk = isPersonal
+            ? (isNA
+              ? "个人 IP 推广手作香膏时，严厉禁止提及消除湿疹、治疗敏感、抗老防衰等药理功效宣称，需遵守 FTC 个人代言守则。"
+              : "规避使用“异邦神秘主义/巫术符咒(Brujería)”等偏见或可能引起宗教保守家庭反感的视觉/文案标签。")
+            : (reg === "North America"
+              ? "严防医疗及诊疗功效宣誓红线，规避任何可能引导消费者产生FDA处方药物联想的修辞。"
+              : "避免使用极调阴暗孤僻、过于生硬刻板的异邦文化视觉标签，防止产生疏离感。");
             
           const customMustNotInsight = hostMustNot.length > 0
             ? `（合规退回拦截网已主动防偏：严格把关禁止 【${hostMustNot.join(" | ")}】 违规标签的溢出）`
@@ -746,26 +734,55 @@ You MUST respond with a strictly parsable JSON object of the exact format below 
         })
       },
       cultural_adaptation: {
-        framework: `Hofstede 适配模型 [个人/集体主义调节]：结合情绪内核动态平移。将“${customAsset}”由国内的宏大文化崇拜平移为海外的生活流、原子化愉悦微观叙事。`,
-        localCanons: customRegions.map(reg => ({
-          region: reg,
-          localEmotion: reg === "North America" ? "自我安抚与正念边界 (Self-regulation)" : "邻里相伴与温暖叙事 (Social Warmth)",
-          scenes: reg === "North America" 
-            ? [`白领在桌灯下静默饮茶/香薰，画面配合“${customTone}”温柔质感，极力突出您所强调的“${hostMustHave[0] || '正负向合规自愈模式'}”特征。`]
-            : [`余晖夕阳下的户外Fiesta，朋友们惊喜相赠与互动，融入“${hostMustHave[0] || '大区热烈叙事风格'}”属性。`],
-          dont: reg === "North America" 
-            ? [`绝对不可承诺医疗诊治功效`, ...(hostMustNot.length > 0 ? [`严禁涉及：${hostMustNot.join("、")}`] : [])] 
-            : [`不可使用冰冷绝望的孤独雨夜视觉`, ...(hostMustNot.length > 0 ? [`严禁涉及：${hostMustNot.join("、")}`] : [])],
-          mappingDescription: `将原“${customAsset}”的古典情理彻底翻译。北美版放大独立情绪，拉美版放大欢庆重聚。`,
-          adaptationBasis: reg === "North America" 
-            ? "North America high Individualism (91): Users look for independent lifestyle choices and personalized stress buffers."
-            : "Latin America low Individualism (30): Focus heavily on shared joy, community laughter, and high-frequency vibrant music.",
-          adaptationBasisZh: reg === "North America"
-            ? "北美高个人主义 (91)：用户追求独立的生活方式宣言与个性化的减压私密空间。"
-            : "拉美低个人主义 (30)：重度聚焦共享的情感、社区街坊笑谑及高频生动的律动配乐。",
-          evidenceData: reg === "North America" ? "79% of US tech professionals prefer self-care digital products over traditional ones." : "88% of LatAm active viewers state they watch video content to share key laughs with family.",
-          evidenceDataZh: reg === "North America" ? "79%的北美科技从业者更倾向于选用具有“自我调节与自愈”质感的数码氛围伴随品。" : "88%的拉美活跃观众声称，他们观看视频内容的主要诉求是与亲人朋友分享欢笑。"
-        }))
+        framework: isPersonal 
+          ? 'Hofstede 低权力距离 + 强调个人技艺自主(Individual Autonomy) + 亲情传承集体主义(Family Heritage)双轨重构'
+          : `Hofstede 适配模型 [个人/集体主义调节]：结合情绪内核动态平移。将“${customAsset}”由国内的宏大文化崇拜平移为海外的生活流、原子化愉悦微观叙事。`,
+        localCanons: customRegions.map(reg => {
+          const isNA = reg.includes("North America") || reg.includes("北美");
+          return {
+            region: reg,
+            localEmotion: isPersonal
+              ? (isNA ? "independent-maker (自主女性匠人与慢美学)" : "el alma de las manos (手掌的灵魂与世代温情)")
+              : (reg === "North America" ? "自我安抚与正念边界 (Self-regulation)" : "邻里相伴与温暖叙事 (Social Warmth)"),
+            scenes: isPersonal
+              ? (isNA 
+                ? ['明亮整洁的手作工作台 (Bright workspace)', '阳光穿过玻璃瓶的微距 (Sunlight through glass jars)', '专注手作的眼角微距 (Focused creative look)']
+                : ['烛光摇曳的暖光庭院 (Candle-lit patio)', '细碎轻哼的和煦下午 (Humming folk lullaby)', '精巧手工包上系上丝带 (Wrapping handmade gifts)'])
+              : (reg === "North America" 
+                ? [`白领在桌灯下静默饮茶/香薰，画面配合“${customTone}”温柔质感，极力突出您所强调的“${hostMustHave[0] || '正负向合规自愈模式'}”特征。`]
+                : [`余晖夕阳下的户外Fiesta，朋友们惊喜相赠与互动，融入“${hostMustHave[0] || '大区热烈叙事风格'}”属性。`]),
+            dont: isPersonal
+              ? (isNA 
+                ? ['绝不强加爱国或宏大意识形态说教 (No ideological preachy lectures)', '绝对不可打医疗功效擦边球 (No clinical beauty promises)']
+                : ['不要出现冰冷的现代流水线工业感 (No sterile machinery)', '绝不涉及异国怪力乱神或神秘占卜 (No weird cult or witch references)'])
+              : (reg === "North America" 
+                ? [`绝对不可承诺医疗诊治功效`, ...(hostMustNot.length > 0 ? [`严禁涉及：${hostMustNot.join("、")}`] : [])] 
+                : [`不可使用冰冷绝望的孤独雨夜视觉`, ...(hostMustNot.length > 0 ? [`严禁涉及：${hostMustNot.join("、")}`] : [])]),
+            mappingDescription: isPersonal
+              ? (isNA 
+                ? '将宏大的“非遗传承”降维转译为“自主女性造物主(Independent Maker)的下午一小时心流”。不摆谱，以低权力距离的平视闺蜜视角展示刺绣和熬制茉莉香膏。'
+                : '迎合拉美高集体主义与高不确定性规避特性，将手工活重塑为“温润的指尖温情”。强调手工艺品承载的亲情温度，完美跨越地缘偏见，建立情感信赖。')
+              : (reg === "North America" 
+                ? `将原“${customAsset}”的古典情理彻底翻译。北美版放大独立情绪，拉美版放大欢庆重聚。`
+                : `将原“${customAsset}”的古典情理彻底翻译。拉美版放大欢庆重聚。`),
+            adaptationBasis: isPersonal
+              ? (isNA ? "Hofstede: High Individualism (IDV 91) & Low Power Distance (PDI 40)" : "Hofstede: High Collectivism (IDV 30) & High Uncertainty Avoidance (UAI 86)")
+              : (reg === "North America" 
+                ? "North America high Individualism (91): Users look for independent lifestyle choices and personalized stress buffers."
+                : "Latin America low Individualism (30): Focus heavily on shared joy, community laughter, and high-frequency vibrant music."),
+            adaptationBasisZh: isPersonal
+              ? (isNA ? "霍夫斯泰德文化维度推导：高个人主义自我价值 (IDV 91) 与低权力距离 PDI 40" : "霍夫斯泰德文化维度推导：高集体主义亲密连连结 (IDV 30) 与高不确定性规避 UAI 86")
+              : (reg === "North America" 
+                ? "北美高个人主义 (91)：用户追求独立的生活方式宣言与个性化的减压私密空间。"
+                : "拉美低个人主义 (30)：重度聚焦共享的情感、社区街坊笑谑及高频生动的律动配乐。"),
+            evidenceData: isPersonal
+              ? (isNA ? "#Craftok has over 32.4B views. 82% of Etsy buyers prefer purchasing from independent creators with clear storytelling." : "Product origin storytelling focusing on 'family devotion' increases conversions by 45%.")
+              : (reg === "North America" ? "79% of US tech professionals prefer self-care products." : "88% of LatAm active viewers watch to share laughs with family."),
+            evidenceDataZh: isPersonal
+              ? (isNA ? "TikTok #Craftok (手艺人) 标签播放超324亿次。82%的北美女性手工买家偏好独立创作者故事。" : "拉美手作零售报告表明：主打“家庭挚爱与心意传承”的背景，销售转化力提升45%。")
+              : (reg === "North America" ? "79%的北美科技从业者更倾向于选用具有“自我调节与自愈”质感的数码氛围伴随品。" : "88%的拉美活跃观众声称，他们观看视频内容的主要诉求是与亲人分享欢笑。")
+          };
+        })
       },
       content_strategy: {
         pillars: [

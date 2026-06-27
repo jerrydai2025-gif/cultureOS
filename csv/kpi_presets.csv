@@ -1,0 +1,5 @@
+id,name_zh,name_en,metric_zh,metric_en,target_value,active
+kpi_exposure,曝光深度,Exposure,大区千次展现成本与曝光量,Video Views & CPM,播放量 > 500k CPM保持平稳,true
+kpi_engagement,互动黏性,Engagement,赞评转及停留时长率,Like / Comment / Share & Watch-time Ratio,总体互动率 (Engagement) > 6.5%,true
+kpi_conversion,业务转化,Conversion,加购跳转及转化漏斗率,Add-to-cart & Funnel Conversion Rate,外部加购率 (Add-to-Cart) > 2.1%,true
+kpi_safety,合规安全,Safety,零侵权立案及起诉零驳回,Compliance Litigation & Rejection Rate,广告驳回率及监管起诉率 = 0%,true

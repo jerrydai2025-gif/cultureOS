@@ -1,0 +1,9 @@
+market_id,platform_id,fit_score,active
+north_america,tiktok,95,true
+north_america,instagram,92,true
+north_america,reddit,85,true
+latin_america,tiktok,98,true
+latin_america,instagram,90,true
+europe,instagram,88,true
+southeast_asia,tiktok,96,true
+japan_korea,instagram,86,true
