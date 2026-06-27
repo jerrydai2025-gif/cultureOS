@@ -37,6 +37,7 @@ export default function App() {
     upgradeRequests,
     handleLogin,
     handleRegister,
+    handleGuestLogin,
     handleLogout,
     handleCheckAndConsumeQuota,
     handleRechargeUser,
@@ -751,6 +752,7 @@ export default function App() {
         setView={setAuthView}
         onLogin={handleLogin}
         onRegister={handleRegister}
+        onGuestLogin={handleGuestLogin}
         isZh={isZh}
       />
 
@@ -759,6 +761,10 @@ export default function App() {
         isOpen={quotaExceededModalOpen}
         onClose={() => setQuotaExceededModalOpen(false)}
         onSubmitRequest={handleSubmitUpgradeRequest}
+        onSignUpClick={() => {
+          setAuthView('signup');
+          setIsAuthModalOpen(true);
+        }}
         currentUser={currentUser}
         isZh={isZh}
       />

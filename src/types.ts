@@ -180,7 +180,7 @@ export interface UserProfile {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'user' | 'guest';
   remainingQuota: number;
   maxQuota: number;
   regDate: string;

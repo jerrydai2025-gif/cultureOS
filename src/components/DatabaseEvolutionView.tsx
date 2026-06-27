@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Database, Sparkles, RefreshCw, Layers, History, Check, AlertTriangle, 
-  ArrowRight, Tag, HelpCircle, Flame, Plus, Play, ChevronRight, CheckCircle2, FileText
+  ArrowRight, Tag, HelpCircle, Flame, Plus, Play, ChevronRight, CheckCircle2, FileText,
+  Edit, Save, X, Trash2
 } from 'lucide-react';
 import { RagEntry, RagFeedback, EvolutionTrace } from '../types';
 import { INITIAL_RAG_ENTRIES } from '../data/rag_presets';
@@ -136,19 +137,202 @@ export default function DatabaseEvolutionView({
   const [showDiff, setShowDiff] = useState(false);
   const [evolutionSuccess, setEvolutionSuccess] = useState(false);
 
-  // Initialize and sync presets to localStorage if not exists
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('cultureos_rag_entries');
-      if (!saved) {
-        localStorage.setItem('cultureos_rag_entries', JSON.stringify(INITIAL_RAG_ENTRIES));
-      }
-    } catch (e) {
-      console.warn("Could not write RAG presets to localStorage", e);
+  // Direct editing states
+  const [isEditingActive, setIsEditingActive] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescZh, setEditDescZh] = useState('');
+  const [editDescEn, setEditDescEn] = useState('');
+  const [editRegion1MustHaves, setEditRegion1MustHaves] = useState('');
+  const [editRegion1MustNots, setEditRegion1MustNots] = useState('');
+  const [editRegion1Vibes, setEditRegion1Vibes] = useState('');
+  const [editRegion2MustHaves, setEditRegion2MustHaves] = useState('');
+  const [editRegion2MustNots, setEditRegion2MustNots] = useState('');
+  const [editRegion2Vibes, setEditRegion2Vibes] = useState('');
+
+  // Creation state
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newCategory, setNewCategory] = useState<'symbol' | 'regulatory' | 'music_visual' | 'audience' | 'case_study'>('symbol');
+  const [newDescZh, setNewDescZh] = useState('');
+  const [newDescEn, setNewDescEn] = useState('');
+  const [newConcept1Name, setNewConcept1Name] = useState('');
+  const [newConcept1Values, setNewConcept1Values] = useState('');
+  const [newConcept2Name, setNewConcept2Name] = useState('');
+  const [newConcept2Values, setNewConcept2Values] = useState('');
+  const [newRegion1MustHaves, setNewRegion1MustHaves] = useState('');
+  const [newRegion1MustNots, setNewRegion1MustNots] = useState('');
+  const [newRegion1Vibes, setNewRegion1Vibes] = useState('');
+  const [newRegion2MustHaves, setNewRegion2MustHaves] = useState('');
+  const [newRegion2MustNots, setNewRegion2MustNots] = useState('');
+  const [newRegion2Vibes, setNewRegion2Vibes] = useState('');
+
+  // Handle deletion of custom cards
+  const handleDeleteCustomCard = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (id === 'rag-001' || id === 'rag-002' || id === 'rag-003') {
+      alert(isZh ? '系统置顶示例卡片不能删除。请仅删除自定义创建的卡片。' : 'Built-in template cards cannot be deleted.');
+      return;
     }
-  }, []);
+    if (!confirm(isZh ? '确认要永久删除这个自定义基因规章卡吗？' : 'Are you sure you want to delete this custom card?')) {
+      return;
+    }
+    const updated = entries.filter(item => item.id !== id);
+    setEntries(updated);
+    localStorage.setItem('cultureos_rag_entries', JSON.stringify(updated));
+    setSelectedEntryId('rag-001');
+  };
 
   const activeEntry = entries.find(e => e.id === selectedEntryId) || entries[0];
+
+  useEffect(() => {
+    if (activeEntry) {
+      setEditName(activeEntry.name);
+      setEditDescZh(activeEntry.descriptionZh);
+      setEditDescEn(activeEntry.descriptionEn);
+      
+      const r1 = activeEntry.regionalGuidelines?.[0];
+      const r2 = activeEntry.regionalGuidelines?.[1];
+      
+      if (r1) {
+        setEditRegion1MustHaves(r1.mustHaves?.join('\n') || '');
+        setEditRegion1MustNots(r1.mustNots?.join('\n') || '');
+        setEditRegion1Vibes(r1.vibeStickers?.join(', ') || '');
+      } else {
+        setEditRegion1MustHaves('');
+        setEditRegion1MustNots('');
+        setEditRegion1Vibes('');
+      }
+      
+      if (r2) {
+        setEditRegion2MustHaves(r2.mustHaves?.join('\n') || '');
+        setEditRegion2MustNots(r2.mustNots?.join('\n') || '');
+        setEditRegion2Vibes(r2.vibeStickers?.join(', ') || '');
+      } else {
+        setEditRegion2MustHaves('');
+        setEditRegion2MustNots('');
+        setEditRegion2Vibes('');
+      }
+    }
+  }, [selectedEntryId, entries]);
+
+  const handleSaveEdit = () => {
+    if (!editName.trim()) {
+      alert(isZh ? '请输入 RAG 规章名称' : 'Please input a name.');
+      return;
+    }
+
+    const nextVer = (parseFloat(activeEntry.version || '1.0') + 0.1).toFixed(1);
+    
+    const updatedEntry: RagEntry = {
+      ...activeEntry,
+      name: editName,
+      descriptionZh: editDescZh,
+      descriptionEn: editDescEn,
+      version: nextVer,
+      lastUpdated: new Date().toISOString().replace('T', ' ').slice(0, 19),
+      regionalGuidelines: [
+        {
+          region: activeEntry.regionalGuidelines?.[0]?.region || 'North America (北美)',
+          mustHaves: editRegion1MustHaves.split('\n').map(l => l.trim()).filter(Boolean),
+          mustNots: editRegion1MustNots.split('\n').map(l => l.trim()).filter(Boolean),
+          vibeStickers: editRegion1Vibes.split(/[,，]/).map(s => s.trim()).filter(Boolean)
+        },
+        {
+          region: activeEntry.regionalGuidelines?.[1]?.region || 'Latin America (拉美)',
+          mustHaves: editRegion2MustHaves.split('\n').map(l => l.trim()).filter(Boolean),
+          mustNots: editRegion2MustNots.split('\n').map(l => l.trim()).filter(Boolean),
+          vibeStickers: editRegion2Vibes.split(/[,，]/).map(s => s.trim()).filter(Boolean)
+        }
+      ],
+      changeLogs: [
+        {
+          version: nextVer,
+          timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+          triggerFeedbackId: 'manual',
+          changeSummary: isZh ? '人工规则直编：修改了边界词库和正负基因控制指标。' : 'Manual rules adjustment: Modified region tags and boundary limits.'
+        },
+        ...(activeEntry.changeLogs || [])
+      ]
+    };
+
+    const updatedList = entries.map(e => e.id === activeEntry.id ? updatedEntry : e);
+    setEntries(updatedList);
+    localStorage.setItem('cultureos_rag_entries', JSON.stringify(updatedList));
+    setIsEditingActive(false);
+  };
+
+  const handleCreateNew = () => {
+    if (!newName.trim()) {
+      alert(isZh ? '请输入 RAG 规章名称' : 'Please input a name.');
+      return;
+    }
+
+    const generatedId = 'rag-user-' + Date.now().toString().slice(-4);
+    const newEntry: RagEntry = {
+      id: generatedId,
+      name: newName,
+      category: newCategory,
+      version: '1.0',
+      lastUpdated: new Date().toISOString().replace('T', ' ').slice(0, 19),
+      descriptionZh: newDescZh || '新定义的出海水准及过滤指南。',
+      descriptionEn: newDescEn || 'Custom globalization dynamic guide.',
+      coreConcepts: [
+        { 
+          name: newConcept1Name.trim() || (isZh ? '品牌核心定义' : 'Brand Definition'), 
+          values: newConcept1Values.split(/[,，]/).map(v => v.trim()).filter(Boolean) 
+        },
+        ...(newConcept2Name.trim() ? [{ 
+          name: newConcept2Name.trim(), 
+          values: newConcept2Values.split(/[,，]/).map(v => v.trim()).filter(Boolean) 
+        }] : [])
+      ],
+      regionalGuidelines: [
+        {
+          region: 'North America (北美)',
+          mustHaves: newRegion1MustHaves.split('\n').map(l => l.trim()).filter(Boolean),
+          mustNots: newRegion1MustNots.split('\n').map(l => l.trim()).filter(Boolean),
+          vibeStickers: newRegion1Vibes.split(/[,，]/).map(s => s.trim()).filter(Boolean)
+        },
+        {
+          region: 'Latin America (拉美)',
+          mustHaves: newRegion2MustHaves.split('\n').map(l => l.trim()).filter(Boolean),
+          mustNots: newRegion2MustNots.split('\n').map(l => l.trim()).filter(Boolean),
+          vibeStickers: newRegion2Vibes.split(/[,，]/).map(s => s.trim()).filter(Boolean)
+        }
+      ],
+      feedbacks: [],
+      changeLogs: [
+        {
+          version: '1.0',
+          timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+          triggerFeedbackId: 'initial',
+          changeSummary: isZh ? '全新定制 RAG 知识链创建完毕。' : 'Brand new custom RAG segment registered.'
+        }
+      ]
+    };
+
+    const updatedList = [newEntry, ...entries];
+    setEntries(updatedList);
+    localStorage.setItem('cultureos_rag_entries', JSON.stringify(updatedList));
+    setSelectedEntryId(generatedId);
+    
+    // Reset fields
+    setNewName('');
+    setNewDescZh('');
+    setNewDescEn('');
+    setNewConcept1Name('');
+    setNewConcept1Values('');
+    setNewConcept2Name('');
+    setNewConcept2Values('');
+    setNewRegion1MustHaves('');
+    setNewRegion1MustNots('');
+    setNewRegion1Vibes('');
+    setNewRegion2MustHaves('');
+    setNewRegion2MustNots('');
+    setNewRegion2Vibes('');
+    
+    setIsCreatingNew(false);
+  };
 
   // Quick feedback templates
   const feedbackTemplates = [
@@ -596,29 +780,51 @@ export default function DatabaseEvolutionView({
       </div>
 
       {/* Sub tabs navigation */}
-      <div className="flex border-b border-slate-800/60 pb-3 gap-4">
-        <button
-          onClick={() => setSubTab('evolution')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
-            subTab === 'evolution'
-              ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20 shadow shadow-cyan-500/5'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Database className="w-4 h-4" />
-          <span>{isZh ? 'RAG 规则动态自进化' : 'RAG Database Evolution'}</span>
-        </button>
-        <button
-          onClick={() => setSubTab('cases')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
-            subTab === 'cases'
-              ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20 shadow shadow-cyan-500/5'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
-          <span>{isZh ? '出海名企案例与定位定制库' : 'Brand Cases & Slogan Generator'}</span>
-        </button>
+      <div className="flex border-b border-slate-800/60 pb-3 gap-4 items-center justify-between flex-wrap">
+        <div className="flex gap-4">
+          <button
+            onClick={() => {
+              setSubTab('evolution');
+              setIsCreatingNew(false);
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              subTab === 'evolution'
+                ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20 shadow shadow-cyan-500/5'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Database className="w-4 h-4" />
+            <span>{isZh ? 'RAG 规则动态自进化' : 'RAG Database Evolution'}</span>
+          </button>
+          <button
+            onClick={() => setSubTab('cases')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              subTab === 'cases'
+                ? 'bg-[#14233c] text-cyan-300 border border-cyan-500/20 shadow shadow-cyan-500/5'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+            <span>{isZh ? '出海名企案例与定位定制库' : 'Brand Cases & Slogan Generator'}</span>
+          </button>
+        </div>
+
+        {subTab === 'evolution' && (
+          <button
+            onClick={() => {
+              setIsCreatingNew(prev => !prev);
+              setIsEditingActive(false);
+            }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 cursor-pointer shadow-md ${
+              isCreatingNew 
+                ? 'bg-rose-500/20 border border-rose-500/40 text-rose-300' 
+                : 'bg-gradient-to-r from-cyan-400 to-cyan-200 text-slate-950 hover:from-cyan-350 hover:to-cyan-150'
+            }`}
+          >
+            {isCreatingNew ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            <span>{isCreatingNew ? (isZh ? '取消录入' : 'Cancel') : (isZh ? '+ 新创出海规则卡' : '+ Create Custom Card')}</span>
+          </button>
+        )}
       </div>
 
       {subTab === 'evolution' ? (
@@ -632,10 +838,12 @@ export default function DatabaseEvolutionView({
                 key={entry.id}
                 onClick={() => {
                   setSelectedEntryId(entry.id);
+                  setIsEditingActive(false);
+                  setIsCreatingNew(false);
                   setMutatedEntryData(null);
                   setShowDiff(false);
                 }}
-                className={`p-4 rounded-xl border cursor-pointer transition flex flex-col justify-between h-[120px] ${
+                className={`p-4 rounded-xl border cursor-pointer transition flex flex-col justify-between h-[120px] relative ${
                   selectedEntryId === entry.id
                     ? 'bg-cyan-550/5 border-cyan-500/40 text-cyan-200'
                     : 'bg-slate-900/40 border-slate-800/60 hover:bg-slate-900/80'
@@ -646,13 +854,24 @@ export default function DatabaseEvolutionView({
                     <span className="bg-slate-800 px-2 py-0.5 rounded font-bold">{entry.category.toUpperCase()}</span>
                     <span>Ver {entry.version}</span>
                   </div>
-                  <h4 className="font-bold text-sm text-slate-100 truncate">{entry.name}</h4>
+                  <h4 className="font-bold text-sm text-slate-100 truncate pr-5">{entry.name}</h4>
                   <p className="text-xs text-slate-450 line-clamp-1 mt-1">
                     {isZh ? entry.descriptionZh : entry.descriptionEn}
                   </p>
                 </div>
 
-                <div className="text-[10px] text-slate-500 font-mono text-right flex items-center justify-end gap-1.5 pt-2 border-t border-slate-800/40">
+                {/* Show deletion button if custom created */}
+                {entry.id.startsWith('rag-user-') && (
+                  <button
+                    onClick={(e) => handleDeleteCustomCard(entry.id, e)}
+                    className="absolute top-3 right-3 text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-850 transition z-10 cursor-pointer"
+                    title={isZh ? "删除此卡" : "Delete Card"}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+
+                <div className="text-[10px] text-slate-500 font-mono text-right flex items-center justify-end gap-1.5 pt-2 border-t border-slate-800/40 font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
                   <span>Update: {entry.lastUpdated.split(' ')[0]}</span>
                 </div>
@@ -660,93 +879,426 @@ export default function DatabaseEvolutionView({
             ))}
           </div>
 
-          {/* Active Entry Detail */}
-          <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/80 space-y-6 shadow-md relative">
-            <div className="flex items-center justify-between border-b border-slate-850 pb-4">
-              <div className="space-y-0.5">
-                <span className="text-[10px] uppercase font-bold text-cyan-400 font-mono">ACTIVE RAG SCHEMA</span>
-                <h3 className="font-black text-lg text-white">{activeEntry.name}</h3>
+          {/* DYNAMIC: Create card panel OR edit card panel OR standard active card details display */}
+          {isCreatingNew ? (
+            <div className="p-6 rounded-2xl bg-slate-950 border-2 border-cyan-500/30 space-y-5 shadow-xl relative">
+              <div className="flex items-center justify-between border-b border-slate-850 pb-4">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase font-bold text-cyan-400 font-mono">NEW BRAND KNOWLEDGE GATEWAY</span>
+                  <h3 className="font-black text-lg text-white">{isZh ? '🚀 录入出海定制规则卡' : '🚀 Create Outbound Rules Card'}</h3>
+                </div>
+                <button 
+                  onClick={() => setIsCreatingNew(false)}
+                  className="text-slate-400 hover:text-white p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <div className="text-right font-mono text-xs text-slate-400">
-                <p>Ver {activeEntry.version}</p>
-                <p className="text-[10px] text-slate-500">{activeEntry.lastUpdated}</p>
-              </div>
-            </div>
 
-            {/* Core Concepts */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-black uppercase text-slate-450 tracking-wider flex items-center gap-1.5">
-                <Tag className="w-3.5 h-3.5 text-cyan-400" />
-                <span>{isZh ? '元特征基因定义' : 'Ontological Concepts & Tokens'}</span>
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {activeEntry.coreConcepts.map((concept, idx) => (
-                  <div key={idx} className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-900 space-y-2">
-                    <p className="text-xs font-bold text-cyan-300 font-mono">{isZh ? concept.name : concept.name}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {concept.values.map((v, vIdx) => (
-                        <span key={vIdx} className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800">
-                          {v}
-                        </span>
-                      ))}
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono font-bold text-slate-400 uppercase">{isZh ? '项目及卡片名称' : 'RAG Card / Brand Name'}</label>
+                  <input
+                    type="text"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    placeholder="e.g. E-Bike Outbound Guidelines, Florasis Brand Gene"
+                    className="w-full bg-slate-900 border border-slate-800 focus:border-cyan-400 px-4 py-2.5 rounded-xl text-slate-200 text-xs outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono font-bold text-slate-400 uppercase block">{isZh ? '产品及规章类目' : 'RAG Rule Category'}</label>
+                  <select
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value as any)}
+                    className="w-full bg-slate-900 border border-slate-800 focus:border-cyan-400 px-4 py-2.5 rounded-xl text-slate-200 text-xs outline-none text-slate-300"
+                  >
+                    <option value="symbol">{isZh ? '文化图腾与情绪符号 (symbol)' : 'Cultural Symbol'}</option>
+                    <option value="regulatory">{isZh ? '大区合规硬隔离线 (regulatory)' : 'Advertising Safeguard'}</option>
+                    <option value="case_study">{isZh ? '对标名企对位规则 (case_study)' : 'Brand Comparison Case'}</option>
+                    <option value="audience">{isZh ? '大区受众画像细分 (audience)' : 'Audience Persona'}</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-mono font-bold text-slate-400 uppercase">{isZh ? '规则描述 (中文)' : 'Description (ZH)'}</label>
+                    <textarea
+                      value={newDescZh}
+                      onChange={(e) => setNewDescZh(e.target.value)}
+                      placeholder="例如：针对出海运动品类的定位引导，划分阻尼保护，规避虚假宣称。"
+                      className="w-full bg-slate-900 border border-slate-800 focus:border-cyan-400 px-4 py-2.5 rounded-xl text-slate-200 text-xs min-h-[60px]"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-mono font-bold text-slate-400 uppercase">{isZh ? '规则描述 (英文)' : 'Description (EN)'}</label>
+                    <textarea
+                      value={newDescEn}
+                      onChange={(e) => setNewDescEn(e.target.value)}
+                      placeholder="e.g. Guidance for outbound sports products, focusing on safe claims and premium lifestyle re-framing."
+                      className="w-full bg-slate-900 border border-slate-800 focus:border-cyan-400 px-4 py-2.5 rounded-xl text-slate-200 text-xs min-h-[60px]"
+                    />
+                  </div>
+                </div>
+
+                {/* Concept Definition */}
+                <div className="p-4 rounded-xl bg-slate-905/60 border border-slate-900 space-y-3">
+                  <span className="text-[10px] font-mono font-bold uppercase text-cyan-400 block">{isZh ? '基因概念标签定义 (Concepts)' : 'Concepts definition'}</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <input
+                        type="text"
+                        value={newConcept1Name}
+                        onChange={(e) => setNewConcept1Name(e.target.value)}
+                        placeholder="第一组概念名 (如: 精神内核)"
+                        className="w-full bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-slate-250 text-xs"
+                      />
+                      <input
+                        type="text"
+                        value={newConcept1Values}
+                        onChange={(e) => setNewConcept1Values(e.target.value)}
+                        placeholder="标签值，逗号隔开 (如: 自由, 自愈, 出发)"
+                        className="w-full bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-slate-400 text-[11px]"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <input
+                        type="text"
+                        value={newConcept2Name}
+                        onChange={(e) => setNewConcept2Name(e.target.value)}
+                        placeholder="第二组概念名 (可选)"
+                        className="w-full bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-slate-250 text-xs"
+                      />
+                      <input
+                        type="text"
+                        value={newConcept2Values}
+                        onChange={(e) => setNewConcept2Values(e.target.value)}
+                        placeholder="标签值，逗号隔开"
+                        className="w-full bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-slate-400 text-[11px]"
+                      />
                     </div>
                   </div>
-                ))}
+                </div>
+
+                <div className="border-t border-slate-900 pt-4 space-y-4">
+                  <span className="text-xs font-black uppercase text-amber-400 block">{isZh ? '分目标市场（大区）基因定制' : 'Region specific custom directives'}</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Region 1: NA */}
+                    <div className="p-4 rounded-xl border border-slate-850 bg-slate-950 space-y-3">
+                      <h4 className="text-xs font-bold text-slate-300 font-mono">North America (北美)</h4>
+                      <div className="space-y-2">
+                        <div>
+                          <label className="text-[9px] font-mono text-green-400 uppercase font-black block">✔ Must-Have (加分基因，换行分割)</label>
+                          <textarea
+                            value={newRegion1MustHaves}
+                            onChange={(e) => setNewRegion1MustHaves(e.target.value)}
+                            placeholder="e.g. UL Safety Certified&#13;Focus on off-road leisure"
+                            className="w-full bg-slate-900 border border-slate-850 px-3 py-2 rounded-lg text-slate-205 text-xs min-h-[80px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-mono text-red-400 uppercase font-black block">✘ Must-Not (禁止违禁词 / 边界红线，换行分割)</label>
+                          <textarea
+                            value={newRegion1MustNots}
+                            onChange={(e) => setNewRegion1MustNots(e.target.value)}
+                            placeholder="e.g. Absolute clinical cure&#13;Over-promising mileage results"
+                            className="w-full bg-slate-900 border border-slate-850 px-3 py-2 rounded-lg text-slate-205 text-xs min-h-[80px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-mono text-amber-400 uppercase font-black block">Vibe Stickers (氛围标签, 逗号隔开)</label>
+                          <input
+                            type="text"
+                            value={newRegion1Vibes}
+                            onChange={(e) => setNewRegion1Vibes(e.target.value)}
+                            placeholder="Eco-Power, Off-road, Commute-zen"
+                            className="w-full bg-slate-900 border border-slate-850 px-3 py-1.5 rounded-lg text-slate-200 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Region 2: LATAM */}
+                    <div className="p-4 rounded-xl border border-slate-850 bg-slate-950 space-y-3">
+                      <h4 className="text-xs font-bold text-slate-300 font-mono">Latin America (拉美)</h4>
+                      <div className="space-y-2">
+                        <div>
+                          <label className="text-[9px] font-mono text-green-400 uppercase font-black block">✔ Must-Have (加分基因，换行分割)</label>
+                          <textarea
+                            value={newRegion2MustHaves}
+                            onChange={(e) => setNewRegion2MustHaves(e.target.value)}
+                            placeholder="e.g. Fiesta companion power&#13;Vibrant high saturation clips"
+                            className="w-full bg-slate-900 border border-slate-850 px-3 py-2 rounded-lg text-slate-205 text-xs min-h-[80px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-mono text-red-400 uppercase font-black block">✘ Must-Not (熔断禁忌边界，换行分割)</label>
+                          <textarea
+                            value={newRegion2MustNots}
+                            onChange={(e) => setNewRegion2MustNots(e.target.value)}
+                            placeholder="e.g. Ultra depressive tones&#13;Avoid authoritative tone and lecturing"
+                            className="w-full bg-slate-900 border border-slate-850 px-3 py-2 rounded-lg text-slate-205 text-xs min-h-[80px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-mono text-amber-400 uppercase font-black block">Vibe Stickers (氛围标签, 逗号隔开)</label>
+                          <input
+                            type="text"
+                            value={newRegion2Vibes}
+                            onChange={(e) => setNewRegion2Vibes(e.target.value)}
+                            placeholder="Fiesta-Active, Familia, Calor"
+                            className="w-full bg-slate-900 border border-slate-850 px-3 py-1.5 rounded-lg text-slate-200 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-900">
+                <button
+                  onClick={() => setIsCreatingNew(false)}
+                  className="px-4 py-2 border border-slate-800 text-slate-400 hover:text-white rounded-xl text-xs font-bold"
+                >
+                  {isZh ? '取消' : 'Cancel'}
+                </button>
+                <button
+                  onClick={handleCreateNew}
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-200 text-slate-950 font-black text-xs uppercase cursor-pointer"
+                >
+                  {isZh ? '确认创建存储卡' : 'Save & Compile Card'}
+                </button>
               </div>
             </div>
+          ) : isEditingActive ? (
+            <div className="p-6 rounded-2xl bg-slate-950 border-2 border-amber-500/30 space-y-5 shadow-xl relative">
+              <div className="flex items-center justify-between border-b border-slate-850 pb-4">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase font-bold text-amber-400 font-mono">MANUAL RULE DEFINITION</span>
+                  <h3 className="font-black text-lg text-white">{isZh ? '✎ 直编约束标签集' : '✎ Edit Custom Active Constraints'}</h3>
+                </div>
+                <button 
+                  onClick={() => setIsEditingActive(false)}
+                  className="text-slate-400 hover:text-white p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-            {/* Regional Rules Detail */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-black uppercase text-slate-450 tracking-wider flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-cyan-400" />
-                <span>{isZh ? '正负向区域过滤指令系统' : 'Region Bi-Directional Active Directives'}</span>
-              </h4>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono font-bold text-slate-400 uppercase">{isZh ? '基因规章名称' : 'RAG Card / Brand Name'}</label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-800 focus:border-amber-405 px-4 py-2.5 rounded-xl text-slate-200 text-xs outline-none"
+                  />
+                </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {activeEntry.regionalGuidelines.map((guideline, gIdx) => (
-                  <div key={gIdx} className="border border-slate-800/60 rounded-xl bg-slate-950/40 overflow-hidden flex flex-col justify-between">
-                    <div className="bg-slate-900/65 px-4 py-2 border-b border-slate-800/60 flex items-center justify-between">
-                      <strong className="text-xs text-slate-300 font-sans">{guideline.region}</strong>
-                      <div className="flex gap-1">
-                        {guideline.vibeStickers.map((sticker, sIdx) => (
-                          <span key={sIdx} className="text-[8px] font-mono px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                            {sticker}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-mono font-bold text-slate-400 uppercase">{isZh ? '规章中文描述' : 'Description (ZH)'}</label>
+                    <textarea
+                      value={editDescZh}
+                      onChange={(e) => setEditDescZh(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 focus:border-amber-405 px-4 py-2 rounded-xl text-slate-200 text-xs min-h-[60px]"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-mono font-bold text-slate-400 uppercase">{isZh ? '规章英文描述' : 'Description (EN)'}</label>
+                    <textarea
+                      value={editDescEn}
+                      onChange={(e) => setEditDescEn(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 focus:border-amber-405 px-4 py-2 rounded-xl text-slate-200 text-xs min-h-[60px]"
+                    />
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-900 pt-4 space-y-4">
+                  <span className="text-xs font-black uppercase text-amber-400 block">{isZh ? '按大区高亮设置正负基因指令' : 'Region-specific custom rules'}</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* NA */}
+                    <div className="p-4 rounded-xl border border-slate-850 bg-slate-950 space-y-3">
+                      <h4 className="text-xs font-bold text-slate-300 font-mono">North America (北美)</h4>
+                      <div className="space-y-2">
+                        <div>
+                          <label className="text-[9px] font-mono text-green-400 uppercase font-black block">✔ Must-Have (加分基因, 换行分割)</label>
+                          <textarea
+                            value={editRegion1MustHaves}
+                            onChange={(e) => setEditRegion1MustHaves(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-850 px-3 py-2 rounded-lg text-slate-200 text-xs min-h-[100px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-mono text-red-400 uppercase font-black block">✘ Must-Not (刚性熔断红线, 换行分割)</label>
+                          <textarea
+                            value={editRegion1MustNots}
+                            onChange={(e) => setEditRegion1MustNots(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-850 px-3 py-2 rounded-lg text-slate-200 text-xs min-h-[100px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-mono text-amber-400 uppercase font-black block">Vibe Stickers (氛围标签, 逗号隔开)</label>
+                          <input
+                            type="text"
+                            value={editRegion1Vibes}
+                            onChange={(e) => setEditRegion1Vibes(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-850 px-3 py-1.5 rounded-lg text-slate-200 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* LATAM */}
+                    <div className="p-4 rounded-xl border border-slate-850 bg-slate-950 space-y-3">
+                      <h4 className="text-xs font-bold text-slate-300 font-mono">Latin America (拉美)</h4>
+                      <div className="space-y-2">
+                        <div>
+                          <label className="text-[9px] font-mono text-green-400 uppercase font-black block">✔ Must-Have (加分基因, 换行分割)</label>
+                          <textarea
+                            value={editRegion2MustHaves}
+                            onChange={(e) => setEditRegion2MustHaves(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-850 px-3 py-2 rounded-lg text-slate-200 text-xs min-h-[100px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-mono text-red-400 uppercase font-black block">✘ Must-Not (刚性熔断红线, 换行分割)</label>
+                          <textarea
+                            value={editRegion2MustNots}
+                            onChange={(e) => setEditRegion2MustNots(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-850 px-3 py-2 rounded-lg text-slate-200 text-xs min-h-[100px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-mono text-amber-400 uppercase font-black block">Vibe Stickers (氛围标签, 逗号隔开)</label>
+                          <input
+                            type="text"
+                            value={editRegion2Vibes}
+                            onChange={(e) => setEditRegion2Vibes(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-850 px-3 py-1.5 rounded-lg text-slate-200 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-900">
+                <button
+                  onClick={() => setIsEditingActive(false)}
+                  className="px-4 py-2 border border-slate-800 text-slate-400 hover:text-white rounded-xl text-xs font-bold"
+                >
+                  {isZh ? '取消' : 'Cancel'}
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-200 text-slate-950 font-black text-xs uppercase cursor-pointer"
+                >
+                  {isZh ? '保存修改并更新版本' : 'Save Changes & Bump Version'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/80 space-y-6 shadow-md relative">
+              <div className="flex items-center justify-between border-b border-slate-850 pb-4">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase font-bold text-cyan-400 font-mono">ACTIVE RAG SCHEMA</span>
+                    <button
+                      onClick={() => setIsEditingActive(true)}
+                      className="px-2.5 py-1 rounded border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-[10px] font-black flex items-center gap-1 cursor-pointer transition"
+                    >
+                      <Edit className="w-3 h-3" />
+                      <span>{isZh ? '直编规则' : 'Direct Edit'}</span>
+                    </button>
+                  </div>
+                  <h3 className="font-black text-lg text-white">{activeEntry.name}</h3>
+                </div>
+                <div className="text-right font-mono text-xs text-slate-400">
+                  <p>Ver {activeEntry.version}</p>
+                  <p className="text-[10px] text-slate-500">{activeEntry.lastUpdated}</p>
+                </div>
+              </div>
+
+              {/* Core Concepts */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-black uppercase text-slate-450 tracking-wider flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>{isZh ? '元特征基因定义' : 'Ontological Concepts & Tokens'}</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {activeEntry.coreConcepts && activeEntry.coreConcepts.map((concept, idx) => (
+                    <div key={idx} className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-900 space-y-2">
+                      <p className="text-xs font-bold text-cyan-300 font-mono">{concept.name}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {concept.values && concept.values.map((v, vIdx) => (
+                          <span key={vIdx} className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800">
+                            {v}
                           </span>
                         ))}
                       </div>
                     </div>
+                  ))}
+                </div>
+              </div>
 
-                    <div className="p-4 space-y-3 flex-1">
-                      {/* Must haves */}
-                      <div className="space-y-1">
-                        <span className="text-[9px] font-mono text-green-400 block font-black uppercase">✔ Must-Have (加分基因)</span>
-                        <ul className="text-xs text-slate-300 space-y-1 list-none">
-                          {guideline.mustHaves.map((h, hIdx) => (
-                            <li key={hIdx} className="flex items-start gap-1 pb-1 border-b border-slate-900/20">
-                              <span className="text-green-500 font-bold">+</span>
-                              <span className="leading-snug">{h}</span>
-                            </li>
+              {/* Regional Rules Detail */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase text-slate-450 tracking-wider flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>{isZh ? '正负向区域过滤指令系统' : 'Region Bi-Directional Active Directives'}</span>
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {activeEntry.regionalGuidelines && activeEntry.regionalGuidelines.map((guideline, gIdx) => (
+                    <div key={gIdx} className="border border-slate-800/60 rounded-xl bg-slate-950/40 overflow-hidden flex flex-col justify-between">
+                      <div className="bg-slate-900/65 px-4 py-2 border-b border-slate-800/60 flex items-center justify-between">
+                        <strong className="text-xs text-slate-300 font-sans">{guideline.region}</strong>
+                        <div className="flex gap-1">
+                          {guideline.vibeStickers && guideline.vibeStickers.map((sticker, sIdx) => (
+                            <span key={sIdx} className="text-[8px] font-mono px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-bold">
+                              {sticker}
+                            </span>
                           ))}
-                        </ul>
+                        </div>
                       </div>
 
-                      {/* Must nots */}
-                      <div className="space-y-1 pt-2">
-                        <span className="text-[9px] font-mono text-red-400 block font-black uppercase">✘ Must-Not (熔断红线)</span>
-                        <ul className="text-xs text-slate-300 space-y-1 list-none">
-                          {guideline.mustNots.map((n, nIdx) => (
-                            <li key={nIdx} className="flex items-start gap-1 pb-1 border-b border-slate-900/20 text-slate-400">
-                              <span className="text-red-500 font-bold">-</span>
-                              <span className="leading-snug">{n}</span>
-                            </li>
-                          ))}
-                        </ul>
+                      <div className="p-4 space-y-3 flex-1">
+                        {/* Must haves */}
+                        <div className="space-y-1">
+                          <span className="text-[9px] font-mono text-green-400 block font-black uppercase">✔ Must-Have (加分基因)</span>
+                          <ul className="text-xs text-slate-300 space-y-1 list-none">
+                            {guideline.mustHaves && guideline.mustHaves.map((h, hIdx) => (
+                              <li key={hIdx} className="flex items-start gap-1 pb-1 border-b border-slate-900/20">
+                                <span className="text-green-500 font-bold">+</span>
+                                <span className="leading-snug text-slate-200">{h}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Must nots */}
+                        <div className="space-y-1 pt-2">
+                          <span className="text-[9px] font-mono text-red-400 block font-black uppercase">✘ Must-Not (熔断红线)</span>
+                          <ul className="text-xs text-slate-300 space-y-1 list-none text-slate-400">
+                            {guideline.mustNots && guideline.mustNots.map((n, nIdx) => (
+                              <li key={nIdx} className="flex items-start gap-1 pb-1 border-b border-slate-900/20 text-slate-400">
+                                <span className="text-red-500 font-bold">-</span>
+                                <span className="leading-snug text-slate-400">{n}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
 
             {/* Version ChangeLogs list */}
             <div className="space-y-2.5 pt-3">
@@ -797,7 +1349,8 @@ export default function DatabaseEvolutionView({
               </div>
             )}
           </div>
-        </div>
+        )}
+      </div>
 
         {/* Right Column: Ingest feedback and run evolution */}
         <div className="lg:col-span-5 space-y-6">

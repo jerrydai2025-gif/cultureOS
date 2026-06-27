@@ -59,26 +59,46 @@ export default function LandingView({
             className="space-y-6 z-10"
           >
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-bold uppercase tracking-wider text-cyan-400">
-              <Sparkles className="w-3.5 h-3.5 animate-spin" />
-              <span>{isZh ? '新一代跨文化 IP 创作工具' : 'Next-Gen Cross-Cultural IP Creation Tool'}</span>
+              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+              <span>{isZh ? '文化连接世界 • 内容驱动增长' : 'Culture Connects the World • Content Drives Growth'}</span>
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
-              {isZh ? '让 IP 跨越 ' : 'Let your IP Cross '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200 glow-gold">
-                {isZh ? '语言与文化的壁垒' : 'Language & Cultural Barriers'}
+              {isZh ? 'CultureOS ' : 'CultureOS '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 glow-cyan">
+                {isZh ? '全球IP内容增长操作系统' : 'Global IP Content Growth OS'}
               </span>
               <br className="hidden sm:inline" />
-              <span className="text-xl md:text-3xl font-light text-slate-300 tracking-wide mt-3 block leading-[1.3]">
-                {isZh ? '智能协同工作流，解决出海落地差异，打造全球本土化爆款' : 'An intelligent orchestration pipeline resolving localization barriers to create global hits'}
+              <span className="text-xl md:text-3xl font-light text-slate-350 tracking-wide mt-3 block leading-[1.3]">
+                {isZh ? '让每一个创作者和品牌，都能用 IP 内容撬动全球流量，实现跨文化增长' : 'Empowering every creator and brand to leverage global traffic with IP content'}
               </span>
             </h1>
 
             <p className="text-base md:text-lg text-slate-400 leading-relaxed max-w-xl">
               {isZh 
-                ? 'CultureOS 是一款面向全球市场的跨文化 IP 创作与落地协同工具。通过 7 大核心专家级智能体，我们打通了语言翻译、地域文俗雷区甄别、地方合规性审查和多语种视听自适应，在提供 100% 安全保障的同时，帮创作者把同一个东方故事，落地为满足北美独立感性或拉美温润陪伴的个性化本土共鸣。'
-                : 'CultureOS is a workflow integration workspace for cross-cultural IP creation and swift global publishing. Powered by 7 autonomous expert agents, we streamline translation, regional taboos checks, compliance audits, and multi-language acoustic adaptation to let your unique story resonate flawlessly.'}
+                ? '内容竞争已经从“创作能力”转向“系统能力”。随着 AI 让内容生产成本趋近于 0，平台分发全面依赖推荐算法，唯一的流量入口就是优质 IP。CultureOS 帮您构建“IP + 内容结构 + 增长路径”的三位一体系统，解决出海本地化水土不服、选题难爆、规则违规下架痛点，提供一站式全球化增长闭环基础设施。'
+                : 'Content competition has shifted from "creation" to "system capabilities". As AI lowers production costs to near zero and platform distribution relies entirely on algorithms, IP becomes the ultimate gateway. CultureOS establishes a unified system of "IP + Content Structure + Growth Path" for your global expansion.'}
             </p>
+
+            {/* Core Pillars Grid */}
+            <div className="grid grid-cols-2 gap-3 pt-2 max-w-xl">
+              <div className="p-3 rounded-xl bg-slate-900/40 border border-slate-800/60 flex flex-col justify-between">
+                <span className="text-xs font-bold text-cyan-400">🌐 {isZh ? '连接全球文化' : 'Culture Connection'}</span>
+                <span className="text-[10px] text-slate-400 mt-1">{isZh ? '打破文化边界，深度文化适配' : 'Transcend regional bias and borders'}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-900/40 border border-slate-800/60 flex flex-col justify-between">
+                <span className="text-xs font-bold text-amber-400">🎯 {isZh ? 'IP驱动内容' : 'IP-Driven Content'}</span>
+                <span className="text-[10px] text-slate-400 mt-1">{isZh ? '持续创造情感价值与认可' : 'Consistently generate symbolic value'}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-900/40 border border-slate-800/60 flex flex-col justify-between">
+                <span className="text-xs font-bold text-blue-400">🚀 {isZh ? '算法助大增长' : 'Algorithm Acceleration'}</span>
+                <span className="text-[10px] text-slate-400 mt-1">{isZh ? '匹配算法触发机制，精准爆量' : 'Trigger platform recommendations'}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-900/40 border border-slate-800/60 flex flex-col justify-between">
+                <span className="text-xs font-bold text-purple-400">🔄 {isZh ? '数据反馈迭代' : 'Data Evolutionary Loop'}</span>
+                <span className="text-[10px] text-slate-400 mt-1">{isZh ? '自进化闭环反馈，持续成长' : 'Continuous self-learning feedback'}</span>
+              </div>
+            </div>
 
             <div className="flex flex-wrap gap-4 pt-4">
               <button 

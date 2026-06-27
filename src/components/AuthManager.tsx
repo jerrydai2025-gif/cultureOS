@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Lock, Key, Shield, LogIn, LogOut, UserPlus, CreditCard, 
   RefreshCw, BarChart2, ShieldAlert, CheckCircle2, Trash2, Edit2, 
-  Plus, Users, Compass, Clock, Check, AlertTriangle, Send, Sparkles, Building
+  Plus, Users, Compass, Clock, Check, AlertTriangle, Send, Sparkles, Building,
+  Mail, Smartphone, Cpu
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserProfile, QuotaAuditLog } from '../types';
@@ -152,12 +153,19 @@ export function useAuthManager() {
         }
       } catch (e) {}
     } else {
-      // Default to guest or auto login demo for easy usability
-      const defaultUser = storedUsers.find(su => su.email === 'demo@cultureos.com');
-      if (defaultUser) {
-        setCurrentUser(defaultUser);
-        localStorage.setItem(`${STORAGE_PREFIX}current`, JSON.stringify(defaultUser));
-      }
+      // Default to read-only guest demo so they can explore immediately without log in, but cannot trigger active runs
+      const guestUser: UserProfile = {
+        id: 'u-guest',
+        email: 'guest@cultureos.com',
+        name: '游客演示账号 (Guest Demo)',
+        role: 'guest',
+        remainingQuota: 0,
+        maxQuota: 0,
+        regDate: new Date().toISOString().split('T')[0],
+        businessDomain: '只读演示企业 (ReadOnly Inc)',
+        purpose: '预览体验大区适配、AI工作坊和出海方案演示'
+      };
+      setCurrentUser(guestUser);
     }
   }, []);
 
@@ -222,6 +230,21 @@ export function useAuthManager() {
     return { success: true };
   };
 
+  const handleGuestLogin = () => {
+    const guestUser: UserProfile = {
+      id: 'u-guest',
+      email: 'guest@cultureos.com',
+      name: '游客演示账号 (Guest Demo)',
+      role: 'guest',
+      remainingQuota: 0,
+      maxQuota: 0,
+      regDate: new Date().toISOString().split('T')[0],
+      businessDomain: '只读演示企业 (ReadOnly Inc)',
+      purpose: '预览体验大区适配、AI工作坊和出海方案演示'
+    };
+    saveCurrentUser(guestUser);
+  };
+
   const handleLogout = () => {
     saveCurrentUser(null);
   };
@@ -235,6 +258,11 @@ export function useAuthManager() {
 
     if (currentUser.role === 'admin') {
       return true; // Infinite capacity for admins
+    }
+
+    if (currentUser.role === 'guest') {
+      setQuotaExceededModalOpen(true);
+      return false;
     }
 
     if (currentUser.remainingQuota <= 0) {
@@ -368,6 +396,7 @@ export function useAuthManager() {
     upgradeRequests,
     handleLogin,
     handleRegister,
+    handleGuestLogin,
     handleLogout,
     handleCheckAndConsumeQuota,
     handleRechargeUser,
@@ -394,7 +423,7 @@ export function AuthQuotaControl({
     return (
       <button
         onClick={onLoginClick}
-        className="px-4 py-2 rounded-xl bg-orange-550/20 text-orange-300 border border-orange-500/30 hover:bg-orange-550/30 cursor-pointer flex items-center gap-1.5 text-xs font-black transition shadow-md"
+        className="px-4 py-2 rounded-xl bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 cursor-pointer flex items-center gap-1.5 text-xs font-black transition shadow-md"
       >
         <LogIn className="w-3.5 h-3.5" />
         <span>{isZh ? '登录账号' : 'Client Login'}</span>
@@ -403,6 +432,7 @@ export function AuthQuotaControl({
   }
 
   const isAdmin = currentUser.role === 'admin';
+  const isGuest = currentUser.role === 'guest';
 
   return (
     <div className="flex items-center gap-3 bg-slate-950/60 p-1.5 pl-3 pr-2.5 rounded-xl border border-slate-800/80">
@@ -410,6 +440,8 @@ export function AuthQuotaControl({
         <div className="flex items-center gap-1.5">
           {isAdmin ? (
             <Shield className="w-3 h-3 text-amber-400 animate-pulse" />
+          ) : isGuest ? (
+            <Compass className="w-3 h-3 text-amber-400" />
           ) : (
             <User className="w-3 h-3 text-cyan-400" />
           )}
@@ -420,6 +452,8 @@ export function AuthQuotaControl({
         <div className="flex items-center gap-1.5 mt-0.5 font-mono text-[9px]">
           {isAdmin ? (
             <span className="text-amber-400 font-extrabold uppercase">SUPER ADMIN</span>
+          ) : isGuest ? (
+            <span className="text-amber-500 font-extrabold uppercase">{isZh ? '只读演示' : 'GUEST DEMO'}</span>
           ) : (
             <div className="flex items-center gap-1">
               <span className="text-cyan-400 font-black">{currentUser.remainingQuota}</span>
@@ -431,7 +465,7 @@ export function AuthQuotaControl({
       </div>
 
       {/* Quota Progress line for regular users */}
-      {!isAdmin && (
+      {!isAdmin && !isGuest && (
         <div className="hidden md:block w-14 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
           <div 
             className="h-full bg-cyan-400 rounded-full"
@@ -458,12 +492,14 @@ export function QuotaExceededModal({
   isOpen,
   onClose,
   onSubmitRequest,
+  onSignUpClick,
   currentUser,
   isZh
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSubmitRequest: (amount: number, message: string) => void;
+  onSignUpClick?: () => void;
   currentUser: UserProfile | null;
   isZh: boolean;
 }) {
@@ -472,6 +508,61 @@ export function QuotaExceededModal({
   const [submitted, setSubmitted] = useState(false);
 
   if (!isOpen || !currentUser) return null;
+
+  if (currentUser.role === 'guest') {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
+        <div className="bg-[#0b1220] border border-amber-500/20 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
+          
+          {/* Banner header icon */}
+          <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/25 p-5 border-b border-amber-500/10 text-center space-y-1 relative">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/35 flex items-center justify-center text-amber-300 mx-auto animate-pulse">
+              <Lock className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-black text-white mt-3">
+              {isZh ? '🔒 只读演示模式受限' : 'Read-Only Demo Mode'}
+            </h3>
+            <p className="text-[11px] text-slate-400">
+              {isZh ? '您当前处于 [游客演示] 状态，此操作需要调用大语言模型算力队列。' : 'You are browsing in Guest Viewer state.'}
+            </p>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <p className="text-xs text-slate-350 leading-relaxed">
+              {isZh 
+                ? '出海商家 AI 工作流协同编排、智能文案生成及规则进化的操作需要绑定真实的商户档案及算力指标。目前您可以任意查看各大区预设的适配交割物。' 
+                : 'Interactive agent pipeline simulations are restricted for guest previews under read-only parameters.'}
+            </p>
+            
+            <div className="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/15 leading-relaxed text-amber-400 text-xs text-center font-bold font-sans">
+              {isZh ? '💡 限时优惠：一键免费建档立即赠送 5 次免费调用配额' : 'Register now for 5 complimentary system access credits.'}
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-3 rounded-xl border border-slate-800 hover:text-slate-200 cursor-pointer text-slate-400 font-bold transition text-xs"
+              >
+                {isZh ? '继续只读体验' : 'Read-Only Preview'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  if (onSignUpClick) onSignUpClick();
+                }}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-90 cursor-pointer text-slate-950 font-black flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 transition text-xs"
+              >
+                <UserPlus className="w-3.5 h-3.5 text-slate-950" />
+                <span>{isZh ? '立即免费注册建档' : 'Create Profile'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -489,7 +580,7 @@ export function QuotaExceededModal({
         
         {/* Banner header icon */}
         <div className="bg-gradient-to-r from-red-500/25 to-amber-500/25 p-5 border-b border-red-500/10 text-center space-y-1 relative">
-          <div className="w-12 h-12 rounded-xl bg-orange-550/15 border border-orange-500/30 flex items-center justify-center text-orange-400 mx-auto animate-bounce">
+          <div className="w-12 h-12 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center text-orange-400 mx-auto animate-bounce">
             <AlertTriangle className="w-6 h-6" />
           </div>
           <h3 className="text-base font-black text-white mt-3">
@@ -524,7 +615,7 @@ export function QuotaExceededModal({
                       onClick={() => setRequestedAmount(num)}
                       className={`py-2 rounded-xl border text-xs font-bold font-mono transition cursor-pointer ${
                         requestedAmount === num
-                          ? 'bg-orange-550/20 border-orange-500/40 text-orange-300'
+                          ? 'bg-orange-500/20 border-orange-500/40 text-orange-300'
                           : 'bg-slate-900 border-slate-850 text-slate-400'
                       }`}
                     >
@@ -556,7 +647,7 @@ export function QuotaExceededModal({
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-orange-550 hover:bg-orange-600 cursor-pointer text-slate-950 font-black flex items-center justify-center gap-1.5 shadow-md shadow-orange-550/10 transition"
+                  className="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 cursor-pointer text-slate-950 font-black flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/10 transition"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>{isZh ? '提交申请' : 'Request Booster'}</span>
@@ -580,6 +671,7 @@ export function AuthModal({
   setView,
   onLogin,
   onRegister,
+  onGuestLogin,
   isZh
 }: {
   isOpen: boolean;
@@ -588,6 +680,7 @@ export function AuthModal({
   setView: (v: 'login' | 'signup' | 'profile') => void;
   onLogin: (email: string) => { success: boolean; error?: string };
   onRegister: (name: string, email: string, businessDomain: string, purpose: string) => { success: boolean; error?: string };
+  onGuestLogin: () => void;
   isZh: boolean;
 }) {
   const [email, setEmail] = useState('');
@@ -598,41 +691,114 @@ export function AuthModal({
   const [errorMsg, setErrorMsg] = useState('');
   const [regSuccess, setRegSuccess] = useState(false);
 
+  // Verification Code state loops
+  const [signupStep, setSignupStep] = useState<'profile' | 'otp'>('profile');
+  const [loginStep, setLoginStep] = useState<'email' | 'otp'>('email');
+  const [otpCode, setOtpCode] = useState('');
+  const [sentOtp, setSentOtp] = useState('');
+  const [countdown, setCountdown] = useState(0);
+
+  // Sync and reset internal view steps
+  useEffect(() => {
+    setSignupStep('profile');
+    setLoginStep('email');
+    setOtpCode('');
+    setSentOtp('');
+    setErrorMsg('');
+    setCountdown(0);
+  }, [view, isOpen]);
+
+  // Countdown tick
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Trigger signup OTP
+  const handleRequestRegisterOtp = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
-    if (view === 'login') {
-      const res = onLogin(email);
-      if (res.success) {
+    const finalDomain = domain === 'custom' ? customDomain : domain;
+    if (!name || !email || !finalDomain || !purpose) {
+      setErrorMsg(isZh ? '请将出海商家资料填写完整。' : 'Please complete all registration fields.');
+      return;
+    }
+
+    // Generate random 6 digit OTP code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setSentOtp(code);
+    setSignupStep('otp');
+    setCountdown(60);
+  };
+
+  // Verify and submit registration
+  const handleRegisterVerifyAndSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+
+    if (otpCode.trim() !== sentOtp) {
+      setErrorMsg(isZh ? '激活码校验不匹配，请输入框上模拟接收的 6 位验证码。' : 'Incorrect activation code entered.');
+      return;
+    }
+
+    const finalDomain = domain === 'custom' ? customDomain : domain;
+    const res = onRegister(name, email, finalDomain, purpose);
+    if (res.success) {
+      setRegSuccess(true);
+      setTimeout(() => {
+        setRegSuccess(false);
         onClose();
+        // Reset states
+        setName('');
         setEmail('');
-      } else {
-        setErrorMsg(res.error || '');
-      }
+        setCustomDomain('');
+        setPurpose('');
+        setSignupStep('profile');
+      }, 1500);
     } else {
-      const finalDomain = domain === 'custom' ? customDomain : domain;
-      if (!name || !email || !finalDomain || !purpose) {
-        setErrorMsg(isZh ? '请按规范填写出完整用户档案。' : 'Please complete all details.');
-        return;
-      }
-      const res = onRegister(name, email, finalDomain, purpose);
-      if (res.success) {
-        setRegSuccess(true);
-        setTimeout(() => {
-          setRegSuccess(false);
-          onClose();
-          // Reset
-          setName('');
-          setEmail('');
-          setCustomDomain('');
-          setPurpose('');
-        }, 1500);
-      } else {
-        setErrorMsg(res.error || '');
-      }
+      setErrorMsg(res.error || '');
+    }
+  };
+
+  // Trigger passwordless login OTP
+  const handleRequestLoginOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+
+    if (!email) {
+      setErrorMsg(isZh ? '请输入注册绑定的邮箱。' : 'Please enter registered email.');
+      return;
+    }
+
+    // Generate random 6 digit login OTP code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setSentOtp(code);
+    setLoginStep('otp');
+    setCountdown(60);
+  };
+
+  // Verify login code
+  const handleLoginVerifyAndSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+
+    if (otpCode.trim() !== sentOtp) {
+      setErrorMsg(isZh ? '验证码校验错误，请输入绿底条上的 6 位数字激活登录。' : 'Incorrect verification code.');
+      return;
+    }
+
+    const res = onLogin(email);
+    if (res.success) {
+      onClose();
+      setEmail('');
+      setLoginStep('email');
+    } else {
+      setErrorMsg(res.error || '');
     }
   };
 
@@ -648,198 +814,327 @@ export function AuthModal({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-500 hover:text-slate-300 font-bold"
+          className="absolute top-4 right-4 text-slate-500 hover:text-slate-300 font-bold transition duration-200"
         >
           ✕
         </button>
 
         {/* Content */}
-        <div className="p-6 md:p-8 space-y-6">
+        <div className="p-6 md:p-8 space-y-5">
           <div className="text-center space-y-1.5">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-slate-900 shadow-md shadow-cyan-500/10 mx-auto">
-              <Shield className="w-5 h-5 text-white" />
+              {view === 'login' ? <Key className="w-5 h-5 text-white" /> : <UserPlus className="w-5 h-5 text-white" />}
             </div>
             <h3 className="text-lg font-black text-white mt-3">
-              {view === 'login' ? (isZh ? '出海商家身份登录' : 'Client Authorization') : (isZh ? '建立出海商家档案 (留下用户资料)' : 'Establish Merchant Profile')}
+              {view === 'login' ? (isZh ? '出海商户身份登录' : 'Client Access Port') : (isZh ? '新商户多层激活建档' : 'Register Merchant Profile')}
             </h3>
             <p className="text-slate-400 text-xs font-sans">
               {isZh 
-                ? 'CultureOS 提供管理员全局监控与普通商家的配额防御算力隔离。' 
-                : 'Role isolation protects your API keys and quotas securely.'}
+                ? 'CultureOS 提供管理员全局审批与普通商家的配额算力保障。' 
+                : 'Interactive sandbox featuring mock mail service handles fast OTP.'}
             </p>
           </div>
 
           {regSuccess ? (
             <div className="text-center py-8 space-y-3 animate-fade-in">
               <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto animate-pulse" />
-              <p className="text-sm font-bold text-white">{isZh ? '商家档案创建成功！' : 'Client Profile Authorized!'}</p>
-              <p className="text-xs text-slate-400">{isZh ? '系统已自动生成 5 次免费创意体验额度，已为您自动进入工作台。' : 'You have been awarded 5 creative credits.'}</p>
+              <p className="text-sm font-bold text-white">{isZh ? '商家激活建档成功！' : 'Client Activated Successfully!'}</p>
+              <p className="text-xs text-slate-400">{isZh ? '系统已自动核发 5 次免费创意体验配额，已为您进入智能工作台。' : '5 Trial credits assigned to your active panel.'}</p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4 text-xs font-sans">
+            <div className="space-y-4">
               
+              {/* Error alerts */}
               {errorMsg && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-400 flex items-start gap-2">
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-start gap-2 animate-shake text-xs">
                   <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
               )}
 
-              {view === 'login' ? (
-                <>
-                  <div className="space-y-1.5">
-                    <label className="text-slate-400 font-bold">{isZh ? '账号邮箱地址' : 'Account Email'}</label>
-                    <div className="relative">
-                      <User className="absolute left-3.5 top-3.5 text-slate-500 w-4 h-4" />
-                      <input
-                        required
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="demo@cultureos.com"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-500/40 font-mono"
-                      />
-                    </div>
+              {/* Simulated Mailbox Alert / Floating OTP tray */}
+              {sentOtp && (signupStep === 'otp' || loginStep === 'otp') && (
+                <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs space-y-1 font-mono">
+                  <div className="flex items-center gap-2 font-bold font-sans">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    <span>📩 {isZh ? '【系统虚拟邮箱激活中心】' : '【CultureOS Verification Mailbox】'}</span>
                   </div>
-
-                  {/* Seed Preset account quick tabs */}
-                  <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-900 space-y-1.5 select-none">
-                    <span className="text-[10px] text-slate-500 font-bold block uppercase">{isZh ? '✨ 点击预设测试账号直接体验' : '✨ CLick preset account to experience'}</span>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      <button
-                        type="button"
-                        onClick={() => loadPresetAccount('demo@cultureos.com')}
-                        className="p-2 border border-slate-800 rounded bg-slate-900 text-[10px] text-cyan-300 hover:border-cyan-500/20 text-left font-mono"
-                      >
-                        <div className="font-bold font-sans">普通客户 (Quota: 3/5)</div>
-                        <div>demo@cultureos.com</div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => loadPresetAccount('admin@cultureos.com')}
-                        className="p-2 border border-slate-800 rounded bg-slate-900 text-[10px] text-amber-300 hover:border-amber-500/20 text-left font-mono"
-                      >
-                        <div className="font-bold font-sans flex items-center gap-1">
-                          <Shield className="w-2.5 h-2.5 text-amber-400" />
-                          <span>全局管理员 (Admin)</span>
-                        </div>
-                        <div>admin@cultureos.com</div>
-                      </button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-1.5">
-                    <label className="text-slate-400 font-bold">{isZh ? '真实姓名 / 企业主体' : 'Name / Company'}</label>
-                    <input
-                      required
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder={isZh ? "张三 / 智能冲浪板实验室" : "James / SurfingTech Labs"}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-500/40 font-sans"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-slate-400 font-bold">{isZh ? '注册邮箱 (登录凭证)' : 'Register Email'}</label>
-                    <input
-                      required
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="client@company.com"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-500/40 font-mono"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-slate-400 font-bold">{isZh ? '产品主营垂直品类' : 'Product Category'}</label>
-                    <select
-                      value={domain}
-                      onChange={(e) => setDomain(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-500/40"
-                    >
-                      <option value="pet_tech">{isZh ? "🧸 智能温控宠物电器" : "Pet Tech Accessories"}</option>
-                      <option value="ebike">{isZh ? "⚡ 强续航低碳智能电动车 (E-Bike)" : "Carbon Low E-Bike"}</option>
-                      <option value="herbal_tea">{isZh ? "🍵 东方古方高浓缩草本茶" : "Herbal Oriental Tea"}</option>
-                      <option value="custom">{isZh ? "❖ 其它品类 (手动输入个性定制)" : "Custom Enterprise Category"}</option>
-                    </select>
-                  </div>
-
-                  {domain === 'custom' && (
-                    <div className="space-y-1.5 animate-fade-in">
-                      <label className="text-slate-450">{isZh ? '产品描述大类名称' : 'Custom Category Name'}</label>
-                      <input
-                        required
-                        type="text"
-                        value={customDomain}
-                        onChange={(e) => setCustomDomain(e.target.value)}
-                        placeholder="e.g. 降噪耳机 / 恒温睡袋"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none"
-                      />
-                    </div>
-                  )}
-
-                  <div className="space-y-1.5">
-                    <label className="text-slate-400 font-bold">{isZh ? '出海核心业务目标 (简述)' : 'Primary Global Goal'}</label>
-                    <textarea
-                      required
-                      rows={2}
-                      value={purpose}
-                      onChange={(e) => setPurpose(e.target.value)}
-                      placeholder={isZh ? "例：攻坚欧美中产减压市场，以更具高级感的话术打入Tiktok流媒体，替代廉价感促销。" : "e.g., Reach EU urban young professionals with rich branding assets to boost CTR"}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-cyan-500/40 font-sans resize-none"
-                    />
-                  </div>
-                </>
+                  <p className="text-slate-200">
+                    {isZh ? '一封带有 6 位数字验证码的激活邮件已成功发送。模拟激活码为：' : 'Assigned secure test OTP verification token is: '}
+                    <span className="text-emerald-400 font-extrabold text-sm underline block mt-0.5 mt-1">{sentOtp}</span>
+                  </p>
+                </div>
               )}
 
-              <button
-                type="submit"
-                className="w-full py-3.5 mt-2 rounded-xl bg-cyan-550 hover:bg-cyan-600 font-extrabold cursor-pointer text-slate-950 flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/10 transition"
-              >
-                {view === 'login' ? (
-                  <>
-                    <LogIn className="w-4 h-4 text-slate-950" />
-                    <span>{isZh ? '立即进入智能工作台' : 'Verify and Authorized'}</span>
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="w-4 h-4 text-slate-950" />
-                    <span>{isZh ? '提交商家档案并开始试用体验' : 'Register Merchant Profile'}</span>
-                  </>
-                )}
-              </button>
+              {/* 1. LOGIN MODE VIEWS */}
+              {view === 'login' && (
+                <div className="space-y-3.5">
+                  {loginStep === 'email' ? (
+                    <form onSubmit={handleRequestLoginOtp} className="space-y-3.5 text-xs font-sans">
+                      <div className="space-y-1.5">
+                        <label className="text-slate-400 font-bold">{isZh ? '账号注册邮箱' : 'Account Email'}</label>
+                        <div className="relative">
+                          <Mail className="absolute left-3.5 top-3.5 text-slate-500 w-4 h-4" />
+                          <input
+                            required
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="请输入绑定的企业邮箱"
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-500/40 font-mono transition"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full py-3 bg-cyan-500 hover:bg-cyan-600 font-extrabold cursor-pointer text-slate-950 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/10 transition"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>{isZh ? '获取邮箱登录验证码' : 'Send Verification OTP'}</span>
+                      </button>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleLoginVerifyAndSubmit} className="space-y-3.5 text-xs font-sans">
+                      <div className="space-y-1.5 text-left">
+                        <label className="text-[#94a3b8] font-bold">{isZh ? '输入 6 位数邮箱验证码' : 'Verification OTP Code'}</label>
+                        <input
+                          required
+                          type="text"
+                          maxLength={6}
+                          value={otpCode}
+                          onChange={(e) => setOtpCode(e.target.value)}
+                          placeholder="******"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none text-center font-mono text-lg font-black tracking-widest focus:border-cyan-500"
+                        />
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => { setLoginStep('email'); setSentOtp(''); }}
+                          className="px-4 py-3 rounded-xl border border-slate-800 hover:text-slate-200 cursor-pointer text-slate-400 font-bold transition text-xs"
+                        >
+                          {isZh ? '返回' : 'Back'}
+                        </button>
+                        <button
+                          type="submit"
+                          className="flex-1 py-3 bg-cyan-500 hover:bg-cyan-600 font-extrabold cursor-pointer text-slate-950 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/10 transition text-xs"
+                        >
+                          <LogIn className="w-3.5 h-3.5 text-slate-950" />
+                          <span>{isZh ? '验证并激活账号登录' : 'Verify & Login'}</span>
+                        </button>
+                      </div>
+
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          disabled={countdown > 0}
+                          onClick={() => {
+                            const code = Math.floor(100000 + Math.random() * 900000).toString();
+                            setSentOtp(code);
+                            setCountdown(60);
+                          }}
+                          className="text-[10px] text-slate-450 hover:text-cyan-400 disabled:opacity-50 cursor-pointer"
+                        >
+                          {countdown > 0 ? (isZh ? `重新发送 (${countdown}s)` : `Resend in ${countdown}s`) : (isZh ? '重新获取验证码' : 'Resend Code')}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {/* Seed Preset Accounts Info Tip */}
+                  <div className="bg-slate-950/40 p-3.5 rounded-xl border border-slate-900 text-[10px] text-slate-400 font-sans leading-relaxed">
+                    <span className="text-amber-400 font-bold block mb-1">💡 {isZh ? '系统演示环境预设测试账号：' : 'Sandbox Demo Accounts:'}</span>
+                    <ul className="list-disc pl-4 space-y-1 font-mono text-slate-300">
+                      <li>{isZh ? '标准演示商户：' : 'Merchant Standard Account: '}demo@cultureos.com</li>
+                      <li>{isZh ? '系统超级管理员：' : 'Super Administrator Account: '}admin@cultureos.com</li>
+                    </ul>
+                    <p className="mt-2.5 opacity-80 text-[9.5px]">
+                      {isZh ? '请在上方账号邮箱字段中【手动输入】对应地址并提交。系统将自动向您在下方呈现专门生成的 6 位数字验证码，以供极速验证登录。' : 'Please manually enter either account address above. The system dynamic mailbox will intercept the routing and output the corresponding 6-digit code for activation.'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* 2. SIGNUP MODE VIEWS */}
+              {view !== 'login' && (
+                <div className="space-y-3.5">
+                  {signupStep === 'profile' ? (
+                    <form onSubmit={handleRequestRegisterOtp} className="space-y-3 text-xs font-sans">
+                      <div className="space-y-1">
+                        <label className="text-slate-400 font-bold">{isZh ? '真实姓名 / 企业主体' : 'Name / Company'}</label>
+                        <input
+                          required
+                          type="text"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder={isZh ? "张三 / 智能航海科技" : "E.g. James / Oceanic Marine"}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-cyan-500/40 font-sans"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-slate-400 font-bold">{isZh ? '企业工作邮箱 (用以接收激活码)' : 'Work Email'}</label>
+                        <input
+                          required
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="client@company.com"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-cyan-500/40 font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-slate-400 font-bold">{isZh ? '产品主营垂直大类' : 'Product Category'}</label>
+                        <select
+                          value={domain}
+                          onChange={(e) => setDomain(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-100 focus:outline-none focus:border-cyan-500/40 cursor-pointer"
+                        >
+                          <option value="pet_tech">{isZh ? "🧸 智能温控宠物电器" : "Pet Tech Accessories"}</option>
+                          <option value="ebike">{isZh ? "⚡ 强续航低碳智能电动车 (E-Bike)" : "Carbon Low E-Bike"}</option>
+                          <option value="herbal_tea">{isZh ? "🍵 东方古方高浓缩草本茶" : "Herbal Oriental Tea"}</option>
+                          <option value="custom">{isZh ? "❖ 其它品类 (手动输入个性定制)" : "Custom Enterprise Category"}</option>
+                        </select>
+                      </div>
+
+                      {domain === 'custom' && (
+                        <div className="space-y-1 animate-fade-in">
+                          <label className="text-slate-450">{isZh ? '个性大类简述' : 'Custom Category'}</label>
+                          <input
+                            required
+                            type="text"
+                            value={customDomain}
+                            onChange={(e) => setCustomDomain(e.target.value)}
+                            placeholder="降噪耳机 / 恒温睡袋"
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-cyan-500"
+                          />
+                        </div>
+                      )}
+
+                      <div className="space-y-1">
+                        <label className="text-slate-400 font-bold">{isZh ? '核心业务需求及全球化目标' : 'Global Rationale'}</label>
+                        <textarea
+                          required
+                          rows={2}
+                          value={purpose}
+                          onChange={(e) => setPurpose(e.target.value)}
+                          placeholder={isZh ? "例：攻坚欧美中产减压市场，以更具高级感的话术打入Tiktok流媒体，规避民族促销。" : "e.g., Reach EU urban young professionals with rich branding assets to boost CTR"}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-slate-100 focus:outline-none focus:border-cyan-500/40 resize-none font-sans"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full py-3 mt-1.5 bg-cyan-500 hover:bg-cyan-600 font-extrabold cursor-pointer text-slate-950 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/10 transition"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>{isZh ? '发送邮箱注册激活码' : 'Send Activation Code'}</span>
+                      </button>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleRegisterVerifyAndSubmit} className="space-y-3.5 text-xs font-sans">
+                      <div className="space-y-2 text-left">
+                        <label className="text-[#94a3b8] font-bold">
+                          {isZh ? '验证您的工作邮箱并激活账号' : 'Verify & Activate Your Email'}
+                        </label>
+                        <p className="text-[10px] text-slate-450 leading-relaxed font-sans mt-0.5">
+                          {isZh ? `我们已模拟向 ${email} 递送了企业秘钥激活邮件，请输写下方的 6 位激活秘钥完成注册和 5 额度兑换。` : `We simulated sending an activation token to ${email}.`}
+                        </p>
+                        <input
+                          required
+                          type="text"
+                          maxLength={6}
+                          value={otpCode}
+                          onChange={(e) => setOtpCode(e.target.value)}
+                          placeholder="******"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 mt-2 text-slate-100 focus:outline-none text-center font-mono text-lg font-black tracking-widest focus:border-cyan-500"
+                        />
+                      </div>
+
+                      <div className="flex gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => { setSignupStep('profile'); setSentOtp(''); }}
+                          className="px-4 py-3 rounded-xl border border-slate-800 hover:text-slate-200 cursor-pointer text-slate-400 font-bold transition text-xs"
+                        >
+                          {isZh ? '返回修改' : 'Back'}
+                        </button>
+                        <button
+                          type="submit"
+                          className="flex-1 py-3 bg-cyan-500 hover:bg-cyan-600 font-extrabold cursor-pointer text-slate-950 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/10 transition text-xs"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>{isZh ? '提交激活码并即刻启用' : 'Submit Code & Register'}</span>
+                        </button>
+                      </div>
+
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          disabled={countdown > 0}
+                          onClick={() => {
+                            const code = Math.floor(100000 + Math.random() * 900000).toString();
+                            setSentOtp(code);
+                            setCountdown(60);
+                          }}
+                          className="text-[10px] text-slate-450 hover:text-cyan-400 disabled:opacity-50 cursor-pointer"
+                        >
+                          {countdown > 0 ? (isZh ? `重新发送 (${countdown}s)` : `Resend in ${countdown}s`) : (isZh ? '重新获取激活码' : 'Resend Code')}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
+
+              {/* Bottom direct Guest Explore Button */}
+              <div className="pt-3 border-t border-slate-900 text-center select-none space-y-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onGuestLogin();
+                    onClose();
+                  }}
+                  className="w-full py-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 font-bold text-amber-300 text-xs transition cursor-pointer flex items-center justify-center gap-2 shadow"
+                >
+                  <Compass className="w-4 h-4 text-amber-400" />
+                  <span>{isZh ? '👁️ 以游客身份免注册直接看 Demo' : 'Explore Demo Immediately as Guest'}</span>
+                </button>
+                <p className="text-[10px] text-slate-500 max-w-[280px] mx-auto font-sans leading-relaxed">
+                  {isZh ? '游客具有完整的视图浏览权限，无需填写任何账户信息或验证；但无法执行流程演算生成等操作。' : 'Guest has read-only privileges.'}
+                </p>
+              </div>
 
               {/* View Switcher toggle */}
-              <div className="text-center pt-2 select-none border-t border-slate-900">
+              <div className="text-center pt-2 select-none border-t border-slate-950 text-[11px]">
                 {view === 'login' ? (
-                  <p className="text-slate-400 text-[11px]">
-                    {isZh ? '还没有账户资料？' : 'First time merchant? '}
+                  <p className="text-slate-400">
+                    {isZh ? '还没有商户账号？' : 'First time merchant? '}
                     <button
                       type="button"
                       onClick={() => setView('signup')}
-                      className="text-cyan-400 font-bold hover:underline cursor-pointer"
+                      className="text-cyan-400 font-bold hover:underline cursor-pointer ml-1"
                     >
-                      {isZh ? '一键创建商家建档 (留下资料)' : 'Establish and Register Port'}
+                      {isZh ? '免费建档/注册' : 'Create Profile'}
                     </button>
                   </p>
                 ) : (
-                  <p className="text-slate-400 text-[11px]">
-                    {isZh ? '已有注册账号？' : 'Returning global player? '}
+                  <p className="text-slate-400">
+                    {isZh ? '已有激活账号？' : 'Returning player? '}
                     <button
                       type="button"
                       onClick={() => setView('login')}
-                      className="text-cyan-400 font-bold hover:underline cursor-pointer"
+                      className="text-cyan-400 font-bold hover:underline cursor-pointer ml-1"
                     >
-                      {isZh ? '直接邮箱登录登录' : 'Sign In Now'}
+                      {isZh ? '直接邮箱验证登录' : 'Sign In Now'}
                     </button>
                   </p>
                 )}
               </div>
-            </form>
+            </div>
           )}
 
         </div>
@@ -1039,7 +1334,7 @@ export function AdminDashboardView({
                           </select>
                           <button
                             onClick={() => handleChargeSubmit(usr.id)}
-                            className="bg-cyan-550/20 border border-cyan-550/30 text-cyan-300 px-3 py-1 rounded text-[10px] font-black cursor-pointer hover:bg-cyan-500/20 active:opacity-80 transition"
+                            className="bg-cyan-500/25 border border-cyan-500/35 text-cyan-300 px-3 py-1 rounded text-[10px] font-black cursor-pointer hover:bg-cyan-500/40 active:opacity-80 transition"
                           >
                             {isZh ? '立即充值' : 'Recharge'}
                           </button>
