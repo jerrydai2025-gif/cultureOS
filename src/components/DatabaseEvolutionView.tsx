@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Database, Sparkles, RefreshCw, Layers, History, Check, AlertTriangle, 
   ArrowRight, Tag, HelpCircle, Flame, Plus, Play, ChevronRight, CheckCircle2, FileText,
-  Edit, Save, X, Trash2, Orbit, Compass
+  Edit, Save, X, Trash2, Orbit, Compass, Link
 } from 'lucide-react';
 import { RagEntry, RagFeedback, EvolutionTrace } from '../types';
 import { INITIAL_RAG_ENTRIES } from '../data/rag_presets';
@@ -154,6 +154,7 @@ export default function DatabaseEvolutionView({
   const [startupCustomCategory, setStartupCustomCategory] = useState<string>('');
   const [startupRegion, setStartupRegion] = useState<'NA' | 'LATAM'>('NA');
   const [startupRawSlogan, setStartupRawSlogan] = useState<string>('');
+  const [appliedRagId, setAppliedRagId] = useState<string>('rag-002');
   const [isBrandingEvolving, setIsBrandingEvolving] = useState<boolean>(false);
   const [customBrandResult, setCustomBrandResult] = useState<any | null>(null);
   const [brandingTraces, setBrandingTraces] = useState<string[]>([]);
@@ -263,6 +264,31 @@ export default function DatabaseEvolutionView({
       }
     }
   }, [selectedEntryId, entries]);
+
+  // Auto-load raw slogans when changing startup category
+  useEffect(() => {
+    const defaultSlogansList = [
+      "",
+      "智能定时定量、不卡粮极速放电。随时看宠解焦虑白菜促销！",
+      "Smart timing, 2K cam to watch pet to solve separation anxiety with cheap pricing!",
+      "时速40迈超速狂飙跑山、极速跑更远、性能完爆全网！",
+      "40mph speeds, long range trail riding, best stats on the market!",
+      "中药植物老方，排毒解酒护肝利尿、省下一大笔咖啡钱！",
+      "Ancient herbs of secret recipe, detoxifies liver/fat, perfect price!"
+    ];
+
+    if (defaultSlogansList.includes(startupRawSlogan.trim())) {
+      if (startupCategory === 'pet_tech') {
+        setStartupRawSlogan(isZh ? "智能定时定量、不卡粮极速放电。随时看宠解焦虑白菜促销！" : "Smart timing, 2K cam to watch pet to solve separation anxiety with cheap pricing!");
+      } else if (startupCategory === 'ebike') {
+        setStartupRawSlogan(isZh ? "时速40迈超速狂飙跑山、极速跑更远、性能完爆全网！" : "40mph speeds, long range trail riding, best stats on the market!");
+      } else if (startupCategory === 'herbal_tea') {
+        setStartupRawSlogan(isZh ? "中药植物老方，排毒解酒护肝利尿、省下一大笔咖啡钱！" : "Ancient herbs of secret recipe, detoxifies liver/fat, perfect price!");
+      } else {
+        setStartupRawSlogan('');
+      }
+    }
+  }, [startupCategory, isZh]);
 
   const handleSaveEdit = () => {
     if (!editName.trim()) {
@@ -429,7 +455,7 @@ export default function DatabaseEvolutionView({
       feedbackContent: customFeedback,
       feedbackSource: feedbackSource,
       provider: modelProvider,
-      model: modelProvider === 'gemini' ? 'gemini-3.5-flash' : 'deepseek-chat'
+      model: modelProvider === 'gemini' ? 'gemini-3.5-flash' : modelProvider === 'openai' ? 'gpt-4o-mini' : 'deepseek-chat'
     };
 
     try {
@@ -592,11 +618,13 @@ export default function DatabaseEvolutionView({
         keyStrategy = isZh
           ? "将国内“监控卡粮、狂看爱宠解焦虑”等偏向主人过度掌控的负压词软化，包装为“关注宠物健康自主与双向安全陪伴”。完美契合北美对宠物作为独立家庭角色的社会环保消费舆情。"
           : "Softened monitoring metaphors. Reframed monitoring features as pet comfort freedom and mental calmness, adhering to NA progressive animal welfare ethics.";
-        mustHaves = [
+        const rEntry = entries.find(e => e.id === 'rag-006');
+        const rGuideline = rEntry?.regionalGuidelines.find(g => g.region.includes('North America'));
+        mustHaves = rGuideline ? rGuideline.mustHaves : [
           isZh ? "强调爱宠独立自我的高画质“不被打扰时光”安详画面" : "Highlight scenes of pets enjoying cozy, distraction-free alone time",
           isZh ? "列明 UL 抗漏电防咬材质、食品级不含双酚A不卡粮认证" : "UL-certified safety materials and BPA-Free food security labels"
         ];
-        mustNots = [
+        mustNots = rGuideline ? rGuideline.mustNots : [
           isZh ? "严禁虚假声称该电子器物能“包治各种宠物郁结焦虑、保障宠物健康快乐成长”等越线医疗指控" : "Do NOT guarantee physical or psychological therapy claims for animals",
           isZh ? "杜绝不断强调“全网最低、白菜促销”等砸损高客单价溢价的话术" : "Avoid cheap discount copy like 'bargain bin' that ruins brand equity"
         ];
@@ -608,11 +636,14 @@ export default function DatabaseEvolutionView({
         keyStrategy = isZh
           ? "融入拉美浓郁的生命集体融洽氛围，强调智能设备是为家庭成员共享快乐时光、保障安心而生的家庭好帮手，彻底摒弃冰冷单身独处镜头。"
           : "Integrated with LATAM family warmth. Position pet care devices as a reliable helper for family gatherings, avoiding cold isolation vibes.";
-        mustHaves = [
+        
+        const rEntry = entries.find(e => e.id === 'rag-006');
+        const rGuideline = rEntry?.regionalGuidelines.find(g => g.region.includes('Latin America'));
+        mustHaves = rGuideline ? rGuideline.mustHaves : [
           isZh ? "展示宠物在明亮日落、全家Fiesta庭院烧烤派对中撒欢玩耍的温馨大视野场景" : "Display warm clips of pets participating in family outdoor celebrations",
           isZh ? "欢悦明快、带点低保真律动的西班牙尼龙木吉他背景音" : "Cheerful cozy spanish guitar backgrounds"
         ];
-        mustNots = [
+        mustNots = rGuideline ? rGuideline.mustNots : [
           isZh ? "严禁在视频开头使用幽暗、冰冷偏暗蓝的深夜关灯空禁闭色调" : "Do NOT utilize depressive, cold, nocturnal isolated setups for pets",
           isZh ? "避免照搬过于高冷的北欧风黑白灰单色极简主义UI色板" : "Avoid copying isolated minimalistic monochrome setups"
         ];
@@ -630,11 +661,13 @@ export default function DatabaseEvolutionView({
         keyStrategy = isZh
           ? "淘汰国内喜好的“狂飙、秒杀、拼速度常数、低价降维打击”等带有危险危险和廉价街头感标签，重塑为“在拥挤的欧美地铁外获取专属于个体的两英里正念呼吸时间”。完美打入中产美学。"
           : "Eradicated aggressive speed/conquering marketing. Reframed micro-mobility as a premium, low-entropy mindfulness escape from heavy metropolitan subways, fully matching middle-class values.";
-        mustHaves = [
+        const rEntry = entries.find(e => e.id === 'rag-007');
+        const rGuideline = rEntry?.regionalGuidelines.find(g => g.region.includes('North America'));
+        mustHaves = rGuideline ? rGuideline.mustHaves : [
           isZh ? "明确标示碳平衡减排系数证书以及环保再生合金用料质认证" : "Highlight cargo certifications, eco-alloy and carbon reduction indexes",
           isZh ? "捕捉雨后清晨第一道街头阳光、车体顺滑掠过的静音特写" : "Serene sunlit morning streets, sleek noise-canceled design highlights"
         ];
-        mustNots = [
+        mustNots = rGuideline ? rGuideline.mustNots : [
           isZh ? "严禁将主视觉标语或口号设计为鼓励超越本地城市法定限速的违规野外狂跑山" : "Avoid marketing speeding beyond regulated city limits containing off-road risk",
           isZh ? "严禁在宣发物料中出现骑行未佩戴美国DOT头盔、甚至危险穿插行车线等反规雷区画面" : "Do NOT show reckless riders missing helmets or violating local safety guidelines"
         ];
@@ -646,11 +679,14 @@ export default function DatabaseEvolutionView({
         keyStrategy = isZh
           ? "针对拉美对自由探索和温暖社区人情的高感度。侧重于“长寿电量省下奔波时间、回家探望母亲、结伴看球夕阳Fiesta”的主题宣讲。"
           : "Focus on connection freedom and weekend family visits. Leverage community colors and romantic dapple sunset paths.";
-        mustHaves = [
+        
+        const rEntry = entries.find(e => e.id === 'rag-007');
+        const rGuideline = rEntry?.regionalGuidelines.find(g => g.region.includes('Latin America'));
+        mustHaves = rGuideline ? rGuideline.mustHaves : [
           isZh ? "展示骑行穿过彩色殖民老楼、街坊亲昵挥手微笑的近焦深情谊画面" : "Showcase passing dapple colonial buildings with local neighbors waving hands",
           isZh ? "暖洋洋的高对比拉丁流行沙锤、经典尼龙弦即敲打击伴奏" : "Exquisite rhythmic percussion and warm Spanish acoustic"
         ];
-        mustNots = [
+        mustNots = rGuideline ? rGuideline.mustNots : [
           isZh ? "严防全盘挪用冰冷、高冷性冷淡、零温度的废墟工业朋克科技质感" : "Avoid cold, dark clinical gray mechanical isolation layouts",
           isZh ? "避忌使用未经审核的、可能冒犯或混淆本地特定原住民氏族土地所有权敏感性的装饰符号" : "Avoid naming vectors that touch indigenous territorial pride controversy"
         ];
@@ -668,11 +704,13 @@ export default function DatabaseEvolutionView({
         keyStrategy = isZh
           ? "在国内被滥用的“老祖宗汉方消炎、排毒酒精、刮油、代替药物”在美加是触发FDA严重行政处罚的绝对熔断雷红线。CultureOS将其完全升级为“岩茶冲泡的蒸汽微距ASMR、给眼部电脑屏幕带来两分钟的东方非药物感官禅意冥想时刻”。"
           : "Excluding all health warnings about detoxification or obesity clinics. Rebuilt campaign as a 2-minute tea-steaming ASMR escape for overworked programmers or designers, fully safe under FTC codes.";
-        mustHaves = [
+        const rEntry = entries.find(e => e.id === 'rag-008');
+        const rGuideline = rEntry?.regionalGuidelines.find(g => g.region.includes('North America'));
+        mustHaves = rGuideline ? rGuideline.mustHaves : [
           isZh ? "展示质朴陶罐缓缓注入沸水、微距透光拍摄红茶岩骨花香茶汤交融的解压微镜头" : "Capture extreme macro-ASMR of thermal steam and clay cup texture",
           isZh ? "包装及详情页强制标注 100% Non-GMO（非转基因）及天然天然草本食品认证标牌" : "Verified natural organic botanical tags conforming to USDA Organic guidelines"
         ];
-        mustNots = [
+        mustNots = rGuideline ? rGuideline.mustNots : [
           isZh ? "绝对禁止提及任何关于“根制失眠、消弭长期焦虑、治疗脑神经衰弱”等不实药理承诺" : "Do NOT cite unqualified claims on blood pressure, weight-loss or diabetes",
           isZh ? "避免渲染大内皇宫、权贵独享、给百姓看病的封建尊卑姿态镜头" : "Avoid outdated Imperial dynasty costumes that create cultural distance"
         ];
@@ -684,11 +722,14 @@ export default function DatabaseEvolutionView({
         keyStrategy = isZh
           ? "针对拉美“尊重自然母体与泥土恩赐（Pachamama Vibe）”的朴素生态神学理念。着重塑造100%纯天然自然原叶收割、不添加糖、无人工色素，作为亲友野聚消暑圣品。"
           : "Evoke general Mother-Nature elements. Focus on 100% natural organic harvest and family cozy tables.";
-        mustHaves = [
+        
+        const rEntry = entries.find(e => e.id === 'rag-008');
+        const rGuideline = rEntry?.regionalGuidelines.find(g => g.region.includes('Latin America'));
+        mustHaves = rGuideline ? rGuideline.mustHaves : [
           isZh ? "微距展现热带清露、雨林深处茶农质朴劳作，以及双手捧陶汤大口饱吸天然茶露的幸福" : "Show earthen clay pots, lush organic tea garden dew and tactile comfort snaps",
           isZh ? "展现一大壶冷茶摆放在开阔草坪，供整个街坊、多口之家开怀消遣的欢聚图景" : "Family share pitcher setups with glowing sunlit tables"
         ];
-        mustNots = [
+        mustNots = rGuideline ? rGuideline.mustNots : [
           isZh ? "切记不要将茶叶故事讲成带有符咒开光、辟邪做法迷信色彩、与天主教信仰发生强烈冲突的封建神秘主义" : "Strictly avoid pagan mysticism or superstitious claims provoking Catholic areas",
           isZh ? "极力规避单人处在黑漆房幽闭喝茶、愁云惨淡反思的情调，会引发本地社会抑郁症创伤敏感" : "Avoid dry, isolating dark meditative graphics"
         ];
@@ -711,11 +752,13 @@ export default function DatabaseEvolutionView({
         ? "系统智能抓取到国内话术里的主观疗宣称，并判定“秒杀狂暴低价”等具有高反弹力负面品牌资产风险。CultureOS已强制将卖点突变重塑为“温润融入日常正念仪式、零压力合规”的高客单价叙事。"
         : "Detected heavy commercial slogans containing clinical claiming risks. Upgraded brand to sensory aesthetic focus, bypassing safety traps while amplifying premium trust.";
 
-      mustHaves = [
+      const rEntry = entries.find(e => e.id === appliedRagId);
+      const rGuideline = rEntry?.regionalGuidelines.find(g => g.region.includes(startupRegion === "NA" ? "North America" : "Latin America"));
+      mustHaves = rGuideline ? rGuideline.mustHaves : [
         isZh ? "微距展示产品本真物理细节，运用自然斑驳柔光，在视觉上直接证明其质感和定价溢价度" : "Close-up tactile textures, authentic handmade/precision detailing highlights",
         isZh ? "符合大区DE&I多元共融(Diversity & Equity)审美的模特及日常社媒极简尺寸画面" : "Fully compliance certified aspect ratios and localized compliant diversity imagery"
       ];
-      mustNots = [
+      mustNots = rGuideline ? rGuideline.mustNots : [
         isZh ? "严禁虚假渲染包治情绪、解决生理病理或可取代专业治疗医生和健康检测的字眼" : "Zero mentions of professional psychological cures or diagnostic alternatives",
         isZh ? "杜绝一切粗暴的纯卖参数、反复洗脑大吼叫卖和带有赌性噱头的街头低端推销手法" : "Zero annoying aggressive loud selling clips or speculative gimmicks"
       ];
@@ -1786,7 +1829,29 @@ export default function DatabaseEvolutionView({
 
                 {/* Domestic raw slogan input */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-350">{isZh ? "国内诉求文案 (建议包含过度吹嘘/中草药疗效词)" : "Domestic Raw Slogan / Claims"}</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-350">{isZh ? "国内诉求文案 (建议包含过度吹嘘/中草药疗效词)" : "Domestic Raw Slogan / Claims"}</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (startupCategory === 'pet_tech') {
+                          setStartupRawSlogan(isZh ? "智能定时定量、不卡粮极速放电。随时看宠解焦虑白菜促销！" : "Smart timing, 2K cam to watch pet to solve separation anxiety with cheap pricing!");
+                        } else if (startupCategory === 'ebike') {
+                          setStartupRawSlogan(isZh ? "时速40迈超速狂飙跑山、极速跑更远、性能完爆全网！" : "40mph speeds, long range trail riding, best stats on the market!");
+                        } else if (startupCategory === 'herbal_tea') {
+                          setStartupRawSlogan(isZh ? "中药植物老方，排毒解酒护肝利尿、省下一大笔咖啡钱！" : "Ancient herbs of secret recipe, detoxifies liver/fat, perfect price!");
+                        } else {
+                          setStartupRawSlogan('');
+                        }
+                        showNotification(isZh ? '已恢复该品类预设的演示诉求！' : 'Loaded category demo preset!', 'info');
+                      }}
+                      className="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold transition flex items-center gap-1 cursor-pointer bg-transparent border-none outline-none py-0.5 px-1 rounded hover:bg-slate-900"
+                      title={isZh ? "重置并重新加载默认示范" : "Reset & reload demo presets"}
+                    >
+                      <Sparkles className="w-3 h-3 text-cyan-400" />
+                      <span>{isZh ? "加载推荐预设" : "Load Preset"}</span>
+                    </button>
+                  </div>
                   <textarea
                     rows={4}
                     value={startupRawSlogan}
@@ -1805,6 +1870,109 @@ export default function DatabaseEvolutionView({
                   <span className="text-[10px] text-slate-500 block leading-relaxed select-none">
                     {isZh ? "🔥 提示：试着输入一些极其“中国特色营销”的口号，观察 AI 文化编译器如何在翻译和重塑时，进行无害化解耦，转化为符合当地环保、反成瘾和 FDA 法令的高客单价叙事。" : "🔥 Inside tip: Add heavy clinical promises or severe pricing slangs to observe how our engine dissolves and reconstructs copy."}
                   </span>
+                </div>
+
+                {/* RAG core constraints link block */}
+                <div className="p-4 rounded-xl border border-dashed border-cyan-500/25 bg-cyan-950/10 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
+                      <Link className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>{isZh ? "🔗 RAG 核心合规库实时联动" : "🔗 Live RAG Alignment Link"}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        let matched = entries.find(e => {
+                          if (startupCategory === 'pet_tech') return e.id === "rag-006";
+                          if (startupCategory === 'ebike') return e.id === "rag-007";
+                          if (startupCategory === 'herbal_tea') return e.id === "rag-008";
+                          return e.id === appliedRagId;
+                        });
+                        if (matched) {
+                          setSelectedEntryId(matched.id);
+                          setIsEditingActive(false);
+                          setIsCreatingNew(false);
+                          setSubTab('evolution');
+                          showNotification(isZh ? `已跳转并定位至【${matched.name}】规则卡！` : `Navigated to [${matched.name}]!`, 'info');
+                        }
+                      }}
+                      className="text-[9px] text-amber-400 hover:text-amber-300 font-bold transition flex items-center gap-0.5 cursor-pointer bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded"
+                    >
+                      <Edit className="w-2.5 h-2.5" />
+                      <span>{isZh ? "跳转直编该规则" : "Edit Rule"}</span>
+                    </button>
+                  </div>
+
+                  {/* Dropdown for custom applied RAG selection */}
+                  {startupCategory === 'custom' ? (
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold text-slate-400 block text-left">{isZh ? "应用哪个 RAG 规则作为编译硬约束？" : "Apply which RAG constraints?"}</label>
+                      <select
+                        value={appliedRagId}
+                        onChange={(e) => setAppliedRagId(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 focus:outline-none focus:border-cyan-500/40"
+                      >
+                        {entries.map(e => (
+                          <option key={e.id} value={e.id}>
+                            {e.name} ({e.category.toUpperCase()})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-950/40 px-3 py-2 rounded-lg border border-slate-900 flex items-start justify-between gap-2 text-left">
+                      <div className="space-y-0.5">
+                        <p className="text-xs font-bold text-slate-200 leading-snug">
+                          {startupCategory === 'pet_tech' && (entries.find(e => e.id === 'rag-006')?.name || "智能宠物安全规约")}
+                          {startupCategory === 'ebike' && (entries.find(e => e.id === 'rag-007')?.name || "E-Bike 欧美法规")}
+                          {startupCategory === 'herbal_tea' && (entries.find(e => e.id === 'rag-008')?.name || "古汉草本 FDA 规约")}
+                        </p>
+                        <p className="text-[9px] text-slate-500">
+                          {isZh ? "状态：已挂载并实时监听更新" : "Status: Mounted & listening for local updates"}
+                        </p>
+                      </div>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-500/10 font-mono shrink-0">
+                        Active
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Live rules preview */}
+                  <div className="space-y-1 text-[10px] bg-slate-950/80 p-2.5 rounded-lg border border-slate-900">
+                    <p className="text-slate-400 font-bold border-b border-slate-900 pb-1 flex items-center justify-between select-none">
+                      <span>{isZh ? `当前大区 (${startupRegion}) RAG 安全红线预览:` : `Active Region (${startupRegion}) RAG Preview:`}</span>
+                      <span className="text-[8px] bg-slate-850 text-slate-500 px-1 rounded">Live DB Ref</span>
+                    </p>
+                    {(() => {
+                      const matched = entries.find(e => {
+                        if (startupCategory === 'pet_tech') return e.id === "rag-006";
+                        if (startupCategory === 'ebike') return e.id === "rag-007";
+                        if (startupCategory === 'herbal_tea') return e.id === "rag-008";
+                        return e.id === appliedRagId;
+                      });
+                      const regionCode = startupRegion === "NA" ? "North America" : "Latin America";
+                      const guideline = matched?.regionalGuidelines.find(g => g.region.includes(regionCode));
+                      if (!guideline) {
+                        return <p className="text-slate-500 italic py-1 text-center">{isZh ? "未检测到该大区规则" : "No rules for this region"}</p>;
+                      }
+                      return (
+                        <div className="space-y-2 pt-1 font-sans text-left">
+                          <div>
+                            <span className="text-green-400 font-bold block">{isZh ? "✔ 必须满足的本地化加分特征 (Must-Haves):" : "✔ Must-Haves:"}</span>
+                            <ul className="list-disc pl-4 text-slate-300 space-y-0.5 max-h-[80px] overflow-y-auto">
+                              {guideline.mustHaves.slice(0, 3).map((m, i) => <li key={i}>{m}</li>)}
+                            </ul>
+                          </div>
+                          <div>
+                            <span className="text-red-400 font-bold block">{isZh ? "✘ 严禁触犯的合规与文化雷区 (Must-Nots):" : "✘ Must-Nots:"}</span>
+                            <ul className="list-disc pl-4 text-slate-300 space-y-0.5 max-h-[80px] overflow-y-auto">
+                              {guideline.mustNots.slice(0, 3).map((m, i) => <li key={i}>{m}</li>)}
+                            </ul>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
 
                 {/* Submit button */}

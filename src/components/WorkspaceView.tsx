@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { 
   Play, Settings, Terminal, Sparkles, CheckCircle2, RotateCw, 
   AlertTriangle, Layers, Activity, Check, Bookmark, Info, Flame, Trash2,
-  Database
+  Database, Volume2, RefreshCw, Compass, ShieldCheck, Award, ArrowRight
 } from 'lucide-react';
 import { CampaignBrief, AgentNode, TraceLog, CulturePack } from '../types';
 import { PRESETS } from '../data/presets';
@@ -33,6 +33,70 @@ interface WorkspaceViewProps {
   onConsumeQuota?: (actionName: string) => boolean;
 }
 
+interface ConsultationState {
+  entityType: 'brand' | 'personal' | null;
+  category: string | null;
+  stage: string | null;
+  painPoint: string | null;
+}
+
+const SIMPLE_TEMPLATES: Record<string, { zh: string; directEn: string; directEs: string; eqEn: string; eqEs: string; explanationZh: string; explanationEn: string }> = {
+  cosmetics: {
+    zh: "极致抗皱淡斑黄金面霜：纯人参提取物，10天内消除黑色素并抚平深层皱纹，让你年轻二十岁，重新拥有完美白皙肌肤！",
+    directEn: "Ultimate Anti-Wrinkle Spot Fading Gold Cream: Pure ginseng extract, eliminates melanin and smooths deep wrinkles in 10 days, making you look twenty years younger and possess perfect white skin!",
+    directEs: "Crema de oro definitiva para eliminar arrugas y manchas: Extracto puro de ginseng, elimina la melanina y suaviza las arrugas profundas en 10 días, ¡haciéndote lucir veintidós años más joven y con una piel blanca perfecta!",
+    eqEn: "Clean Botanical Ginseng Skin Food: Gently soothe your skin's natural moisture barrier. Formulated with pure, sustainably sourced plant extracts to restore weightless luminosity and raw vitality.",
+    eqEs: "Nutrición botánica purificada con ginseng: Calma suavemente la barrera de hidratación natural de tu piel. Formulado con extractos de plantas puros para restaurar una luminosidad ingrávida.",
+    explanationZh: "【FDA/FTC风控对齐】：规避了『消除黑色素』、『年轻二十岁』等极高违规风险的绝对性药用宣传，转译为符合欧美高知识产阶级审美的『天然屏障营养』和『植物活力恢复』，将强硬的推销转为情绪悦己叙事。",
+    explanationEn: "[FDA/FTC Compliance Realignment]: Replaced extreme medical claims ('eliminates melanin', 'looks 20 years younger') with compliant self-care elements ('nourish natural moisture barrier', 'sustainably sourced plant extracts') favored by high-end Western demographics."
+  },
+  personal_ip: {
+    zh: "阿琪是我抖音电台：今晚阿琪为你翻唱一首张国荣的《风继续吹》，陪伴深夜加班的你。请双击屏幕点赞并分享给需要温暖的朋友！",
+    directEn: "Aqi is me Douyin Radio: Tonight Aqi will cover Leslie Cheung's 'Wind Blows On' for you, accompanying you working late. Please double-click screen to like and share with friends who need warmth!",
+    directEs: "Radio de Douyin de Aqi: Esta noche Aqi cantará un cover de 'Wind Blows On' de Leslie Cheung para ti, acompañándote a trabajar tarde. ¡Dale doble clic para dar me gusta!",
+    eqEn: "Aqi Cover Acoustic: Strumming a vintage melody tonight just for you. Grab a warm cup of tea, take a slow breath, and let the busy day fade away into the late-night ambient breeze.",
+    eqEs: "Aqi Cover Acústico: Tocando una melodía vintage esta noche solo para ti. Toma una taza de té caliente, respira lentamente y deja que el día se desvanezca en la brisa.",
+    explanationZh: "【本土化内容起号对齐】：去除了带有明显中式带货套路的『点赞分享』，将其转译为西方极度流行的『ASMR深夜温情陪伴』与『Lo-fi慢生活美学』，完美契合 TikTok 推荐推流算法的情感共鸣因子。",
+    explanationEn: "[Viral Algorithmic Seeding Realignment]: Replaced literal Chinese call-to-actions ('double-click to like', 'share to friends') with cozy late-night ASMR acoustic vibes and slow-living aesthetic cues that organically score high on Western FYP algorithms."
+  },
+  ebike: {
+    zh: "极速智能电动自行车：超大容量电池，骑行续航高达200公里，时速50公里，电机动力超强，解决你的出行焦虑，碾压所有传统单车！",
+    directEn: "Super Fast Smart Electric Bike: Super large capacity battery, riding range up to 200km, speed 50km/h, super strong motor power, solves your travel anxiety and crushes all traditional bicycles!",
+    directEs: "Bicicleta eléctrica inteligente súper rápida: Batería de gran capacidad, autonomía de hasta 200 km, velocidad de 50 km/h, motor súper potente, ¡resuelve tu ansiedad de viaje!",
+    eqEn: "Eco-Ebike Silent Cruiser: Rediscover your city with carbon-neutral freedom. Engineered with seamless battery efficiency for quiet weekend escapes and mindful, traffic-free daily commutes.",
+    eqEs: "Eco-Ebike Silent Cruiser: Redescubre tu ciudad con libertad neutra en carbono. Diseñado con una eficiencia de batería perfecta para escapes de fin de semana silenciosos.",
+    explanationZh: "【大区ESG准入对齐】：规避了可能引发地缘交通处罚的『时速50公里』超限宣称与侵略性对比词『碾压传统』，转译为欧洲极度崇尚的『碳中和自由』与『静音周末出逃』，提升品牌社会责任认知度。",
+    explanationEn: "[ESG Regulatory Realignment]: Avoided aggressive speeds claims (50km/h violates EU Class-1 restrictions) and comparative brag words ('crushes others'). Reframed into highly praised 'carbon-neutral freedom' and 'quiet escapes' targeting European eco-conscious elites."
+  },
+  pet_iot: {
+    zh: "智能宠物监控喂食器：高清摄像头24小时无死角监控你的小狗，一旦发出叫声立刻提醒，自动投喂零食，防止它得抑郁症和过度拆家！",
+    directEn: "Smart Pet Camera Feeder: HD camera monitors your dog 24 hours with no dead angle, reminds you immediately if it barks, automatically feeds snacks to prevent depression and house destroying!",
+    directEs: "Alimentador con cámara inteligente para mascotas: Cámara de alta definición que monitorea a tu perro las 24 horas, ¡alimentación automática para evitar la depresión!",
+    eqEn: "PawsComfort Companion: Stay close to your furry friend, wherever the day takes you. Quiet notifications and balanced snack-dispensing keep tails wagging and paws happy, stress-free.",
+    eqEs: "Compañero PawsComfort: Mantente cerca de tu amigo peludo, dondequiera que te lleve el día. Las notificaciones silenciosas mantienen las colas moviéndose de forma feliz.",
+    explanationZh: "【情绪内核净化对齐】：将带有焦虑暗示的『拆家』、『抑郁症』和过度监控词『无死角监控』，转译为倡导宠物福利的『默默陪伴』与『无压力摇尾欢喜』，符合海外中产对动物福利的高感性定位。",
+    explanationEn: "[Animal Welfare & Emotional Realignment]: Softened anxiety-inducing, micro-managing terminology ('no dead angle monitoring', 'prevent depression/house destroying') into animal-centric positive wellness narrative ('quiet companion', 'keep tails wagging and paws happy')."
+  },
+  wellness_tea: {
+    zh: "东方安神降火本草茶：天然蒲公英金银花秘方，1天内消除身体炎症，快速降血压，清热解毒，是熬夜上火、高血压人群的救命神仙茶！",
+    directEn: "Oriental Soothing Fire-Reducing Herbal Tea: Natural dandelion and honeysuckle secret formula, eliminates body inflammation in 1 day, rapidly lowers blood pressure, clears heat and detoxifies, is a life-saving fairy tea for people staying up late or having high blood pressure!",
+    directEs: "Té de hierbas calmante oriental: Fórmula secreta de diente de león y madreselva, elimina la inflamación corporal en 1 día, ¡es un té de hadas que salva vidas para la presión alta!",
+    eqEn: "Zen-Breeze Botanical Infusion: A comforting cup of wild dandelion and sweet honeysuckle. Unwind after a long day with a gentle, caffeine-free herbal brew designed to restore inner equilibrium.",
+    eqEs: "Infusión botánica Zen-Breeze: Una reconfortante taza de diente de león silvestre y madreselva dulce. Desconéctate después de un largo día con una infusión suave.",
+    explanationZh: "【药监法案合规对齐】：FDA 严格禁止非药品食品宣称任何治疗效果（如『消除炎症』、『降低血压』等）。转译为符合欧美瑜伽白领审美的『Zen-Breeze 深夜安神』与『恢复内在平衡』，完全符合安全监管并提升调性。",
+    explanationEn: "[FDA Compliance Realignment]: FDA strictly bans dietary supplements from claiming therapeutic actions ('eliminates inflammation', 'lowers blood pressure'). Reframed into aesthetic wellness storytelling ('Zen-Breeze Botanical Infusion', 'restore inner equilibrium') suited for health food boutiques."
+  },
+  ai_tools: {
+    zh: "智能AI视频爆款生成器：一键抓取全网热点视频，3秒钟自动配音剪辑合成，批量发布到TikTok，每天自动躺赚1000美金，小白也能轻松暴富！",
+    directEn: "Smart AI Viral Video Generator: One-click scrape hot videos on whole web, 3 seconds auto dubbing and clipping synthesis, batch post to TikTok, auto earn $1000 daily, newbies easily get rich!",
+    directEs: "Generador de video viral inteligente de IA: Raspado de videos calientes con un clic, earn $1000 al día, ¡los novatos se enriquecen fácilmente!",
+    eqEn: "FlowEdit Creator Hub: Supercharge your visual storytelling. Elevate raw footage into thumb-stopping social clips with automated multi-format adjustments and seamless smart audio layering.",
+    eqEs: "FlowEdit Creator Hub: Potencia tu narración visual. Convierte imágenes sin procesar en clips sociales atractivos con ajustes automáticos y capas de audio inteligentes.",
+    explanationZh: "【合规与版权自清算对齐】：剔除可能触发平台封号和法律起诉的『抓取全网』、『暴富套现』和『小白躺赚』等灰色诱导性宣称，转译为高大上的『视觉叙事加速』及『多平台自适应』，完美通过社交媒体广告合规检测。",
+    explanationEn: "[Platform Compliance & IP Safety Realignment]: Purged gray-hat claims ('scrape whole web', 'newbies easily get rich', 'earn $1000 daily') that trigger instant shadowbans and copyright lawsuits. Rebuilt as professional, high-vibe SaaS tool terminology ('supercharge visual storytelling', 'seamless smart audio layering')."
+  }
+};
+
 export default function WorkspaceView({
   lang,
   agents: defaultAgents,
@@ -43,6 +107,39 @@ export default function WorkspaceView({
   onConsumeQuota
 }: WorkspaceViewProps) {
   const isZh = lang === 'zh';
+
+  // --- Progressive Onboarding Experience States ---
+  const [activeJourneyStep, setActiveJourneyStep] = useState<'consulting' | 'simple_edit' | 'purification' | 'advanced'>('consulting');
+  const [skipToAdvanced, setSkipToAdvanced] = useState<boolean>(false);
+
+  // Chat Consultation State
+  const [consultationState, setConsultationState] = useState<ConsultationState>({
+    entityType: null,
+    category: null,
+    stage: null,
+    painPoint: null
+  });
+  const [consultationProgress, setConsultationProgress] = useState<number>(0); // 0 = entity, 1 = category, 2 = stage, 3 = painPoint, 4 = finished
+  const [consultingChat, setConsultingChat] = useState<{ sender: 'advisor' | 'user'; text: string; options?: { label: string; value: string }[] }[]>([]);
+  const [isDiagnosticRunning, setIsDiagnosticRunning] = useState<boolean>(false);
+  const [diagnosticProgress, setDiagnosticProgress] = useState<number>(0);
+  const [showDiagnosticResult, setShowDiagnosticResult] = useState<boolean>(false);
+  const [diagnosticMessage, setDiagnosticMessage] = useState<string>('');
+
+  // Step 2: Simple Edit States
+  const [simpleInputText, setSimpleInputText] = useState<string>('');
+  const [simpleOutputText, setSimpleOutputText] = useState<string>('');
+  const [simpleDirectTranslation, setSimpleDirectTranslation] = useState<string>('');
+  const [simpleAnalysisText, setSimpleAnalysisText] = useState<string>('');
+  const [isTranslatingSimple, setIsTranslatingSimple] = useState<boolean>(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
+
+  // Step 3: Database Purification States
+  const [purifiedRules, setPurifiedRules] = useState<{ id: string; name: string; type: string; status: 'pending' | 'purifying' | 'purified' }[]>([
+    { id: 'rule-1', name: 'FDA 宣称合规扫描 (Anti-aging claims screening)', type: 'regulatory', status: 'pending' },
+    { id: 'rule-2', name: '地缘商标著作权防交叉侵权 (Trademark & Copyright audit)', type: 'copyright', status: 'pending' },
+    { id: 'rule-3', name: 'FTC 联盟关系利益主动披露审查 (FTC Endorsement compliance)', type: 'disclosure', status: 'pending' },
+  ]);
 
   // State managers
   const [selectedPreset, setSelectedPreset] = useState<string>('lucky_deer');
@@ -79,6 +176,238 @@ export default function WorkspaceView({
       setRagList(INITIAL_RAG_ENTRIES);
     }
   }, []);
+
+  // --- Onboarding Journey Initializer and Handlers ---
+  useEffect(() => {
+    setConsultingChat([
+      {
+        sender: 'advisor',
+        text: isZh 
+          ? "你好！我是 CultureOS 首席出海智囊顾问 杰里。跨大区传播并非机械式的直译，而是『文化转译』与『合规红线安全防区』的精妙协同。为了量身匹配你的成长需求、规避地缘侵权，能告诉我你目前属于什么实体类型吗？"
+          : "Hello! I am Jerry, Chief Outbound Advisor of CultureOS. Scale is more than translation; it is the synergy of 'cultural translation' and 'compliance safeguards'. To customize your setup, what is your outbound entity type?",
+        options: [
+          { label: isZh ? '🏢 公司品牌出海 (DTC Brand)' : '🏢 Company DTC Brand', value: 'brand' },
+          { label: isZh ? '🎨 个人 IP 博主 (Influencer)' : '🎨 Personal Creator IP', value: 'personal' }
+        ]
+      }
+    ]);
+    setConsultationProgress(0);
+    setConsultationState({ entityType: null, category: null, stage: null, painPoint: null });
+    setShowDiagnosticResult(false);
+  }, [lang]);
+
+  const handleSelectOption = (value: string, label: string) => {
+    const updatedChat = [
+      ...consultingChat,
+      { sender: 'user' as const, text: label }
+    ];
+    setConsultingChat(updatedChat);
+
+    setTimeout(() => {
+      if (consultationProgress === 0) {
+        setConsultationState(prev => ({ ...prev, entityType: value as 'brand' | 'personal' }));
+        setConsultationProgress(1);
+        setConsultingChat(prev => [
+          ...updatedChat,
+          {
+            sender: 'advisor',
+            text: isZh 
+              ? "明白！定位清晰。接下来，你目前的产品或内容处于哪一个品类赛道？我们将为你绑定对应的 Hofstede 先验图腾库与大区安全合规限制集。"
+              : "Clear positioning! Next, what is your product or content category niche? We will bind corresponding Hofstede prior models and safety regulatory blacklists.",
+            options: [
+              { label: isZh ? '💄 美妆护肤与国潮美学' : '💄 Cosmetics & Skincare', value: 'cosmetics' },
+              { label: isZh ? '🚴 绿色电动出行硬件' : '🚴 E-Bike Eco-mobility', value: 'ebike' },
+              { label: isZh ? '🐕 智能宠物硬件与 IoT' : '🐕 Smart Pet IoT', value: 'pet_iot' },
+              { label: isZh ? '🍵 东方本草养生茶饮' : '🍵 Wellness Tea', value: 'wellness_tea' },
+              { label: isZh ? '💻 AI 效率与 SaaS 工具' : '💻 AI SaaS Tools', value: 'ai_tools' },
+              { label: isZh ? '🎤 个人自媒体 / 音乐二创' : '🎤 Personal Vlog / C-Pop Covers', value: 'personal_ip' }
+            ]
+          }
+        ]);
+      } else if (consultationProgress === 1) {
+        setConsultationState(prev => ({ ...prev, category: value }));
+        setConsultationProgress(2);
+        setConsultingChat(prev => [
+          ...updatedChat,
+          {
+            sender: 'advisor',
+            text: isZh 
+              ? "很好，品类基因库关联成功。目前你的项目处于哪一个出海或者成长阶段？"
+              : "Excellent, category library bound. What is your current overseas growth or launch stage?",
+            options: [
+              { label: isZh ? '🌱 种子用户冷启动与内容爆款起号' : '🌱 Cold Launch & Organic Content Seeding', value: 'cold_launch' },
+              { label: isZh ? '📈 大区订阅转化与海外独立站沉淀' : '📈 Regional Subscription & High Retention', value: 'saas_expansion' },
+              { label: isZh ? '🔥 矩阵式中小红人创作者联盟分发' : '🔥 Creator Alliance Syndicate & Distribution', value: 'matrix_viral' }
+            ]
+          }
+        ]);
+      } else if (consultationProgress === 2) {
+        setConsultationState(prev => ({ ...prev, stage: value }));
+        setConsultationProgress(3);
+        setConsultingChat(prev => [
+          ...updatedChat,
+          {
+            sender: 'advisor',
+            text: isZh 
+              ? "收到。在跨大区本土化的全周期中，你目前最担忧的痛点是？"
+              : "Got it. Throughout your local scaling cycle, what is your biggest concern or pain point?",
+            options: [
+              { label: isZh ? '❌ 地缘合规禁令和版权法规红牌' : '❌ Strict Regulatory Bans & Copyright Claims', value: 'compliance' },
+              { label: isZh ? '❌ 中式直译、毫无当地文化情感共鸣' : '❌ Semantic Clichés & Boring Direct Translations', value: 'cliche' },
+              { label: isZh ? '❌ 自媒体推荐算法不推荐、冷启动低迷' : '❌ Low Organic Reach & Cold-Launch Failures', value: 'viral_flow' }
+            ]
+          }
+        ]);
+      } else if (consultationProgress === 3) {
+        setConsultationState(prev => ({ ...prev, painPoint: value }));
+        setConsultationProgress(4);
+        setConsultingChat(prev => [
+          ...updatedChat,
+          {
+            sender: 'advisor',
+            text: isZh 
+              ? "咨询完成！顾问诊断已就绪。请点击下方『生成智能诊断书』按钮，我将为你量身定制专属的诊断建议与一条由浅入深的功能路径引导，准备好帮你的创意扬帆出海了！"
+              : "Consultation finished! Diagnostic insights are ready. Click 'Generate Growth Diagnosis' below to unlock your custom strategic report and progressive experience path!"
+          }
+        ]);
+      }
+    }, 600);
+  };
+
+  const runDiagnosticProcess = () => {
+    setIsDiagnosticRunning(true);
+    setDiagnosticProgress(10);
+    
+    const statusMsgs = [
+      isZh ? "📡 正在拉取 target_markets.csv 与 categories.csv 推荐对齐..." : "📡 Syncing categories.csv and target_markets.csv metrics...",
+      isZh ? "🧬 正在执行 9维 文化相关性 Hofstede 映射计算与雷达拟合..." : "🧬 Compiling Hofstede 9-dimensional social radar coordinates...",
+      isZh ? "🛡️ 正在进行 FTC / FDA 广告地缘安全版权黑名单防线筛查..." : "🛡️ Scanning FTC / FDA local risk rules guidelines databases...",
+      isZh ? "✅ 诊断书与专属分层路径生成完毕！" : "✅ Diagnostics and adaptive path synthesized!"
+    ];
+
+    let i = 0;
+    setDiagnosticMessage(statusMsgs[0]);
+
+    const interval = setInterval(() => {
+      setDiagnosticProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setIsDiagnosticRunning(false);
+            setShowDiagnosticResult(true);
+            
+            // AUTOMATICALLY load the correct preset and bind correct RAG constraints based on chosen category!
+            const cat = consultationState.category || 'cosmetics';
+            if (cat === 'cosmetics') {
+              loadPreset('lucky_deer');
+              setSelectedPreset('lucky_deer');
+              setActiveRagId('rag-001');
+            } else if (cat === 'personal_ip') {
+              loadPreset('aqi_isme');
+              setSelectedPreset('aqi_isme');
+              setActiveRagId('rag-005');
+            } else if (cat === 'ebike') {
+              loadPreset('green_ebike');
+              setSelectedPreset('green_ebike');
+              setActiveRagId('rag-007');
+            } else if (cat === 'pet_iot') {
+              loadPreset('smart_pet');
+              setSelectedPreset('smart_pet');
+              setActiveRagId('rag-006');
+            } else if (cat === 'wellness_tea') {
+              loadPreset('wellness_tea');
+              setSelectedPreset('wellness_tea');
+              setActiveRagId('rag-008');
+            } else if (cat === 'ai_tools') {
+              // Custom build or ai_tools preset
+              setSelectedPreset('custom');
+              setDbCategory('ai_tools');
+              setIpType('brand');
+              setIpName('FlowEdit AI');
+              setCultureAsset('多媒体AI自动混音与智能微剪切');
+              setBusinessGoal('赋能全球自媒体人一键视觉爆款创作');
+              setEmotionalKernelText('flow context, instant release, smart audio');
+              setBrandTone('high-energy, futuristic, modern tech');
+              setTargetRegions(['North America']);
+              setTargetPlatforms(['TikTok', 'Instagram Reels']);
+              setActiveRagId('rag-003');
+              setMustHaveText('flow context; instant release; smart audio');
+              setMustNotText('Copyright infringement; illegal music scrap; auto earn cash claim');
+            }
+            
+            // Preload Simple Adaptor input text
+            const simpleText = SIMPLE_TEMPLATES[cat]?.zh || SIMPLE_TEMPLATES.cosmetics.zh;
+            setSimpleInputText(simpleText);
+            setSimpleDirectTranslation('');
+            setSimpleOutputText('');
+            setSimpleAnalysisText('');
+
+          }, 400);
+          return 100;
+        }
+        i++;
+        if (statusMsgs[i]) setDiagnosticMessage(statusMsgs[i]);
+        return prev + 25;
+      });
+    }, 600);
+  };
+
+  const executeSimpleTranslation = () => {
+    setIsTranslatingSimple(true);
+    setTimeout(() => {
+      const cat = consultationState.category || 'cosmetics';
+      const template = SIMPLE_TEMPLATES[cat] || SIMPLE_TEMPLATES.cosmetics;
+      setSimpleDirectTranslation(isZh ? template.directEn : template.directEs);
+      setSimpleOutputText(isZh ? template.eqEn : template.eqEs);
+      setSimpleAnalysisText(isZh ? template.explanationZh : template.explanationEn);
+      setIsTranslatingSimple(false);
+    }, 1200);
+  };
+
+  const playHealingMelody = () => {
+    if (isAudioPlaying) return;
+    setIsAudioPlaying(true);
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25]; // Pentatonic scale (C4, D4, E4, G4, A4, C5)
+      let time = ctx.currentTime;
+      
+      for (let i = 0; i < 8; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const freq = notes[Math.floor(Math.random() * notes.length)];
+        osc.frequency.setValueAtTime(freq, time);
+        osc.type = 'sine';
+        
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(0.12, time + 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.8);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.start(time);
+        osc.stop(time + 0.9);
+        time += 0.45;
+      }
+      setTimeout(() => {
+        setIsAudioPlaying(false);
+        ctx.close();
+      }, 4500);
+    } catch (e) {
+      console.warn("Audio Context blocked or not supported", e);
+      setIsAudioPlaying(false);
+    }
+  };
+
+  const purifyRule = (id: string) => {
+    setPurifiedRules(prev => prev.map(r => r.id === id ? { ...r, status: 'purifying' as const } : r));
+    setTimeout(() => {
+      setPurifiedRules(prev => prev.map(r => r.id === id ? { ...r, status: 'purified' as const } : r));
+    }, 1000);
+  };
 
   const handleSelectRag = (id: string) => {
     setActiveRagId(id);
@@ -119,12 +448,14 @@ export default function WorkspaceView({
     if (dbCategory === 'personal_ip') {
       loadPreset('aqi_isme');
       setSelectedPreset('aqi_isme');
+      setActiveRagId('rag-005');
       return;
     }
     // If they selected 'cosmetics', let's load 'lucky_deer' preset directly!
     if (dbCategory === 'cosmetics') {
       loadPreset('lucky_deer');
       setSelectedPreset('lucky_deer');
+      setActiveRagId('rag-001');
       return;
     }
 
@@ -172,6 +503,14 @@ export default function WorkspaceView({
 
     setTargetPlatforms([platform?.nameEn || 'TikTok']);
     setSelectedPreset('custom');
+
+    // Dynamically auto-bind correct RAG constraint card based on injected database category
+    let targetRagId = 'rag-002';
+    if (dbCategory === 'pet_iot') targetRagId = 'rag-006';
+    else if (dbCategory === 'ebike') targetRagId = 'rag-007';
+    else if (dbCategory === 'wellness_tea') targetRagId = 'rag-008';
+    else if (dbCategory === 'ai_tools') targetRagId = 'rag-003';
+    setActiveRagId(targetRagId);
   };
 
   // Load preset fields
@@ -190,8 +529,19 @@ export default function WorkspaceView({
     setSelectedPreset(presetId);
     if (presetId === 'aqi_isme') {
       setIpType('personal');
+      setActiveRagId('rag-005');
+    } else if (presetId === 'green_ebike') {
+      setIpType('brand');
+      setActiveRagId('rag-007');
+    } else if (presetId === 'smart_pet') {
+      setIpType('brand');
+      setActiveRagId('rag-006');
+    } else if (presetId === 'wellness_tea') {
+      setIpType('brand');
+      setActiveRagId('rag-008');
     } else {
       setIpType('brand');
+      setActiveRagId('rag-001');
     }
   };
 
@@ -395,8 +745,574 @@ export default function WorkspaceView({
 
   return (
     <div className="space-y-8">
-      {/* Header Info Banner */}
-      <div className="border border-slate-800/80 p-6 rounded-2xl bg-slate-900/40 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+      {/* 出海定位与渐进体验旅程导航轨道 (Enterprise Outbound Journey Navigation Rail) */}
+      <div className="bg-[#0b101c]/80 border border-slate-800 p-5 rounded-2xl shadow-xl space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2.5 w-2.5 rounded-full bg-cyan-400 animate-ping" />
+              <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-widest">CultureOS User Journey</span>
+            </div>
+            <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 font-sans tracking-tight">
+              <span>{isZh ? '全球出海定位诊断与自适应体验旅程' : 'Global Positioning Diagnosis & Progressive Journey'}</span>
+            </h3>
+            <p className="text-xs text-slate-400">
+              {isZh 
+                ? '我们已将数据库与 AI 译配功能按难易度分层，帮助你在出海征程中由浅入深、规避地缘侵权红线。' 
+                : 'Interactive learning roadmap layering complex tools into easy-to-use discovery steps.'}
+            </p>
+          </div>
+          
+          {/* Skip Bypass / Toggle Mode Button */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setSkipToAdvanced(!skipToAdvanced);
+                if (!skipToAdvanced) setActiveJourneyStep('advanced');
+                else setActiveJourneyStep('consulting');
+              }}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 border cursor-pointer ${
+                skipToAdvanced || activeJourneyStep === 'advanced'
+                  ? 'bg-indigo-500/10 border-indigo-500/35 text-indigo-300 hover:bg-indigo-500/20'
+                  : 'bg-amber-400 text-slate-950 font-extrabold border-amber-350 hover:bg-amber-350 shadow-lg shadow-amber-400/10'
+              }`}
+            >
+              <span>{skipToAdvanced || activeJourneyStep === 'advanced' 
+                ? (isZh ? '🛡️ 切换回新手引导 / Back to Guide' : '🛡️ Guided Assistant')
+                : (isZh ? '⚡ 直接体验 7-Agent 高端终端 / Skip to Advanced' : '⚡ Skip to Advanced Mode')
+              }</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 4 Steps Timeline Visualizer */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
+          {/* Step 1 */}
+          <button
+            onClick={() => {
+              if (!skipToAdvanced) setActiveJourneyStep('consulting');
+            }}
+            disabled={skipToAdvanced}
+            className={`p-3.5 rounded-xl border text-left transition flex flex-col justify-between h-[82px] cursor-pointer ${
+              activeJourneyStep === 'consulting' && !skipToAdvanced
+                ? 'bg-amber-400/5 border-amber-400/80 shadow-md'
+                : 'bg-slate-950/40 border-slate-900/80 hover:border-slate-800'
+            }`}
+          >
+            <div className="flex items-center justify-between w-full">
+              <span className="text-[10px] font-mono font-bold text-slate-500">STEP 01</span>
+              {consultationProgress === 4 ? (
+                <span className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-400 rounded-full font-mono font-bold">100%</span>
+              ) : (
+                <span className="text-slate-600 font-mono text-[9px]">{isZh ? '未完成' : 'Pending'}</span>
+              )}
+            </div>
+            <div>
+              <h4 className={`text-xs font-bold tracking-tight ${activeJourneyStep === 'consulting' && !skipToAdvanced ? 'text-amber-350' : 'text-slate-300'}`}>
+                {isZh ? '🌐 智脑出海咨询顾问' : '🌐 Outbound AI Advisor'}
+              </h4>
+              <p className="text-[10px] text-slate-500 font-sans truncate w-full mt-0.5">
+                {isZh ? '出海定位与雷达诊断' : 'Global Diagnostic chat'}
+              </p>
+            </div>
+          </button>
+
+          {/* Step 2 */}
+          <button
+            onClick={() => {
+              if (!skipToAdvanced) {
+                if (consultationProgress < 4) {
+                  alert(isZh ? "请先完成 Step 1 的智脑咨询诊断哦！" : "Please complete Step 1 AI Consultation first!");
+                  return;
+                }
+                setActiveJourneyStep('simple_edit');
+              }
+            }}
+            disabled={skipToAdvanced}
+            className={`p-3.5 rounded-xl border text-left transition flex flex-col justify-between h-[82px] cursor-pointer ${
+              activeJourneyStep === 'simple_edit' && !skipToAdvanced
+                ? 'bg-amber-400/5 border-amber-400/80 shadow-md'
+                : 'bg-slate-950/40 border-slate-900/80 hover:border-slate-800'
+            }`}
+          >
+            <div className="flex items-center justify-between w-full">
+              <span className="text-[10px] font-mono font-bold text-slate-500">STEP 02</span>
+              {simpleOutputText ? (
+                <span className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-400 rounded-full font-mono font-bold">Done</span>
+              ) : (
+                <span className="text-slate-600 font-mono text-[9px]">{isZh ? '未解锁' : 'Locked'}</span>
+              )}
+            </div>
+            <div>
+              <h4 className={`text-xs font-bold tracking-tight ${activeJourneyStep === 'simple_edit' && !skipToAdvanced ? 'text-amber-350' : 'text-slate-300'}`}>
+                {isZh ? '✍️ 极简内容译配尝试' : '✍️ Content Adaptation'}
+              </h4>
+              <p className="text-[10px] text-slate-500 font-sans truncate w-full mt-0.5">
+                {isZh ? '中式直译 vs 情感代偿' : 'Direct vs Cultural adaptation'}
+              </p>
+            </div>
+          </button>
+
+          {/* Step 3 */}
+          <button
+            onClick={() => {
+              if (!skipToAdvanced) {
+                if (consultationProgress < 4) {
+                  alert(isZh ? "请先完成 Step 1 的智脑咨询诊断哦！" : "Please complete Step 1 AI Consultation first!");
+                  return;
+                }
+                setActiveJourneyStep('purification');
+              }
+            }}
+            disabled={skipToAdvanced}
+            className={`p-3.5 rounded-xl border text-left transition flex flex-col justify-between h-[82px] cursor-pointer ${
+              activeJourneyStep === 'purification' && !skipToAdvanced
+                ? 'bg-amber-400/5 border-amber-400/80 shadow-md'
+                : 'bg-slate-950/40 border-slate-900/80 hover:border-slate-800'
+            }`}
+          >
+            <div className="flex items-center justify-between w-full">
+              <span className="text-[10px] font-mono font-bold text-slate-500">STEP 03</span>
+              {purifiedRules.every(r => r.status === 'purified') ? (
+                <span className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-400 rounded-full font-mono font-bold">Done</span>
+              ) : (
+                <span className="text-slate-600 font-mono text-[9px]">{isZh ? '待自进化' : 'Evolving'}</span>
+              )}
+            </div>
+            <div>
+              <h4 className={`text-xs font-bold tracking-tight ${activeJourneyStep === 'purification' && !skipToAdvanced ? 'text-amber-350' : 'text-slate-300'}`}>
+                {isZh ? '🧹 自进化库合规净化' : '🧹 Database Purification'}
+              </h4>
+              <p className="text-[10px] text-slate-500 font-sans truncate w-full mt-0.5">
+                {isZh ? 'RAG 规约扫描与边界安全' : 'Sanitize RAG regulatory bounds'}
+              </p>
+            </div>
+          </button>
+
+          {/* Step 4 */}
+          <button
+            onClick={() => {
+              if (!skipToAdvanced) {
+                if (consultationProgress < 4) {
+                  alert(isZh ? "请先完成 Step 1 的智脑咨询诊断哦！" : "Please complete Step 1 AI Consultation first!");
+                  return;
+                }
+                setActiveJourneyStep('advanced');
+              }
+            }}
+            disabled={skipToAdvanced}
+            className={`p-3.5 rounded-xl border text-left transition flex flex-col justify-between h-[82px] cursor-pointer ${
+              activeJourneyStep === 'advanced' && !skipToAdvanced
+                ? 'bg-amber-400/5 border-amber-400/80 shadow-md'
+                : 'bg-slate-950/40 border-slate-900/80 hover:border-slate-800'
+            }`}
+          >
+            <div className="flex items-center justify-between w-full">
+              <span className="text-[10px] font-mono font-bold text-slate-500">STEP 04</span>
+              <span className="text-slate-600 font-mono text-[9px]">{isZh ? '高级' : 'Advanced'}</span>
+            </div>
+            <div>
+              <h4 className={`text-xs font-bold tracking-tight ${activeJourneyStep === 'advanced' && !skipToAdvanced ? 'text-amber-350' : 'text-slate-300'}`}>
+                {isZh ? '⚙️ 7-Agent 全案协同' : '⚙️ 7-Agent Workstation'}
+              </h4>
+              <p className="text-[10px] text-slate-500 font-sans truncate w-full mt-0.5">
+                {isZh ? '千万推流大案对抗演练' : 'Simulate mass brand launches'}
+              </p>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* --- Step 1: AI Chat Consulting Wizard Layout --- */}
+      {activeJourneyStep === 'consulting' && !skipToAdvanced && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fade-in">
+          {/* Chat Panel (7 cols) */}
+          <div className="lg:col-span-7 border border-slate-800 rounded-2xl bg-[#090d16]/90 p-6 space-y-4 shadow-xl">
+            <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+              <div className="h-10 w-10 rounded-xl bg-amber-400/10 flex items-center justify-center border border-amber-400/25">
+                <Compass className="w-5 h-5 text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-100">{isZh ? 'CultureOS 首席出海智脑顾问 (Jerry)' : 'CultureOS Chief Advisor Jerry'}</h4>
+                <p className="text-[10px] text-slate-500 font-mono">Status: Online | Specialized in Hofstede Social & FTC/FDA Safety Bounds</p>
+              </div>
+            </div>
+
+            {/* Conversation Flow */}
+            <div className="space-y-4 max-h-[360px] overflow-y-auto pr-2 scrollbar-thin">
+              {consultingChat.map((msg, idx) => (
+                <div key={idx} className={`flex gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {msg.sender === 'advisor' && (
+                    <div className="h-7 w-7 rounded-lg bg-amber-400/10 flex items-center justify-center border border-amber-400/20 text-xs font-black text-amber-400 flex-shrink-0">
+                      J
+                    </div>
+                  )}
+                  <div className={`p-3.5 rounded-2xl text-xs max-w-[85%] leading-relaxed ${
+                    msg.sender === 'user'
+                      ? 'bg-amber-400 text-slate-950 font-semibold rounded-tr-none'
+                      : 'bg-slate-900 border border-slate-800/80 text-slate-200 rounded-tl-none'
+                  }`}>
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Selection Buttons for current question */}
+            {consultingChat[consultingChat.length - 1]?.options && (
+              <div className="border-t border-slate-800/50 pt-4 space-y-2">
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-semibold block">{isZh ? '请选择顾问咨询提议：' : 'Select your answer:'}</span>
+                <div className="flex flex-wrap gap-2">
+                  {consultingChat[consultingChat.length - 1].options?.map((opt, oIdx) => (
+                    <button
+                      key={oIdx}
+                      onClick={() => handleSelectOption(opt.value, opt.label)}
+                      className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold rounded-xl border border-slate-800 transition cursor-pointer"
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Diagnostic trigger when finished */}
+            {consultationProgress === 4 && !showDiagnosticResult && !isDiagnosticRunning && (
+              <div className="border-t border-slate-800/50 pt-4 text-center space-y-3 animate-bounce">
+                <p className="text-xs text-amber-400 font-semibold">{isZh ? '🎉 咨询已完成！顾问已为你调配完对应的 Hofstede 及法规限制模型。' : '🎉 Consultation Done! Strategic variables aligned.'}</p>
+                <button
+                  onClick={runDiagnosticProcess}
+                  className="px-6 py-3 bg-amber-400 text-slate-950 font-black rounded-xl text-xs hover:bg-amber-350 shadow-lg shadow-amber-400/10 cursor-pointer transition flex items-center gap-2 mx-auto"
+                >
+                  <Sparkles className="w-4 h-4 animate-pulse" />
+                  <span>{isZh ? '✨ 立即生成专属出海定位诊断书' : '✨ Generate Strategic Diagnostics'}</span>
+                </button>
+              </div>
+            )}
+
+            {/* Loader animation */}
+            {isDiagnosticRunning && (
+              <div className="border-t border-slate-800/50 pt-6 text-center space-y-4">
+                <div className="w-full bg-slate-900 rounded-full h-1.5 border border-slate-850 overflow-hidden">
+                  <div className="bg-amber-400 h-full rounded-full transition-all duration-300" style={{ width: `${diagnosticProgress}%` }} />
+                </div>
+                <p className="text-xs font-mono text-slate-400 animate-pulse">{diagnosticMessage}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Diagnostic Report Panel (5 cols) */}
+          <div className="lg:col-span-5 border border-slate-800 rounded-2xl bg-[#090d16]/90 p-6 space-y-6 shadow-xl min-h-[460px] flex flex-col justify-between">
+            {!showDiagnosticResult ? (
+              <div className="flex flex-col items-center justify-center text-center my-auto space-y-3">
+                <Compass className="w-12 h-12 text-slate-700 animate-pulse" />
+                <h4 className="text-sm font-bold text-slate-400">{isZh ? '出海诊断与适配路径报告' : 'Diagnostics & Adaptive Roadmap'}</h4>
+                <p className="text-xs text-slate-600 max-w-xs leading-relaxed">
+                  {isZh 
+                    ? '在左侧完成咨询问答，顾问即可拉取目标大区先验文化因子，生成高度适配你产品发展阶段的系统功能建议路径。' 
+                    : 'Complete advisor chat to analyze Hofstede data & target regulatory constraints.'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4 flex flex-col justify-between h-full">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+                    <Award className="w-5 h-5 text-amber-400" />
+                    <h4 className="text-sm font-black text-slate-100">{isZh ? '🏢 全球化先验定位与诊断结论' : '🏢 Global Positioning & Diagnostics'}</h4>
+                  </div>
+                  
+                  {/* Customized Content Based on Chosen Category */}
+                  {consultationState.category === 'cosmetics' && (
+                    <div className="space-y-3 text-xs leading-relaxed">
+                      <div className="p-3 bg-green-500/5 border border-green-500/10 rounded-xl">
+                        <strong className="text-green-400 font-bold block mb-1">{isZh ? '【定位诊断：大有可为！】' : '【Verdict: Highly Viable!】'}</strong>
+                        <span className="text-slate-300">
+                          {isZh 
+                            ? '主攻北美中产素食自愈主义。前台打造「草本东方美学」减压概念，后台启动 FDA 药词红线硬防护。' 
+                            : 'Targeting NA middle-class vegan self-care lifestyle. Frontstage builds high-end botanical aesthetics; backend binds strict FDA anti-claim limits.'}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-slate-400"><strong className="text-slate-200">Pros:</strong> {isZh ? '北美具有极高的高情绪价值付费红利，素食无残忍(Cruelty-free)在北美Z世代中拥有高达82%的推流权重。' : 'High willingness to pay for emotional self-care products. Cruelty-free elements get massive push on TikTok and Reels algorithms.'}</p>
+                        <p className="text-slate-400"><strong className="text-slate-200">Risks:</strong> {isZh ? '美国食品药监局(FDA)严禁非药品食品直接宣称『消除黑色素』等临床疗效。' : 'FDA forbids non-medical beauty items from claiming literal clinical actions.'}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {consultationState.category === 'personal_ip' && (
+                    <div className="space-y-3 text-xs leading-relaxed">
+                      <div className="p-3 bg-purple-500/5 border border-purple-500/10 rounded-xl">
+                        <strong className="text-purple-400 font-bold block mb-1">{isZh ? '【定位诊断：共鸣心流显著！】' : '【Verdict: Strong Resonance Flow】'}</strong>
+                        <span className="text-slate-300">
+                          {isZh 
+                            ? '主攻海外华人与亚裔二代的情感自愈。前台打造「阿琪是我」深夜暖心弹唱，后台核准地缘原版翻唱版权。' 
+                            : 'Focusing on Diaspora communities seeking emotional connection. Frontstage centers late-night slow music covers; backend monitors copyright risk flags.'}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-slate-400"><strong className="text-slate-200">Pros:</strong> {isZh ? '华语经典二创、老街树风等东方慢美学对华人圈层具备高黏性、低转化壁垒优势。' : 'C-Pop nostalgia elements trigger extreme high retention among diaspora demographics.'}</p>
+                        <p className="text-slate-400"><strong className="text-slate-200">Risks:</strong> {isZh ? '版权保护在欧美是绝对红牌，必须通过 RAG 原版授权过滤，防范 DMCA 下架封号。' : 'DMCA copyright claims are strict in NA/EU. Requires complete RAG copyright sanitizing.'}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fallback details for other categories */}
+                  {['ebike', 'pet_iot', 'wellness_tea', 'ai_tools'].includes(consultationState.category || '') && (
+                    <div className="space-y-3 text-xs leading-relaxed">
+                      <div className="p-3 bg-cyan-500/5 border border-cyan-500/10 rounded-xl">
+                        <strong className="text-cyan-400 font-bold block mb-1">{isZh ? '【定位诊断：定位精细，红线明确】' : '【Verdict: Focused Niche, Clear Boundaries】'}</strong>
+                        <span className="text-slate-300">
+                          {isZh 
+                            ? `主攻垂直出海。前台打造「绿色减压/智能陪伴」情感体验，后台对齐大区 ESG 及地缘法律规约。` 
+                            : `Focusing on high-growth niche. Frontstage centers eco-living/mindful connection; backend binds regional ESG/FTC disclosures.`}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-slate-400"><strong className="text-slate-200">Pros:</strong> {isZh ? '地缘情绪痛点明确，大区中产阶级愿意为碳中和绿色认证与宠物福利支付溢价。' : 'High willingness to pay a premium for carbon-neutral certifications or strict pet wellness compliance.'}</p>
+                        <p className="text-slate-400"><strong className="text-slate-200">Risks:</strong> {isZh ? '欧盟 GDPR 数据合规、交通速度限制以及 FTC 利益关系主动披露是不容触碰的规则。' : 'EU GDPR data limits, E-Bike speed laws, and FTC affiliate disclosures are strictly monitored.'}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Roadmap details inside report */}
+                  <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
+                    <strong className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block font-extrabold">{isZh ? '🛠️ 推荐自适应体验路径 (Recommended Path)' : '🛠️ Recommended Experience Path'}</strong>
+                    <div className="space-y-1 text-slate-300 text-[11px]">
+                      <p>1. <strong className="text-amber-400">{isZh ? '极简译配' : 'Adaptor'}</strong>: {isZh ? '体验如何将中文宣传词敏捷过滤、转译为情感代偿。' : 'Experience filtering and translating raw concepts.'}</p>
+                      <p>2. <strong className="text-amber-400">{isZh ? '合规安全净化' : 'Purifier'}</strong>: {isZh ? '扫描并净化你的 RAG 约束库，消除违法地缘侵权漏洞。' : 'Sanitize RAG boundaries for legal compliance.'}</p>
+                      <p>3. <strong className="text-amber-400">{isZh ? '7-Agent 推演' : 'Advanced'}</strong>: {isZh ? '启动终极协同终端，多角色智能体自主合流产出全案。' : 'Unlock multi-agent workflow to construct mass campaigns.'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setActiveJourneyStep('simple_edit')}
+                  className="w-full mt-4 py-2.5 bg-amber-400 text-slate-950 font-black rounded-xl text-xs hover:bg-amber-350 cursor-pointer flex items-center justify-center gap-1.5 transition"
+                >
+                  <span>{isZh ? '🔓 去解锁 Step 2：体验极简智能译配' : '🔓 Unlock Step 2: Content Adaptation'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* --- Step 2: Content Localization Adaptor Layout --- */}
+      {activeJourneyStep === 'simple_edit' && !skipToAdvanced && (
+        <div className="border border-slate-800 rounded-2xl bg-[#090d16]/90 p-6 space-y-6 shadow-xl animate-fade-in">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div>
+              <h3 className="text-md font-bold text-slate-100 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-400" />
+                <span>{isZh ? 'Step 2: 极简智能译配与去陈词滥调尝试' : 'Step 2: Lightweight Content Adaptation Playground'}</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                {isZh 
+                  ? '在此阶段体验 CultureOS 如何过滤中文带货词，并以符合 Hofstede 文化偏好的本土化“情感代偿”形式转译。' 
+                  : 'Experience how CultureOS filters semantic clichés and translates them into high-engagement local narratives.'}
+              </p>
+            </div>
+            
+            <div className="flex gap-2">
+              <button 
+                onClick={playHealingMelody}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border ${
+                  isAudioPlaying 
+                    ? 'bg-amber-400/15 border-amber-400 text-amber-300 animate-pulse' 
+                    : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:bg-slate-850'
+                }`}
+              >
+                <Volume2 className="w-3.5 h-3.5" />
+                <span>{isAudioPlaying ? (isZh ? '🎵 正在演奏中...' : '🎵 Playing Synth...') : (isZh ? '🎵 试听大区温情背景配乐' : '🎵 Audition Healing Synth')}</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Input Box (5 cols) */}
+            <div className="lg:col-span-5 space-y-3">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-extrabold">
+                {isZh ? '原始中文创意广告文案 (Original Chinese Copy)' : 'Original Chinese Copy'}
+              </label>
+              <textarea
+                value={simpleInputText}
+                onChange={(e) => setSimpleInputText(e.target.value)}
+                className="w-full h-[180px] bg-slate-950 border border-slate-850 hover:border-slate-800 rounded-xl p-3 text-xs font-semibold text-slate-300 leading-relaxed focus:border-amber-400 outline-none"
+              />
+              <button
+                onClick={executeSimpleTranslation}
+                disabled={isTranslatingSimple}
+                className="w-full py-2.5 bg-amber-400 text-slate-950 font-black rounded-xl text-xs hover:bg-amber-350 cursor-pointer flex items-center justify-center gap-1.5 transition shadow-lg shadow-amber-400/5 disabled:opacity-60"
+              >
+                {isTranslatingSimple ? (
+                  <>
+                    <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>{isZh ? '正在执行去陈词转译中...' : 'Translating & Filtering Clichés...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>{isZh ? '✨ 执行智能转译 & 地缘合规净化' : '✨ Translate & Purify Semantic Clichés'}</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Output Cards (7 cols) */}
+            <div className="lg:col-span-7 flex flex-col justify-between min-h-[260px] space-y-4">
+              {!simpleOutputText ? (
+                <div className="border border-dashed border-slate-850 rounded-xl flex flex-col items-center justify-center text-center p-8 my-auto space-y-2">
+                  <Terminal className="w-8 h-8 text-slate-800 animate-pulse" />
+                  <h5 className="text-xs font-bold text-slate-400">{isZh ? '等待智能转译结果' : 'Awaiting translation output'}</h5>
+                  <p className="text-[10px] text-slate-600 max-w-xs">{isZh ? '点击左侧按钮，即可对比中式直译与符合合规审美的 CultureOS 情绪代偿转译结果。' : 'Click Translate to see direct vs compliant results.'}</p>
+                </div>
+              ) : (
+                <div className="space-y-4 h-full flex flex-col justify-between">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Direct Translation (Boring/Risky) */}
+                    <div className="border border-red-900/20 bg-red-950/5 p-4 rounded-xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <strong className="text-red-400 text-[10px] font-bold font-mono">{isZh ? '⚠️ 常见中式直译 (Risky Direct Translation)' : '⚠️ Risky Direct Translation'}</strong>
+                        <span className="text-[8px] px-1.5 py-0.5 bg-red-500/10 text-red-400 rounded border border-red-500/20">{isZh ? '高危/生硬' : 'Cliché/Noisy'}</span>
+                      </div>
+                      <p className="text-xs text-slate-400 leading-relaxed font-sans font-medium italic">
+                        "{simpleDirectTranslation}"
+                      </p>
+                    </div>
+
+                    {/* CultureOS Translation (Compliant/Aesthetic) */}
+                    <div className="border border-green-500/20 bg-green-950/5 p-4 rounded-xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <strong className="text-green-400 text-[10px] font-bold font-mono">{isZh ? '✅ CultureOS 情绪代偿 (Compliant Outbound Copy)' : '✅ Compliant Outbound Copy'}</strong>
+                        <span className="text-[8px] px-1.5 py-0.5 bg-green-500/10 text-green-400 rounded border border-green-500/20">{isZh ? '安全/共鸣' : 'Aesthetic'}</span>
+                      </div>
+                      <p className="text-xs text-slate-200 leading-relaxed font-sans font-bold">
+                        "{simpleOutputText}"
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Hofstede Context Box */}
+                  <div className="p-4 bg-slate-950/90 border border-slate-850 rounded-xl space-y-1.5">
+                    <strong className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider block font-extrabold">{isZh ? '📊 HOFSTEDE 跨大区文化转译深度解析 (Translation Analytics)' : '📊 Cultural Translation Analysis'}</strong>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {simpleAnalysisText}
+                    </p>
+                  </div>
+
+                  {/* Next Step Navigation */}
+                  <div className="text-right">
+                    <button
+                      onClick={() => setActiveJourneyStep('purification')}
+                      className="px-5 py-2.5 bg-amber-400 text-slate-950 font-black rounded-xl text-xs hover:bg-amber-350 cursor-pointer flex items-center gap-1.5 ml-auto transition"
+                    >
+                      <span>{isZh ? '🔓 去解锁 Step 3：净化自进化安全库' : '🔓 Unlock Step 3: Database Purification'}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- Step 3: Database Purification Sandbox Layout --- */}
+      {activeJourneyStep === 'purification' && !skipToAdvanced && (
+        <div className="border border-slate-800 rounded-2xl bg-[#090d16]/90 p-6 space-y-6 shadow-xl animate-fade-in">
+          <div className="border-b border-slate-800 pb-4">
+            <h3 className="text-md font-bold text-slate-100 flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-amber-400" />
+              <span>{isZh ? 'Step 3: 知识库 RAG 自动自净化扫描' : 'Step 3: RAG Knowledge Base Purification'}</span>
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">
+              {isZh 
+                ? '在 7-Agent 开始自主工作前，必须执行边界规约净化。这确保智能体生成的视频和文章百分之百不侵权、对齐 FDA/FTC 法规红线。' 
+                : 'Sanitize global marketing limits. Purifying these rules prevents multi-agent pipelines from crossing legal trademarks.'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {purifiedRules.map(rule => (
+              <div key={rule.id} className="border border-slate-850 rounded-xl p-4 flex flex-col justify-between h-[150px] bg-slate-950/60 relative overflow-hidden">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-mono font-bold bg-slate-900 border border-slate-800 px-2 py-0.5 text-slate-400 rounded-full">
+                      {rule.type.toUpperCase()}
+                    </span>
+                    {rule.status === 'purified' ? (
+                      <span className="text-[10px] text-green-400 font-bold flex items-center gap-1">
+                        <Check className="w-3 h-3" />
+                        <span>{isZh ? '已核准 V1.1' : 'Purified'}</span>
+                      </span>
+                    ) : rule.status === 'purifying' ? (
+                      <span className="text-[10px] text-amber-400 font-bold animate-pulse">{isZh ? '正在扫描...' : 'Scanning...'}</span>
+                    ) : (
+                      <span className="text-[10px] text-slate-500 font-bold">{isZh ? '待核准' : 'Pending'}</span>
+                    )}
+                  </div>
+                  <h4 className="text-xs font-bold text-slate-200 pt-1 leading-snug">{rule.name}</h4>
+                </div>
+
+                <div className="pt-2">
+                  {rule.status === 'pending' && (
+                    <button
+                      onClick={() => purifyRule(rule.id)}
+                      className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 text-[10px] font-black rounded-lg transition cursor-pointer"
+                    >
+                      {isZh ? '🧼 执行净化 & 授权' : '🧼 Purify & Authorize'}
+                    </button>
+                  )}
+                  {rule.status === 'purifying' && (
+                    <div className="w-full py-1.5 text-center text-slate-500 text-[10px] font-mono animate-pulse">
+                      {isZh ? '正在校验大区法案规约...' : 'Scanning regulatory bounds...'}
+                    </div>
+                  )}
+                  {rule.status === 'purified' && (
+                    <div className="w-full py-1.5 text-center text-green-400 text-[10px] font-mono bg-green-500/5 rounded-lg border border-green-500/10 font-bold">
+                      {isZh ? '✓ 安全授权就绪' : '✓ Safe & Confirmed'}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Success Banner and Next Step Button */}
+          {purifiedRules.every(r => r.status === 'purified') ? (
+            <div className="p-4 border border-green-500/15 bg-green-500/5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-bounce">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4 text-green-400" />
+                </div>
+                <div>
+                  <h5 className="text-xs font-bold text-green-300">{isZh ? '🎉 知识库自进化合规净化 100% 达成！' : '🎉 100% Database Purified & Verified!'}</h5>
+                  <p className="text-[10px] text-slate-500 mt-0.5">{isZh ? '地缘侵权红线已闭合安全防区，智能体具备完全合规全案对抗推演条件。' : 'Regulatory constraints are compiled successfully and locked inside RAG buffers.'}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setActiveJourneyStep('advanced')}
+                className="px-5 py-2.5 bg-amber-400 text-slate-950 font-black rounded-xl text-xs hover:bg-amber-350 cursor-pointer flex items-center gap-1.5 transition whitespace-nowrap shadow-lg shadow-amber-400/10"
+              >
+                <span>{isZh ? '🔓 踏上终极旅程：进入 7-Agent 全案终端' : '🔓 Unlock Step 4: Run Advanced Terminal'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="p-4 border border-slate-850 rounded-xl bg-slate-950/40 text-center">
+              <p className="text-xs text-slate-500">{isZh ? '💡 请点击上方的卡片对三个合规规章执行“净化授权”，以解锁最后的 7-Agent 极速全案终端。' : '💡 Clean all three compliance rules above to unlock Step 4 Advanced Mission Control.'}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* --- Step 4: Advanced 7-Agent Workstation --- */}
+      {(activeJourneyStep === 'advanced' || skipToAdvanced) && (
+        <>
+          {/* Header Info Banner */}
+          <div className="border border-slate-800/80 p-6 rounded-2xl bg-slate-900/40 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2">
           <h2 className="text-2xl font-black text-white flex items-center gap-2">
             <Layers className="w-6 h-6 text-cyan-400" />
@@ -985,6 +1901,8 @@ export default function WorkspaceView({
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

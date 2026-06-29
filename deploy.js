@@ -4,10 +4,10 @@ import fs from 'fs';
 import path from 'path';
 
 const config = {
-  host: process.env.ECS_HOST || '61.29.254.143',
+  host: process.env.ECS_HOST,
   port: parseInt(process.env.ECS_PORT || '22', 10),
-  username: process.env.ECS_USERNAME || 'root',
-  password: process.env.ECS_PASSWORD || 'DD321j654p987',
+  username: process.env.ECS_USERNAME,
+  password: process.env.ECS_PASSWORD,
   remotePath: process.env.ECS_REMOTE_PATH || '/opt/culture-os',
 };
 

@@ -45,6 +45,7 @@ export type CulturePackKey =
   | 'evaluation_score';
 
 export interface CulturePack {
+  mvp_agent_cluster?: any;
   market_insight: {
     title: string;
     regions: {

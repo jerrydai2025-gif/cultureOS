@@ -741,22 +741,29 @@ export default function CreativeStudioView({
   }, [activeMediaSubTab, isMediaAudioPlaying]);
 
   // State for Model configuration management
-  const [modelConfigs, setModelConfigs] = useState(() => {
-    const saved = localStorage.getItem("cultureos_model_configs");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Failed to parse model configs:", e);
-      }
-    }
-    return {
+  const defaultModelConfigs = {
       gemini: { apiKey: "", apiBase: "", activeModel: "gemini-3.5-flash" },
-      openai: { apiKey: "", apiBase: "https://api.openai.com/v1", activeModel: "gpt-4o-mini" },
+      openai: { apiKey: "", apiBase: "https://api.openai-next.com/v1", activeModel: "gpt-4o-mini" },
       deepseek: { apiKey: "", apiBase: "https://api.deepseek.com/v1", activeModel: "deepseek-chat" },
       glm: { apiKey: "", apiBase: "https://open.bigmodel.cn/api/paas/v4", activeModel: "glm-4-flash" },
       custom: { apiKey: "", apiBase: "", activeModel: "custom-llm" }
     };
+  const [modelConfigs, setModelConfigs] = useState(() => {
+    const saved = localStorage.getItem("cultureos_model_configs");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        for (const key of Object.keys(defaultModelConfigs)) {
+          if (!parsed[key]) parsed[key] = defaultModelConfigs[key];
+          if (!parsed[key].apiBase && defaultModelConfigs[key].apiBase) parsed[key].apiBase = defaultModelConfigs[key].apiBase;
+          if (!parsed[key].activeModel && defaultModelConfigs[key].activeModel) parsed[key].activeModel = defaultModelConfigs[key].activeModel;
+        }
+        return parsed;
+      } catch (e) {
+        console.error("Failed to parse model configs:", e);
+      }
+    }
+    return defaultModelConfigs;
   });
 
   // Save configs to localStorage when altered
@@ -823,11 +830,11 @@ export default function CreativeStudioView({
   };
 
   // State for dynamic provider selection
-  const [chatProvider, setChatProvider] = useState<"gemini" | "openai" | "deepseek" | "glm" | "custom">("gemini");
-  const [intelProvider, setIntelProvider] = useState<"gemini" | "openai" | "deepseek" | "glm" | "custom">("gemini");
+  const [chatProvider, setChatProvider] = useState<"gemini" | "openai" | "deepseek" | "glm" | "custom">("openai");
+  const [intelProvider, setIntelProvider] = useState<"gemini" | "openai" | "deepseek" | "glm" | "custom">("openai");
 
   // State for Chatbot
-  const [chatModel, setChatModel] = useState<string>("gemini-3.5-flash");
+  const [chatModel, setChatModel] = useState<string>("gpt-4o-mini");
   const [chatRole, setChatRole] = useState<string>("advisor");
   const [chatHistory, setChatHistory] = useState<Message[]>([
     {
@@ -843,7 +850,7 @@ export default function CreativeStudioView({
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // State for Content Intelligence
-  const [intelModel, setIntelModel] = useState<string>("gemini-3.5-flash");
+  const [intelModel, setIntelModel] = useState<string>("gpt-4o-mini");
   const [intelTask, setIntelTask] = useState<"analyze" | "edit">("analyze");
   const [intelInput, setIntelInput] = useState<string>(
     isZh 
@@ -1251,6 +1258,7 @@ export default function CreativeStudioView({
       setChatModel("gemini-3.5-flash");
     } else if (chatProvider === "openai") {
       setChatModel("gpt-4o-mini");
+      setChatModel("gpt-4o-mini");
     } else if (chatProvider === "deepseek") {
       setChatModel("deepseek-chat");
     } else if (chatProvider === "glm") {
@@ -1264,6 +1272,7 @@ export default function CreativeStudioView({
     if (intelProvider === "gemini") {
       setIntelModel("gemini-3.5-flash");
     } else if (intelProvider === "openai") {
+      setIntelModel("gpt-4o-mini");
       setIntelModel("gpt-4o-mini");
     } else if (intelProvider === "deepseek") {
       setIntelModel("deepseek-chat");

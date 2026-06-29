@@ -3,7 +3,8 @@ import { motion } from 'motion/react';
 import { 
   Globe, Award, Sparkles, ShieldAlert, Cpu, 
   Repeat, ArrowRight, Zap, CheckCircle2, Languages,
-  Music, Camera, Phone, Terminal, Play, Flame, HelpCircle
+  Music, Camera, Phone, Terminal, Play, Flame, HelpCircle,
+  Mail, Users
 } from 'lucide-react';
 import { AgentNode, CulturePack } from '../types';
 import { PRESETS } from '../data/presets';
@@ -226,6 +227,121 @@ export default function LandingView({
               </div>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Founders & Core Team Section */}
+      <section className="py-10 px-6 lg:px-16 border-b border-slate-900/50 relative overflow-hidden bg-gradient-to-b from-slate-950/60 to-[#070d19]/40">
+        <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[400px] h-[150px] bg-cyan-500/5 rounded-full blur-[80px] pointer-events-none" />
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-slate-900/80">
+            <div className="space-y-1.5 text-left">
+              <span className="text-[10px] uppercase font-mono font-black text-amber-400 tracking-wider flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-amber-400" />
+                <span>{isZh ? '💡 我们的核心主创团队' : '💡 CORE CREATION TEAM'}</span>
+              </span>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                {isZh ? '主创团队 & 开发者介绍' : 'Meet Our Founders & Developers'}
+              </h2>
+            </div>
+            <div className="text-left md:text-right text-xs text-slate-400 leading-relaxed max-w-sm">
+              {isZh 
+                ? 'CultureOS 由富有出海增长与技术转译实战经验的跨文化增长极客、AI工程师联合打造。' 
+                : 'CultureOS is crafted by global growth hackers and AI engineers with rich transcultural expansion experience.'}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            {/* Member 1: Dai Jiapeng */}
+            <motion.div 
+              whileHover={{ y: -3, scale: 1.005 }}
+              className="p-6 rounded-2xl bg-gradient-to-r from-slate-900/80 to-slate-950 border border-slate-800/80 relative overflow-hidden group transition duration-300 shadow-xl"
+            >
+              <div className="absolute top-0 right-0 p-3 text-[9px] font-mono font-bold bg-cyan-500/10 text-cyan-400 rounded-bl-xl border-l border-b border-slate-800/60 uppercase tracking-widest">
+                Co-Founder / Tech Lead
+              </div>
+              <div className="flex items-start gap-4 text-left">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-slate-950 font-black text-lg shadow-lg shadow-cyan-500/10 shrink-0">
+                  代
+                </div>
+                <div className="space-y-2 flex-1 min-w-0">
+                  <div>
+                    <h4 className="text-lg font-black text-white group-hover:text-cyan-400 transition duration-200">
+                      {isZh ? '代嘉鹏' : 'Dai Jiapeng'}
+                    </h4>
+                    <p className="text-xs text-slate-400 font-mono">
+                      {isZh ? '联合创始人 / 首席技术架构师' : 'Co-Founder / Chief Technical Architect'}
+                    </p>
+                  </div>
+                  <p className="text-slate-300 text-xs leading-relaxed">
+                    {isZh 
+                      ? '具有近20年经验的产品和用户体验专家。深耕 IP 内容多智能体系统与跨文化符号转译引擎研发。致力于通过自动化管线和安全 RAG 约束模型，解决创作者出海水土不服与高危违规难题。'
+                      : 'A product and user experience expert with nearly 20 years of experience. Specializes in multi-agent content pipelines and transcultural semantic constraint systems.'}
+                  </p>
+                  <div className="pt-2 flex flex-wrap gap-2">
+                    <a 
+                      href="mailto:daijiapeng2012@gmail.com"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-950/80 hover:bg-slate-900 text-[11px] font-mono text-slate-300 hover:text-cyan-300 transition border border-slate-850"
+                    >
+                      <Mail className="w-3 h-3 text-cyan-400" />
+                      <span>daijiapeng2012@gmail.com</span>
+                    </a>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-950/80 text-[11px] font-sans text-slate-300 border border-slate-850">
+                      <span className="text-cyan-400 font-extrabold">{isZh ? '微信:' : 'WeChat:'}</span>
+                      <span>Golden_moon</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Member 2: Ren Huan */}
+            <motion.div 
+              whileHover={{ y: -3, scale: 1.005 }}
+              className="p-6 rounded-2xl bg-gradient-to-r from-slate-900/80 to-slate-950 border border-slate-800/80 relative overflow-hidden group transition duration-300 shadow-xl"
+            >
+              <div className="absolute top-0 right-0 p-3 text-[9px] font-mono font-bold bg-amber-500/10 text-amber-400 rounded-bl-xl border-l border-b border-slate-800/60 uppercase tracking-widest">
+                Co-Founder / Growth Lead
+              </div>
+              <div className="flex items-start gap-4 text-left">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-slate-950 font-black text-lg shadow-lg shadow-amber-500/10 shrink-0">
+                  任
+                </div>
+                <div className="space-y-2 flex-1 min-w-0">
+                  <div>
+                    <h4 className="text-lg font-black text-white group-hover:text-amber-400 transition duration-200">
+                      {isZh ? '任欢' : 'Ren Huan'}
+                    </h4>
+                    <p className="text-xs text-slate-400 font-mono">
+                      {isZh ? '联合创始人 / 出海增长主理人' : 'Co-Founder / Head of Global Growth'}
+                    </p>
+                  </div>
+                  <p className="text-slate-300 text-xs leading-relaxed">
+                    {isZh 
+                      ? '20年经验的市场和品牌专家。多语模态视听本土适配专家，具有丰富的短视频及社媒实战流量爆量经验。通过多维文化包（CulturePack™）赋能实体与IP实现商业闭环。'
+                      : 'A marketing and brand expert with 20 years of experience. Expert in localized short video and social media growth formats.'}
+                  </p>
+                  <div className="pt-2 flex flex-wrap gap-2">
+                    <a 
+                      href="mailto:cathy.ren@163.com"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-950/80 hover:bg-slate-900 text-[11px] font-mono text-slate-300 hover:text-amber-300 transition border border-slate-850"
+                    >
+                      <Mail className="w-3 h-3 text-amber-400" />
+                      <span>cathy.ren@163.com</span>
+                    </a>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-950/80 text-[11px] font-sans text-slate-300 border border-slate-850">
+                      <span className="text-amber-400 font-extrabold">{isZh ? '微信:' : 'WeChat:'}</span>
+                      <span>Mickey_Ren</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-950/80 text-[11px] font-sans text-slate-300 border border-slate-850">
+                      <span className="text-rose-400 font-extrabold">抖音:</span>
+                      <span>阿琪是我</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
