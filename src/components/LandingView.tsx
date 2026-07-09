@@ -4,7 +4,7 @@ import {
   Globe, Award, Sparkles, ShieldAlert, Cpu, 
   Repeat, ArrowRight, Zap, CheckCircle2, Languages,
   Music, Camera, Phone, Terminal, Play, Flame, HelpCircle,
-  Mail, Users
+  Mail, Users, Layers, Video, Coffee, Compass, ChevronRight
 } from 'lucide-react';
 import { AgentNode, CulturePack } from '../types';
 import { PRESETS } from '../data/presets';
@@ -13,6 +13,7 @@ import CulturePackView from './CulturePackView';
 interface LandingViewProps {
   lang: 'zh' | 'en';
   onEnterWorkspace: () => void;
+  onNavigateToView?: (view: 'landing' | 'workspace' | 'studio' | 'docs' | 'database' | 'ppt' | 'admin') => void;
   agents: AgentNode[];
   defaultPack: CulturePack;
   scoreDims: {
@@ -26,6 +27,7 @@ interface LandingViewProps {
 export default function LandingView({ 
   lang, 
   onEnterWorkspace, 
+  onNavigateToView,
   agents, 
   defaultPack,
   scoreDims 
@@ -227,6 +229,199 @@ export default function LandingView({
               </div>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* 3-Track Creator Competition Launchpad Section */}
+      <section className="py-16 px-6 lg:px-16 border-b border-slate-900/50 bg-[#090f1d]/50 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-cyan-500/5 rounded-full blur-[100px] pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto space-y-10">
+          <div className="text-center max-w-3xl mx-auto space-y-3 animate-fade-in">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-bold uppercase tracking-wider text-emerald-400">
+              <Layers className="w-3.5 h-3.5 animate-pulse" />
+              <span>{isZh ? '雪窦山青年创意大赛 • 三组命题专属开发验证' : 'Xuedoushan Youth Creator Competition • Three Propositions'}</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+              {isZh ? '企业命题专属验证通道' : 'Three Enterprise Proposition Sandboxes'}
+            </h2>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              {isZh 
+                ? 'CultureOS 完全重构并匹配大赛官方发布的 3 组企业命题，并在 Specs、Skills、Agents 三大 Wave 闭环推进。点击下方赛道板块，一键验证核心功能形态。'
+                : 'CultureOS fully implements the 3 official enterprise propositions, iterating through the Specs, Skills, and Agents Waves. Click any block below to launch its sandbox.'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Track 1 Block */}
+            <motion.div 
+              whileHover={{ y: -5, scale: 1.01 }}
+              className="p-6 rounded-2xl bg-[#0a1122] border border-cyan-500/10 hover:border-cyan-500/30 transition duration-300 relative overflow-hidden flex flex-col justify-between group shadow-xl"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="space-y-4 text-left">
+                <div className="flex justify-between items-start">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/15 flex items-center justify-center text-cyan-400">
+                    <Sparkles className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                    Wave 1/2/3
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold text-white group-hover:text-cyan-400 transition duration-200">
+                    {isZh ? '命题 1：AIGC 技术赛道' : 'Track 1: AIGC Technology'}
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed min-h-[72px]">
+                    {isZh 
+                      ? '围绕图片、视频、音乐与 3D 生成能力，验证跨境品牌素材从单点生成到批量产出的技术壁垒，搭建全渠道智能重组与合规检测底座。'
+                      : 'Verifies technical barriers of cross-border brand asset pipelines from single-point generation to batch production across images, video, music & 3D models.'}
+                  </p>
+                </div>
+
+                {/* Sub-features list */}
+                <div className="pt-3 border-t border-slate-900 text-[10px] font-mono text-slate-500 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-cyan-400/80">
+                    <span className="w-1 h-1 rounded-full bg-cyan-400" />
+                    <span>{isZh ? '🎨 Specs • 单点资产格式规范对齐' : '🎨 Specs • Asset Schemas & Specs'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1 h-1 rounded-full bg-slate-600" />
+                    <span>{isZh ? '⚡ Skills • 多模态音视频多端原子API' : '⚡ Skills • Multimodal Generator APIs'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1 h-1 rounded-full bg-slate-600" />
+                    <span>{isZh ? '🤖 Agents • 多智能体协作批量创意产出' : '🤖 Agents • Multi-Agent Automation'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6">
+                <button
+                  id="btn-track-1-sandbox"
+                  onClick={() => onNavigateToView ? onNavigateToView('studio') : onEnterWorkspace()}
+                  className="w-full py-3 px-4 rounded-xl font-bold text-xs bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500 hover:text-slate-950 transition duration-250 cursor-pointer border border-cyan-500/20 flex items-center justify-center gap-1.5 shadow"
+                >
+                  <span>{isZh ? '进入 AIGC 创意中台 (命题 1)' : 'Launch AIGC Tech Sandbox'}</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Track 2 Block */}
+            <motion.div 
+              whileHover={{ y: -5, scale: 1.01 }}
+              className="p-6 rounded-2xl bg-[#0a1122] border border-purple-500/10 hover:border-purple-500/30 transition duration-300 relative overflow-hidden flex flex-col justify-between group shadow-xl"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="space-y-4 text-left">
+                <div className="flex justify-between items-start">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/15 flex items-center justify-center text-purple-400">
+                    <Video className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                    Wave 1/2/3
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold text-white group-hover:text-purple-400 transition duration-200">
+                    {isZh ? '命题 2：文化出海场景赛道' : 'Track 2: Cultural Outbound Scene'}
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed min-h-[72px]">
+                    {isZh 
+                      ? '以综合性影片生成、网文与剧本编纂翻译、成片切片分发和 AI 游戏组成内容生产链，让文化产品更快进入海外全语种传播场景。'
+                      : 'Builds an integrated export pipeline spanning AI video production, web novel/script translation, smart clipping/distribution, and AI games.'}
+                  </p>
+                </div>
+
+                {/* Sub-features list */}
+                <div className="pt-3 border-t border-slate-900 text-[10px] font-mono text-slate-500 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-purple-400/80">
+                    <span className="w-1 h-1 rounded-full bg-purple-400" />
+                    <span>{isZh ? '🎬 AI制片 • 综合性影片与脚本生成' : '🎬 AI Film • Comprehensive Video Gen'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1 h-1 rounded-full bg-slate-600" />
+                    <span>{isZh ? '✍️ AI内容 • 网文、剧本编纂与翻译' : '✍️ AI Content • Fiction/Script Trans'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1 h-1 rounded-full bg-slate-600" />
+                    <span>{isZh ? '📦 AI发行 • 成片多渠道自动切片与分发' : '📦 AI Distribution • Auto Video Slicing'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6">
+                <button
+                  id="btn-track-2-sandbox"
+                  onClick={() => onNavigateToView ? onNavigateToView('workspace') : onEnterWorkspace()}
+                  className="w-full py-3 px-4 rounded-xl font-bold text-xs bg-purple-500/10 text-purple-300 hover:bg-purple-500 hover:text-slate-950 transition duration-250 cursor-pointer border border-purple-500/20 flex items-center justify-center gap-1.5 shadow"
+                >
+                  <span>{isZh ? '进入内容生产链 (命题 2)' : 'Launch Culture Outbound Sandbox'}</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Track 3 Block */}
+            <motion.div 
+              whileHover={{ y: -5, scale: 1.01 }}
+              className="p-6 rounded-2xl bg-[#0a1122] border border-amber-500/10 hover:border-amber-500/30 transition duration-300 relative overflow-hidden flex flex-col justify-between group shadow-xl"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="space-y-4 text-left">
+                <div className="flex justify-between items-start">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/15 flex items-center justify-center text-amber-400">
+                    <Compass className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    Wave 1/2/3
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold text-white group-hover:text-amber-400 transition duration-200">
+                    {isZh ? '命题 3：品牌出海场景赛道' : 'Track 3: Brand Outbound Scene'}
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed min-h-[72px]">
+                    {isZh 
+                      ? '围绕出海策略、视觉体系、三方站产品资料、多平台图文/视频获客、直播辅助切片、公私域流转与全渠道流量分析建立增长链。'
+                      : 'Establishes fullbrand outbound growth chains: strategy adaptation, style books, multi-channel growth, live tools, and analytics.'}
+                  </p>
+                </div>
+
+                {/* Sub-features list */}
+                <div className="pt-3 border-t border-slate-900 text-[10px] font-mono text-slate-500 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-amber-400/80">
+                    <span className="w-1 h-1 rounded-full bg-amber-400" />
+                    <span>{isZh ? '📊 AI策划/视觉 • 出海策略与视觉风格体系' : '📊 AI Strategy/Visuals • Style Guides'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1 h-1 rounded-full bg-slate-600" />
+                    <span>{isZh ? '🚀 AI获客 • 小红书/INS/TikTok/直播切片' : '🚀 AI Acquisition • Ads, Slices & Feeds'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1 h-1 rounded-full bg-slate-600" />
+                    <span>{isZh ? '📈 AI私域/分析 • 全渠道流量数据采集分析' : '📈 AI Private Domain & Traffic Logs'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6">
+                <button
+                  id="btn-track-3-sandbox"
+                  onClick={() => onNavigateToView ? onNavigateToView('database') : onEnterWorkspace()}
+                  className="w-full py-3 px-4 rounded-xl font-bold text-xs bg-amber-500/10 text-amber-300 hover:bg-amber-500 hover:text-slate-950 transition duration-250 cursor-pointer border border-amber-500/20 flex items-center justify-center gap-1.5 shadow"
+                >
+                  <span>{isZh ? '进入品牌增长链 (命题 3)' : 'Launch Brand Outbound Sandbox'}</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 

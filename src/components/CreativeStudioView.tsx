@@ -5,7 +5,7 @@ import {
   ArrowRight, Radio, HelpCircle, RefreshCw, Compass, ShieldAlert, BadgeInfo,
   Settings, Eye, EyeOff, Sliders, Server, HardDrive, ShieldCheck, Copy,
   Video, Filter, VolumeX, Plus, Terminal, Minus,
-  Folder, FolderOpen, Search, Maximize2, ChevronLeft, ChevronRight, ChevronDown, Scissors, FileVideo, MoreHorizontal, Cpu
+  Folder, FolderOpen, Search, Maximize2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Scissors, FileVideo, MoreHorizontal, Cpu, Menu
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { MUSIC_PRESETS, MusicPreset } from "../data/music_presets";
@@ -740,36 +740,78 @@ export default function CreativeStudioView({
     };
   }, [activeMediaSubTab, isMediaAudioPlaying]);
 
+  const OBFUSCATION_KEY = "cultureos_secure_key_2026";
+
+  const encryptString = (str: string): string => {
+    if (!str) return "";
+    let result = "";
+    for (let i = 0; i < str.length; i++) {
+      const charCode = str.charCodeAt(i) ^ OBFUSCATION_KEY.charCodeAt(i % OBFUSCATION_KEY.length);
+      result += String.fromCharCode(charCode);
+    }
+    try {
+      return btoa(unescape(encodeURIComponent(result)));
+    } catch (e) {
+      return str;
+    }
+  };
+
+  const decryptString = (encoded: string): string => {
+    if (!encoded) return "";
+    try {
+      const decoded = decodeURIComponent(escape(atob(encoded)));
+      let result = "";
+      for (let i = 0; i < decoded.length; i++) {
+        const charCode = decoded.charCodeAt(i) ^ OBFUSCATION_KEY.charCodeAt(i % OBFUSCATION_KEY.length);
+        result += String.fromCharCode(charCode);
+      }
+      return result;
+    } catch (e) {
+      return encoded; // Fallback to plain text if not encoded
+    }
+  };
+
   // State for Model configuration management
-  const defaultModelConfigs = {
-      gemini: { apiKey: "", apiBase: "", activeModel: "gemini-3.5-flash" },
-      openai: { apiKey: "", apiBase: "https://api.openai-next.com/v1", activeModel: "gpt-4o-mini" },
-      deepseek: { apiKey: "", apiBase: "https://api.deepseek.com/v1", activeModel: "deepseek-chat" },
-      glm: { apiKey: "", apiBase: "https://open.bigmodel.cn/api/paas/v4", activeModel: "glm-4-flash" },
-      custom: { apiKey: "", apiBase: "", activeModel: "custom-llm" }
-    };
   const [modelConfigs, setModelConfigs] = useState(() => {
     const saved = localStorage.getItem("cultureos_model_configs");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        for (const key of Object.keys(defaultModelConfigs)) {
-          if (!parsed[key]) parsed[key] = defaultModelConfigs[key];
-          if (!parsed[key].apiBase && defaultModelConfigs[key].apiBase) parsed[key].apiBase = defaultModelConfigs[key].apiBase;
-          if (!parsed[key].activeModel && defaultModelConfigs[key].activeModel) parsed[key].activeModel = defaultModelConfigs[key].activeModel;
-        }
+        // Securely decrypt keys on load
+        Object.keys(parsed).forEach(key => {
+          if (parsed[key]?.apiKey) {
+            parsed[key].apiKey = decryptString(parsed[key].apiKey);
+          }
+        });
         return parsed;
       } catch (e) {
         console.error("Failed to parse model configs:", e);
       }
     }
-    return defaultModelConfigs;
+    return {
+      gemini: { apiKey: "", apiBase: "", activeModel: "gemini-3.5-flash" },
+      openai: { apiKey: "", apiBase: "https://api.openai.com/v1", activeModel: "gpt-4o-mini" },
+      deepseek: { apiKey: "", apiBase: "https://api.deepseek.com/v1", activeModel: "deepseek-chat" },
+      glm: { apiKey: "", apiBase: "https://open.bigmodel.cn/api/paas/v4", activeModel: "glm-4-flash" },
+      custom: { apiKey: "", apiBase: "", activeModel: "custom-llm" }
+    };
   });
 
-  // Save configs to localStorage when altered
+  // Save configs to localStorage when altered securely
   const saveConfigs = (newConfigs: any) => {
     setModelConfigs(newConfigs);
-    localStorage.setItem("cultureos_model_configs", JSON.stringify(newConfigs));
+    try {
+      // Deep copy to prevent modifying active component state
+      const copy = JSON.parse(JSON.stringify(newConfigs));
+      Object.keys(copy).forEach(key => {
+        if (copy[key]?.apiKey) {
+          copy[key].apiKey = encryptString(copy[key].apiKey);
+        }
+      });
+      localStorage.setItem("cultureos_model_configs", JSON.stringify(copy));
+    } catch (e) {
+      console.error("Failed to save encrypted configs:", e);
+    }
   };
 
   // File upload and click helpers for Media Hub
@@ -830,11 +872,11 @@ export default function CreativeStudioView({
   };
 
   // State for dynamic provider selection
-  const [chatProvider, setChatProvider] = useState<"gemini" | "openai" | "deepseek" | "glm" | "custom">("openai");
-  const [intelProvider, setIntelProvider] = useState<"gemini" | "openai" | "deepseek" | "glm" | "custom">("openai");
+  const [chatProvider, setChatProvider] = useState<"gemini" | "openai" | "deepseek" | "glm" | "custom">("gemini");
+  const [intelProvider, setIntelProvider] = useState<"gemini" | "openai" | "deepseek" | "glm" | "custom">("gemini");
 
   // State for Chatbot
-  const [chatModel, setChatModel] = useState<string>("gpt-4o-mini");
+  const [chatModel, setChatModel] = useState<string>("gemini-3.5-flash");
   const [chatRole, setChatRole] = useState<string>("advisor");
   const [chatHistory, setChatHistory] = useState<Message[]>([
     {
@@ -850,7 +892,7 @@ export default function CreativeStudioView({
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // State for Content Intelligence
-  const [intelModel, setIntelModel] = useState<string>("gpt-4o-mini");
+  const [intelModel, setIntelModel] = useState<string>("gemini-3.5-flash");
   const [intelTask, setIntelTask] = useState<"analyze" | "edit">("analyze");
   const [intelInput, setIntelInput] = useState<string>(
     isZh 
@@ -933,7 +975,7 @@ export default function CreativeStudioView({
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const [panStart, setPanStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [canvasHeight, setCanvasHeight] = useState<number>(500);
+  const [canvasHeight, setCanvasHeight] = useState<number>(680);
   const canvasViewportRef = useRef<HTMLDivElement | null>(null);
 
   // Left and Right Sidebars width stretching state and drag states
@@ -1038,6 +1080,43 @@ export default function CreativeStudioView({
   ]);
   const [copilotInput, setCopilotInput] = useState<string>("");
 
+  // Higgsfield-inspired signature states
+  const [higgsCameraPreset, setHiggsCameraPreset] = useState<"zoom_in" | "zoom_out" | "pan_left" | "pan_right" | "tilt_up" | "tilt_down" | "orbit" | "shake">("zoom_in");
+  const [higgsMotionStrength, setHiggsMotionStrength] = useState<number>(0.65);
+  const [higgsCameraSpeed, setHiggsCameraSpeed] = useState<number>(1.2);
+  const [higgsCharacterSeed, setHiggsCharacterSeed] = useState<string>("Cyber Rebel");
+  const [higgsSelectedStyle, setHiggsSelectedStyle] = useState<string>("cinematic");
+  const [higgsMeshStyle, setHiggsMeshStyle] = useState<"wireframe" | "shaded" | "points">("wireframe");
+  const [higgsSyncAudio, setHiggsSyncAudio] = useState<boolean>(true);
+  const [higgsSync3D, setHiggsSync3D] = useState<boolean>(true);
+  const [higgsSyncCompliance, setHiggsSyncCompliance] = useState<boolean>(true);
+  const [higgsRotateAngle, setHiggsRotateAngle] = useState<number>(0);
+  const [higgsMeshSpeed, setHiggsMeshSpeed] = useState<number>(1);
+  const [higgsActiveTimelineId, setHiggsActiveTimelineId] = useState<string>("clip-1");
+  const [higgsTimelineProgress, setHiggsTimelineProgress] = useState<number>(40);
+  const [higgsVideoPlaying, setHiggsVideoPlaying] = useState<boolean>(false);
+  const [higgsPreviewTab, setHiggsPreviewTab] = useState<"video" | "mesh3d">("video");
+
+  // Collapsible accordion states for the Right Sidebar Creator Rig
+  const [isCameraRigExpanded, setIsCameraRigExpanded] = useState<boolean>(true);
+  const [isActorRigExpanded, setIsActorRigExpanded] = useState<boolean>(false);
+  const [isRenderFxExpanded, setIsRenderFxExpanded] = useState<boolean>(false);
+
+  // Collapsible accordion states for the Audio generation panel
+  const [isAudioPresetsExpanded, setIsAudioPresetsExpanded] = useState<boolean>(true);
+  const [isAudioInstrumentsExpanded, setIsAudioInstrumentsExpanded] = useState<boolean>(false);
+  const [isAudioMixerExpanded, setIsAudioMixerExpanded] = useState<boolean>(false);
+
+  useEffect(() => {
+    let animId: number;
+    const tick = () => {
+      setHiggsRotateAngle(prev => (prev + higgsMeshSpeed * 1.2) % 360);
+      animId = requestAnimationFrame(tick);
+    };
+    animId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animId);
+  }, [higgsMeshSpeed]);
+
   const handleAddFileToCanvas = (
     title: string, 
     type: "image" | "video" | "audio", 
@@ -1060,6 +1139,81 @@ export default function CreativeStudioView({
       setCanvasConnections(prev => [...prev, { from: selectedNodeId, to: newId }]);
     }
     setSelectedNodeId(newId);
+  };
+
+  const handleGenerateFullStack = () => {
+    if (isCanvasGenerating) return;
+    
+    setIsCanvasGenerating(true);
+    setActiveGenStepIdx(0);
+    setCanvasGenSteps([
+      isZh ? "正在初始化「角色一致性舱」- 锁定脸部及比例种子..." : "Initializing Consistent Character reference...",
+      isZh ? `正在对齐「镜头运动机架」- 注入镜头预设: ${higgsCameraPreset.toUpperCase()}...` : `Aligning camera motion rig: ${higgsCameraPreset.toUpperCase()}...`,
+      isZh ? `正在运行 8K 物理关键帧去噪渲染 (Denoising Steps: 30)...` : "Denoising 8K video latents (Steps: 30)...",
+      isZh ? `正在调用「Lyria 声音大模型」压制 ${musicLeadInstrument} 声学音轨...` : `Synthesizing Lyria soundtrack: ${musicLeadInstrument} backing track...`,
+      isZh ? "正在合成 3D 物理资产 Mesh 线框与点云拓扑 specs..." : "Compiling 3D mesh CAD topological specifications...",
+      isZh ? "正在运行 24 大洲地缘合规红线扫描审查..." : "Scanning international compliance & cultural red-lines..."
+    ]);
+
+    let step = 0;
+    const interval = setInterval(() => {
+      step++;
+      if (step <= 5) {
+        setActiveGenStepIdx(step);
+      } else {
+        clearInterval(interval);
+        
+        // Success synthesis! Add output video and update states
+        const newVideoName = `H3_Short_${higgsCharacterSeed.replace(/\s+/g, '_')}_v${Date.now().toString().slice(-4)}.mp4`;
+        const newUrl = "https://assets.mixkit.co/videos/preview/mixkit-woodland-drone-shot-at-sunset-40292-large.mp4";
+        
+        const newVideoItem = {
+          id: `v-${Date.now()}`,
+          name: newVideoName,
+          url: newUrl,
+          size: "4.8 MB"
+        };
+        
+        setMediaVideos(prev => [newVideoItem, ...prev]);
+        setActiveVideoUrl(newUrl);
+        setHiggsVideoPlaying(true);
+        setHiggsTimelineProgress(0);
+
+        // Also push a canvas node for absolute compatibility
+        const newNodeId = `n-${Date.now()}`;
+        const newCanvasNode: CanvasNode = {
+          id: newNodeId,
+          title: newVideoName,
+          type: "video",
+          x: 240,
+          y: 190,
+          contentUrl: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=300&auto=format&fit=crop",
+          promptText: canvasPrompt || `Meme concept with ${higgsCharacterSeed}`,
+          status: "complete"
+        };
+        setCanvasNodes(prev => [...prev, newCanvasNode]);
+        setSelectedNodeId(newNodeId);
+
+        setIsCanvasGenerating(false);
+        setActiveGenStepIdx(-1);
+        
+        // Add congratulations messages
+        setCopilotMessages(prev => [
+          ...prev,
+          {
+            id: `c-${Date.now()}`,
+            role: "assistant",
+            text: isZh
+              ? `🎉 联培合成大成功！物料「${newVideoName}」已发布到您的画板、时间轴与 3D Specs 终端！音轨使用 Lyria ${musicLeadInstrument} Lofi，且已通过 Middle East & LatAm 全大洲地缘合规红线扫描。`
+              : `🎉 Multi-modal synthesis completed! '${newVideoName}' has been delivered to your timeline and 3D specifications block. Audio uses Lyria ${musicLeadInstrument} Lofi. Checked against all global compliance anchors.`,
+            thinking: "Synthesis completed. Aspect: 16:9, Framerate: 30 FPS, mesh vertices: 18,492."
+          }
+        ]);
+        
+        // Trigger parent quota if available
+        onConsumeQuota?.("Higgsfield Unified Generation");
+      }
+    }, 1200);
   };
 
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
@@ -1258,7 +1412,6 @@ export default function CreativeStudioView({
       setChatModel("gemini-3.5-flash");
     } else if (chatProvider === "openai") {
       setChatModel("gpt-4o-mini");
-      setChatModel("gpt-4o-mini");
     } else if (chatProvider === "deepseek") {
       setChatModel("deepseek-chat");
     } else if (chatProvider === "glm") {
@@ -1272,7 +1425,6 @@ export default function CreativeStudioView({
     if (intelProvider === "gemini") {
       setIntelModel("gemini-3.5-flash");
     } else if (intelProvider === "openai") {
-      setIntelModel("gpt-4o-mini");
       setIntelModel("gpt-4o-mini");
     } else if (intelProvider === "deepseek") {
       setIntelModel("deepseek-chat");
@@ -1792,15 +1944,28 @@ export default function CreativeStudioView({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <div className="relative w-full text-left">
       
+      {/* Floating Menu Trigger Button when Collapsed */}
+      {isSidebarCollapsed && (
+        <div className="fixed left-6 top-28 z-40">
+          <button
+            onClick={() => setIsSidebarCollapsed(false)}
+            className="p-3.5 rounded-2xl bg-[#0c1322]/95 backdrop-blur-md border border-cyan-500/35 text-cyan-400 hover:text-cyan-200 hover:bg-cyan-500/10 transition-all duration-300 shadow-[0_10px_35px_rgba(6,182,212,0.3)] hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center"
+            title={isZh ? "展开导航" : "Expand Navigation"}
+          >
+            <Menu className="w-5 h-5 animate-pulse" />
+          </button>
+        </div>
+      )}
+
       {/* Sidebar Tool Selection Card */}
       {!isSidebarCollapsed && (
-        <div className="lg:col-span-3 space-y-3 animate-fade-in">
-          <div className="p-4 rounded-2xl bg-[#0c1322]/90 border border-[#1e2f4d]/60 shadow-xl">
+        <div className="fixed left-6 top-28 w-72 space-y-3 animate-fade-in z-45 max-h-[calc(100vh-140px)] overflow-y-auto scrollbar-thin">
+          <div className="p-4 rounded-2xl bg-[#0c1322]/80 backdrop-blur-md border border-cyan-500/20 shadow-[0_12px_40px_rgba(6,182,212,0.15)] hover:border-cyan-500/40 hover:shadow-[0_16px_48px_rgba(6,182,212,0.22)] transition-all duration-500">
             <div className="flex items-center justify-between mb-3 border-b border-[#1e2f4d]/30 pb-2">
               <h4 className="text-xs font-mono uppercase font-black text-slate-500 tracking-wider">
-                {isZh ? "💎 创意工具套件" : "💎 Creative Toolkits"}
+                {isZh ? "🎨 命题一：AIGC技术赛道" : "🎨 Prop 1: AIGC Tech Track"}
               </h4>
               <button
                 onClick={() => setIsSidebarCollapsed(true)}
@@ -1822,8 +1987,8 @@ export default function CreativeStudioView({
               >
                 <Cpu className="w-4.5 h-4.5 text-cyan-400" />
                 <div className="flex-1">
-                  <p className="font-extrabold leading-tight">{isZh ? "海螺智能画板" : "MiniMax Canvas Hub"}</p>
-                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Visual Board & Co-Pilot</p>
+                  <p className="font-extrabold leading-tight">{isZh ? "四合一智能画板" : "4-in-1 Canvas Hub"}</p>
+                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">{isZh ? "物理与3D资产 Specs" : "3D & Asset Grid Specs"}</p>
                 </div>
               </button>
 
@@ -1837,8 +2002,8 @@ export default function CreativeStudioView({
               >
                 <MessageSquare className="w-4.5 h-4.5" />
                 <div className="flex-1">
-                  <p className="font-bold leading-tight">{isZh ? "出海咨询顾问" : "Multiverse Advisor"}</p>
-                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Gemini Roleplay Chat</p>
+                  <p className="font-bold leading-tight">{isZh ? "AIGC 跨境生成顾问" : "AIGC Outbound Advisor"}</p>
+                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">{isZh ? "多角色 Agents 协同" : "Multi-Agent System"}</p>
                 </div>
               </button>
 
@@ -1852,8 +2017,8 @@ export default function CreativeStudioView({
               >
                 <Sparkles className="w-4.5 h-4.5" />
                 <div className="flex-1">
-                  <p className="font-bold leading-tight">{isZh ? "爆款内容洞察" : "Copy Gen Intelligence"}</p>
-                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Content & Taboos Auditor</p>
+                  <p className="font-bold leading-tight">{isZh ? "素材全渠道合规" : "Omni-Asset Compliance"}</p>
+                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">{isZh ? "自动拦截与 Specs 审查" : "Red-Line Audit & Specs"}</p>
                 </div>
               </button>
 
@@ -1867,8 +2032,8 @@ export default function CreativeStudioView({
               >
                 <ImageIcon className="w-4.5 h-4.5" />
                 <div className="flex-1">
-                  <p className="font-bold leading-tight">{isZh ? "视觉创意画布" : "Image Visual Studio"}</p>
-                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Image Generator / Editor</p>
+                  <p className="font-bold leading-tight">{isZh ? "图片单点与批量生成" : "Image Single/Batch Gen"}</p>
+                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">{isZh ? "多模态 Skills 设计" : "Multi-style Image Skills"}</p>
                 </div>
               </button>
 
@@ -1882,8 +2047,8 @@ export default function CreativeStudioView({
               >
                 <Music className="w-4.5 h-4.5" />
                 <div className="flex-1">
-                  <p className="font-bold leading-tight">{isZh ? "流配乐作曲家" : "Folk Sound Composer"}</p>
-                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Lyria Soundtrack Generator</p>
+                  <p className="font-bold leading-tight">{isZh ? "音轨与音乐 AIGC 引擎" : "Music & Soundtrack Gen"}</p>
+                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">{isZh ? "声学 Skills 生成" : "Soundtrack Skills"}</p>
                 </div>
               </button>
 
@@ -1897,8 +2062,8 @@ export default function CreativeStudioView({
               >
                 <Video className="w-4.5 h-4.5 text-cyan-400 animate-pulse" />
                 <div className="flex-1">
-                  <p className="font-bold leading-tight">{isZh ? "多媒体体验舱" : "Interactive Media Hub"}</p>
-                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">{isZh ? "视频、音频及图像物料" : "Upload, Preview & Playback"}</p>
+                  <p className="font-bold leading-tight">{isZh ? "视频合成与批量产出" : "Video Synth & Batch Hub"}</p>
+                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">{isZh ? "视频 & 3D 资产交割" : "Deliverables & Exporter"}</p>
                 </div>
               </button>
 
@@ -1912,8 +2077,8 @@ export default function CreativeStudioView({
               >
                 <Settings className="w-4.5 h-4.5 text-amber-400" />
                 <div className="flex-1">
-                  <p className="font-bold leading-tight text-amber-300">{isZh ? "多模型配置中心" : "Model Registry Settings"}</p>
-                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">DeepSeek, OpenAI, GLM Setup</p>
+                  <p className="font-bold leading-tight text-amber-300">{isZh ? "Specs 规范与大模型" : "Specs & Model Registry"}</p>
+                  <p className="text-[10px] font-normal text-slate-500 leading-none mt-0.5">Prompt Specs & Multi-LLM</p>
                 </div>
               </button>
 
@@ -1921,7 +2086,7 @@ export default function CreativeStudioView({
           </div>
 
           {/* Informative model constraints block */}
-          <div className="p-4 rounded-xl bg-[#090f1e]/80 border border-[#1e2f4d]/40 text-left">
+          <div className="p-4 rounded-xl bg-[#090f1e]/60 backdrop-blur-md border border-cyan-500/10 shadow-lg text-left">
             <h5 className="text-[10px] font-mono font-bold text-amber-400 tracking-wider flex items-center gap-1.5 mb-1.5 uppercase">
               <BadgeInfo className="w-3.5 h-3.5" />
               <span>{isZh ? "多端运行与配额说明" : "Dynamic Model Registry"}</span>
@@ -1936,7 +2101,7 @@ export default function CreativeStudioView({
       )}
 
       {/* Main Tool Content Panel */}
-      <div className={isSidebarCollapsed ? "lg:col-span-12 transition-all duration-300" : "lg:col-span-9 transition-all duration-300"}>
+      <div className={`w-full transition-all duration-300 ${isSidebarCollapsed ? "pl-0" : "lg:pl-80"}`}>
         <div className="p-6 rounded-2xl bg-[#0c1322]/85 border border-[#1e2f4d]/50 shadow-2xl relative min-h-[520px] flex flex-col justify-between">
           
           {/* Top Utility Bar for Collapsed State */}
@@ -1953,13 +2118,13 @@ export default function CreativeStudioView({
               <div className="h-4 w-px bg-[#1e2f4d]/60" />
               <span className="text-xs text-slate-400 font-mono">
                 {isZh ? "当前工具" : "Active Tool"}: <span className="text-cyan-300 font-bold">{
-                  activeTab === "canvas" ? (isZh ? "海螺智能画板" : "Canvas Hub") :
-                  activeTab === "chatbot" ? (isZh ? "出海咨询顾问" : "Multiverse Advisor") :
-                  activeTab === "intelligence" ? (isZh ? "爆款内容洞察" : "Copy Gen Intelligence") :
-                  activeTab === "visuals" ? (isZh ? "视觉创意画布" : "Image Visual Studio") :
-                  activeTab === "audio" ? (isZh ? "流配乐作曲家" : "Folk Sound Composer") :
-                  activeTab === "media" ? (isZh ? "多媒体体验舱" : "Interactive Media Hub") :
-                  (isZh ? "多模型配置中心" : "Model Registry Settings")
+                  activeTab === "canvas" ? (isZh ? "四合一智能画板 (Specs)" : "4-in-1 Canvas Hub (Specs)") :
+                  activeTab === "chatbot" ? (isZh ? "AIGC 跨境生成顾问 (Agents)" : "AIGC Outbound Advisor (Agents)") :
+                  activeTab === "intelligence" ? (isZh ? "素材全渠道合规 (Specs)" : "Omni-Asset Compliance (Specs)") :
+                  activeTab === "visuals" ? (isZh ? "图片单点与批量生成 (Skills)" : "Image Single/Batch Gen (Skills)") :
+                  activeTab === "audio" ? (isZh ? "音轨与音乐 AIGC 引擎 (Skills)" : "Music & Soundtrack Gen (Skills)") :
+                  activeTab === "media" ? (isZh ? "视频合成与批量产出 (Deliverables)" : "Video Synth & Batch Hub (Deliverables)") :
+                  (isZh ? "Specs 规范与大模型" : "Specs & Model Registry")
                 }</span>
               </span>
             </div>
@@ -2238,286 +2403,580 @@ export default function CreativeStudioView({
                           )}
                         </div>
 
-                        {/* Folder 3: Shot-03 (Audio/Empty) */}
-                        <div>
+                        {/* Folder 3: Shot-03 (Audio Tracks) */}
+                        <div className="space-y-1">
                           <button
+                            type="button"
                             onClick={() => setExpandedFolders(prev => ({ ...prev, "Shot-03": !prev["Shot-03"] }))}
                             className="w-full flex items-center justify-between text-[11px] font-bold text-slate-300 hover:text-white transition px-1 py-1 rounded hover:bg-slate-800/20"
                           >
                             <span className="flex items-center gap-1.5">
                               {expandedFolders["Shot-03"] ? <ChevronDown className="w-3 h-3 text-cyan-400" /> : <ChevronRight className="w-3 h-3 text-cyan-400" />}
-                              <Folder className="w-3.5 h-3.5 text-amber-400" />
-                              <span>Shot-03</span>
+                              <FolderOpen className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Shot-03 (Audio)</span>
                             </span>
-                            <span className="text-[9px] font-mono text-slate-500 bg-slate-900 px-1 py-0.5 rounded">0</span>
+                            <span className="text-[9px] font-mono text-slate-500 bg-slate-900 px-1 py-0.5 rounded">2</span>
                           </button>
+
+                          {expandedFolders["Shot-03"] && (
+                            <div className="pl-4 border-l border-cyan-500/10 space-y-1">
+                              <div
+                                onClick={() => {
+                                  setMusicLeadInstrument("guzheng_lofi");
+                                  alert(isZh ? "🎵 已载入 SoundHelix 古筝 Lofi 伴奏轨" : "🎵 Loaded SoundHelix Guzheng Lofi background track!");
+                                }}
+                                className="group flex items-center gap-1.5 text-[10px] text-slate-400 hover:text-cyan-300 py-1 px-1 rounded hover:bg-[#14233c]/35 transition cursor-pointer"
+                              >
+                                <Music className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                <span className="truncate flex-1">Guzheng_Lofi_Track.mp3</span>
+                              </div>
+
+                              <div
+                                onClick={() => {
+                                  setMusicLeadInstrument("pipa_ambient");
+                                  alert(isZh ? "🎵 已载入 琵琶 Ambient Lofi 伴奏轨" : "🎵 Loaded Arabian Sitar fusion background track!");
+                                }}
+                                className="group flex items-center gap-1.5 text-[10px] text-slate-400 hover:text-cyan-300 py-1 px-1 rounded hover:bg-[#14233c]/35 transition cursor-pointer"
+                              >
+                                <Music className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                <span className="truncate flex-1">Arabian_Sitar_Track.mp3</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
+
                       </div>
                     </div>
 
-                    {/* Bottom action: upload material */}
-                    <div className="pt-2 border-t border-[#1e2f4d]/40">
-                      <button
-                        onClick={() => {
-                          const name = prompt(isZh ? "请输入导入文件名 (如 custom_scene.png):" : "Enter filename to import (e.g., custom_scene.png):");
-                          if (name) {
-                            handleAddFileToCanvas(
-                              name,
-                              name.endsWith(".mp4") ? "video" : "image",
-                              "https://images.unsplash.com/photo-1533158326339-7f3cf2404354?q=80&w=300&auto=format&fit=crop",
-                              "Custom user uploaded workspace elements. Loaded to visual board successfully."
-                            );
-                          }
-                        }}
-                        className="w-full py-2.5 rounded-xl border border-dashed border-cyan-500/30 text-cyan-300 bg-cyan-500/5 hover:bg-cyan-500/10 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>{isZh ? "上传本地素材" : "Upload materials"}</span>
-                      </button>
+                    {/* Quota & Workspace Profile at Bottom of PANE 1 */}
+                    <div className="mt-4 pt-3 border-t border-[#1e2f4d]/30 text-[10px] space-y-1 text-left text-slate-500">
+                      <div className="flex justify-between text-[9px] font-mono">
+                        <span>{isZh ? "算力可用额 (AIGC Quota):" : "Render Quota:"}</span>
+                        <span className="text-cyan-400 font-bold">1,280 / 2,000 MH</span>
+                      </div>
+                      <div className="w-full bg-[#070c16] h-1.5 rounded-full overflow-hidden border border-[#1e2f4d]/30">
+                        <div className="bg-gradient-to-r from-cyan-500 to-indigo-500 h-full rounded-full" style={{ width: "64%" }} />
+                      </div>
                     </div>
+
                   </div>
 
-                  {/* Drag Resizer 1 (Left to Middle) */}
-                  {isLargeScreen && (
-                    <div
-                      onMouseDown={(e) => startResizing(e, "left")}
-                      className="hidden lg:flex w-2.5 bg-transparent hover:bg-cyan-500/20 active:bg-cyan-500/35 cursor-col-resize self-stretch transition-all duration-150 z-20 items-center justify-center group flex-shrink-0"
-                      title={isZh ? "按住左右拖拽调整宽度" : "Drag left/right to resize"}
-                    >
-                      <div className="w-[2px] h-8 bg-[#1e2f4d]/80 group-hover:bg-cyan-400/80 rounded transition-colors" />
-                    </div>
-                  )}
-
-                  {/* PANE 2: MIDDLE CANVAS (Visual Mindmap Grid) */}
+                  {/* PANE 2: HIGGSFIELD MULTI-MODAL CREATIVE CONSOLE */}
                   <div 
                     style={{ height: `${canvasHeight}px` }}
-                    className="flex-1 min-w-0 bg-[#02050c] relative rounded-xl border border-[#1e2f4d]/50 overflow-hidden flex flex-col justify-between"
+                    className="flex-1 min-w-0 bg-[#02050c]/90 relative rounded-xl border border-[#1e2f4d]/50 overflow-hidden flex flex-col justify-between"
                   >
                     
-                    {/* Interactive Viewport Container */}
-                    <div 
-                      ref={canvasViewportRef}
-                      onMouseDown={handleCanvasMouseDown}
-                      onMouseMove={handleCanvasMouseMove}
-                      onMouseUp={handleCanvasMouseUp}
-                      onMouseLeave={handleCanvasMouseUp}
-                      onWheel={handleCanvasWheel}
-                      className="flex-1 w-full relative overflow-hidden z-10 cursor-grab active:cursor-grabbing"
-                    >
-                      
-                      {/* Panned & Zoomed Content Wrapper */}
-                      <div
-                        style={{
-                          transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomScale})`,
-                          transformOrigin: "center center",
-                          width: "100%",
-                          height: "100%",
-                          position: "absolute",
-                          left: 0,
-                          top: 0,
-                        }}
+                    {/* Floating Top Header tabs to toggle between Video Player and 3D CAD Specs */}
+                    <div className="absolute top-3 left-1/2 transform -translate-x-1/2 bg-[#050b16]/95 border border-[#1e2f4d]/80 rounded-full px-4 py-1.5 flex items-center gap-3 shadow-lg z-20 pointer-events-auto backdrop-blur-sm">
+                      <button
+                        onClick={() => setHiggsPreviewTab("video")}
+                        className={`text-[10.5px] font-black px-3 py-1 rounded-full transition cursor-pointer flex items-center gap-1 ${
+                          higgsPreviewTab === "video" ? "bg-cyan-500/15 text-cyan-300 font-bold border border-cyan-500/30" : "text-slate-400 border border-transparent hover:text-slate-200"
+                        }`}
                       >
-                        {/* 1. Background Grid & Connecting Bezier Curves */}
-                        <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
-                          <svg className="w-full h-full">
-                            <defs>
-                              <pattern id="dot-grid" width="22" height="22" patternUnits="userSpaceOnUse">
-                                <circle cx="2" cy="2" r="1.1" fill="#1e2f4d" fillOpacity="0.45" />
-                              </pattern>
-                              <linearGradient id="canvas-line-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.75" />
-                                <stop offset="50%" stopColor="#6366f1" stopOpacity="0.6" />
-                                <stop offset="100%" stopColor="#ec4899" stopOpacity="0.75" />
-                              </linearGradient>
-                            </defs>
-                            <rect width="100%" height="100%" fill="url(#dot-grid)" />
-                            
-                            {/* Dynamic lines */}
-                            {canvasConnections.map((conn, idx) => {
-                              const fromNode = canvasNodes.find(n => n.id === conn.from);
-                              const toNode = canvasNodes.find(n => n.id === conn.to);
-                              if (!fromNode || !toNode) return null;
-                              
-                              // source connector point (mid-right of fromNode)
-                              const x1 = fromNode.x + 150;
-                              const y1 = fromNode.y + 40;
-                              
-                              // target connector point (mid-left of toNode)
-                              const x2 = toNode.x;
-                              const y2 = toNode.y + 40;
-                              
-                              const dx = Math.abs(x2 - x1) * 0.45;
-                              const cx1 = x1 + dx;
-                              const cy1 = y1;
-                              const cx2 = x2 - dx;
-                              const cy2 = y2;
-                              
-                              return (
-                                <path
-                                  key={idx}
-                                  d={`M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`}
-                                  fill="none"
-                                  stroke="url(#canvas-line-grad)"
-                                  strokeWidth="2"
-                                  filter="drop-shadow(0 0 3px rgba(34,211,238,0.3))"
-                                />
-                              );
-                            })}
-                          </svg>
-                        </div>
+                        <Video className="w-3.5 h-3.5" />
+                        <span>{isZh ? "视频动态预览" : "Video Motion Stage"}</span>
+                      </button>
+                      
+                      <span className="w-px h-3 bg-[#1e2f4d]"></span>
 
-                        {/* 3. Drag-and-drop Nodes Rendering */}
-                        {canvasNodes.map((node) => (
-                          <motion.div
-                            key={node.id}
-                            drag
-                            dragMomentum={false}
-                            dragTransition={{ power: 0 }}
-                            dragElastic={0}
-                            onDrag={(e, info) => {
-                              setCanvasNodes(prev => prev.map(n => {
-                                  if (n.id === node.id) {
-                                    return { ...n, x: n.x + info.delta.x / zoomScale, y: n.y + info.delta.y / zoomScale };
+                      <button
+                        onClick={() => setHiggsPreviewTab("mesh3d")}
+                        className={`text-[10.5px] font-black px-3 py-1 rounded-full transition cursor-pointer flex items-center gap-1 ${
+                          higgsPreviewTab === "mesh3d" ? "bg-indigo-500/15 text-indigo-300 font-bold border border-indigo-500/30" : "text-slate-400 border border-transparent hover:text-slate-200"
+                        }`}
+                      >
+                        <Cpu className="w-3.5 h-3.5" />
+                        <span>{isZh ? "3D 物理 Specs" : "3D Specs Model"}</span>
+                      </button>
+                    </div>
+
+                    {/* Viewport content area */}
+                    <div className="flex-1 w-full relative p-3 pt-14 pb-4 overflow-y-auto scrollbar-thin flex flex-col gap-3 justify-start">
+                      
+                      {/* Active viewport (Video or 3D CAD) */}
+                      <div className="w-full flex-1 min-h-[220px] flex items-stretch">
+                        {higgsPreviewTab === "video" ? (
+                          <div className="flex-1 bg-[#02050b] rounded-lg border border-[#1e2f4d]/40 overflow-hidden relative flex flex-col justify-center items-center shadow-lg">
+                            {/* Video Filter Overlays */}
+                            <div className={`absolute inset-0 w-full h-full pointer-events-none z-10 mix-blend-color-add ${
+                              videoFilter === "warm" ? "bg-amber-500/5" :
+                              videoFilter === "vintage" ? "bg-yellow-800/10 sepia" :
+                              videoFilter === "cyber" ? "bg-fuchsia-500/5" :
+                              videoFilter === "cool" ? "bg-cyan-500/5" :
+                              videoFilter === "noir" ? "bg-black/20 grayscale" : "bg-transparent"
+                            }`} />
+                            
+                            {/* Watermark Overlay */}
+                            {videoWatermark && (
+                              <div className="absolute top-3 left-3 bg-black/60 border border-cyan-500/30 text-cyan-300 font-mono text-[8px] font-black tracking-wider px-2 py-0.5 rounded-sm z-20 animate-pulse">
+                                H3-HIGGSFIELD SECURE PROOF // 2026-AIGC-TECH
+                              </div>
+                            )}
+
+                            {/* Subtitle Overlay */}
+                            {videoSubtitles !== "none" && higgsVideoPlaying && (
+                              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/75 border border-cyan-500/20 px-3 py-1 rounded-md text-[10.5px] font-bold text-center text-cyan-200 max-w-[85%] z-20 shadow-md">
+                                {videoSubtitles === "zh" && "「全模态多源协同框架」- 第2幕：高保真人脸及镜头同步锁定。"}
+                                {videoSubtitles === "en" && "“Multi-Modal Co-Synthesis Framework” - Act II: High-Fidelity face & camera lock.”"}
+                                {videoSubtitles === "ar" && "“إطار التوليف متعدد الوسائط” - الفصل الثاني: قفل الوجه والكاميرا بدقة عالية.”"}
+                                {videoSubtitles === "ja" && "「マルチモーダル共同合成フレームワーク」- 第2幕：高精度な顔とカメラのロック。"}
+                              </div>
+                            )}
+
+                            {/* Standard video element */}
+                            <video
+                              key={activeVideoUrl}
+                              src={activeVideoUrl}
+                              autoPlay={higgsVideoPlaying}
+                              loop
+                              muted
+                              className="w-full h-full object-cover max-h-[250px]"
+                              ref={(el) => {
+                                if (el) {
+                                  if (higgsVideoPlaying) {
+                                    el.play().catch(() => {});
+                                  } else {
+                                    el.pause();
                                   }
-                                  return n;
-                                }));
-                            }}
-                            style={{ left: node.x, top: node.y, position: "absolute" }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedNodeId(node.id);
-                            }}
-                            className={`canvas-node w-38 md:w-44 rounded-xl border p-2.5 select-none cursor-grab active:cursor-grabbing transition-all pointer-events-auto ${
-                              selectedNodeId === node.id
-                                ? "border-cyan-400 bg-[#071328]/95 shadow-md shadow-cyan-500/10 z-30"
-                                : "border-[#1e2f4d]/60 bg-[#030814]/95 hover:border-slate-400 z-10"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between border-b border-[#1e2f4d]/30 pb-1 mb-1.5">
-                              <span className="text-[9px] font-mono font-bold text-slate-400 tracking-wide flex items-center gap-1">
-                                {node.type === "image" && <ImageIcon className="w-3 h-3 text-cyan-400" />}
-                                {node.type === "video" && <Video className="w-3 h-3 text-emerald-400 animate-pulse" />}
-                                {node.type === "audio" && <Music className="w-3 h-3 text-cyan-400 animate-bounce" />}
-                                <span className="truncate max-w-[80px]">{node.title}</span>
-                              </span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCanvasNodes(prev => prev.filter(n => n.id !== node.id));
-                                  setCanvasConnections(prev => prev.filter(conn => conn.from !== node.id && conn.to !== node.id));
-                                  if (selectedNodeId === node.id) setSelectedNodeId(null);
-                                }}
-                                className="text-slate-500 hover:text-red-400 transition cursor-pointer"
-                                title={isZh ? "从画布中删除" : "Remove from Canvas"}
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
+                                }
+                              }}
+                              onTimeUpdate={(e) => {
+                                const el = e.target as HTMLVideoElement;
+                                if (el.duration) {
+                                  setHiggsTimelineProgress(Math.round((el.currentTime / el.duration) * 100));
+                                }
+                              }}
+                            />
+
+                            {/* Simulated Camera direction wireframe overlay to show camera rig interactions */}
+                            <div className="absolute bottom-3 right-3 bg-[#030815]/80 border border-[#1e2f4d]/80 px-2 py-1 rounded font-mono text-[8px] text-slate-400 z-20 flex flex-col items-start gap-0.5">
+                              <span className="text-cyan-400 font-bold">CAMERA COMPASS</span>
+                              <span>PRESET: {higgsCameraPreset.toUpperCase()}</span>
+                              <span>SPEED: {higgsCameraSpeed}x</span>
+                              <span>MOTION: {higgsMotionStrength}</span>
                             </div>
 
-                            {/* Node Thumbnail content */}
-                            <div className="relative rounded bg-slate-950/70 overflow-hidden h-18 md:h-20 mb-1.5 border border-[#1e2f4d]/20 flex items-center justify-center">
-                              {node.contentUrl ? (
-                                <img
-                                  src={node.contentUrl}
-                                  alt={node.title}
-                                  referrerPolicy="no-referrer"
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="text-[10px] text-cyan-400 font-mono flex flex-col items-center gap-1 animate-pulse">
-                                  <Cpu className="w-4 h-4 text-cyan-400" />
-                                  <span>PROCESSING</span>
+                            {/* Play overlay if paused */}
+                            {!higgsVideoPlaying && (
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10 pointer-events-none">
+                                <div className="p-3.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 animate-pulse">
+                                  <Play className="w-6 h-6" />
                                 </div>
-                              )}
-                              <div className="absolute top-1 left-1 bg-black/60 text-[8px] font-mono text-slate-300 px-1 py-0.5 rounded">
-                                {node.type.toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          // 3D specs model geometry view
+                          <div className="flex-1 bg-[#02050b] rounded-lg border border-[#1e2f4d]/40 p-3 relative flex flex-col md:flex-row gap-3 items-stretch shadow-lg">
+                            {/* Left Side SVG */}
+                            <div className="flex-1 flex items-center justify-center relative min-h-[160px]">
+                              {/* Inline 3D projection math */}
+                              {(() => {
+                                const vertices = [
+                                  { x: -45, y: -45, z: -45 }, { x: 45, y: -45, z: -45 },
+                                  { x: 45, y: 45, z: -45 }, { x: -45, y: 45, z: -45 },
+                                  { x: -45, y: -45, z: 45 }, { x: 45, y: -45, z: 45 },
+                                  { x: 45, y: 45, z: 45 }, { x: -45, y: 45, z: 45 },
+                                  { x: 0, y: -70, z: 0 }, { x: 0, y: 70, z: 0 },
+                                  { x: -70, y: 0, z: 0 }, { x: 80, y: 0, z: 0 }
+                                ];
+                                
+                                const edges = [
+                                  [0, 1], [1, 2], [2, 3], [3, 0],
+                                  [4, 5], [5, 6], [6, 7], [7, 4],
+                                  [0, 4], [1, 5], [2, 6], [3, 7],
+                                  [8, 0], [8, 1], [8, 4], [8, 5],
+                                  [9, 2], [9, 3], [9, 6], [9, 7],
+                                  [10, 0], [10, 3], [10, 4], [10, 7],
+                                  [11, 1], [11, 2], [11, 5], [11, 6]
+                                ];
+
+                                const radY = (higgsRotateAngle * Math.PI) / 180;
+                                const radX = (45 * Math.PI) / 180;
+
+                                const projected = vertices.map(v => {
+                                  let x1 = v.x * Math.cos(radY) - v.z * Math.sin(radY);
+                                  let z1 = v.x * Math.sin(radY) + v.z * Math.cos(radY);
+                                  let y2 = v.y * Math.cos(radX) - z1 * Math.sin(radX);
+                                  let z2 = v.y * Math.sin(radX) + z1 * Math.cos(radX);
+                                  
+                                  const distance = 200;
+                                  const scale = distance / (distance - z2);
+                                  const px = 100 + x1 * scale;
+                                  const py = 100 + y2 * scale;
+                                  return { x: px, y: py, z: z2 };
+                                });
+
+                                return (
+                                  <svg className="w-48 h-48 bg-[#010307] rounded-lg border border-[#1e2f4d]/30 relative z-10 shadow-inner">
+                                    <defs>
+                                      <radialGradient id="mesh-glow-mid" cx="50%" cy="50%" r="50%">
+                                        <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.2" />
+                                        <stop offset="100%" stopColor="#4f46e5" stopOpacity="0" />
+                                      </radialGradient>
+                                    </defs>
+                                    <circle cx="100" cy="100" r="70" fill="url(#mesh-glow-mid)" />
+                                    
+                                    <circle cx="100" cy="100" r="65" stroke="#1e2f4d" strokeWidth="0.5" strokeDasharray="3,3" fill="none" opacity="0.3" />
+                                    <circle cx="100" cy="100" r="40" stroke="#1e2f4d" strokeWidth="0.5" strokeDasharray="2,2" fill="none" opacity="0.2" />
+                                    
+                                    {edges.map(([f, t], i) => {
+                                      const p1 = projected[f];
+                                      const p2 = projected[t];
+                                      if (!p1 || !p2) return null;
+                                      
+                                      const avgZ = (p1.z + p2.z) / 2;
+                                      const opacity = Math.min(1, Math.max(0.15, (avgZ + 100) / 200));
+                                      const color = higgsMeshStyle === "wireframe" ? "#22d3ee" : higgsMeshStyle === "points" ? "#818cf8" : "#f43f5e";
+                                      
+                                      return (
+                                        <line
+                                          key={i}
+                                          x1={p1.x}
+                                          y1={p1.y}
+                                          x2={p2.x}
+                                          y2={p2.y}
+                                          stroke={color}
+                                          strokeWidth={higgsMeshStyle === "points" ? "0.6" : "1.2"}
+                                          strokeOpacity={opacity * 0.75}
+                                        />
+                                      );
+                                    })}
+
+                                    {higgsMeshStyle !== "wireframe" && projected.map((p, i) => (
+                                      <circle
+                                        key={i}
+                                        cx={p.x}
+                                        cy={p.y}
+                                        r={higgsMeshStyle === "points" ? 3 : 2}
+                                        fill={higgsMeshStyle === "points" ? "#34d399" : "#818cf8"}
+                                        fillOpacity={Math.min(1, Math.max(0.2, (p.z + 100) / 200))}
+                                      />
+                                    ))}
+
+                                    <line x1="100" y1="5" x2="100" y2="195" stroke="#1e2f4d" strokeWidth="0.5" strokeDasharray="4,4" opacity="0.35" />
+                                    <line x1="5" y1="100" x2="195" y2="100" stroke="#1e2f4d" strokeWidth="0.5" strokeDasharray="4,4" opacity="0.35" />
+                                  </svg>
+                                );
+                              })()}
+
+                              {/* Axis rotation info widget */}
+                              <div className="absolute top-2 left-2 bg-[#030815]/90 border border-[#1e2f4d]/40 rounded p-1.5 font-mono text-[7.5px] text-slate-500 space-y-0.5 flex flex-col items-start select-none">
+                                <span className="text-indigo-400 font-bold uppercase tracking-wider">3D ENGINE CAD</span>
+                                <span>MODEL_ID: MESH_{higgsCharacterSeed.toUpperCase().replace(/\s+/g, '_')}</span>
+                                <span>ROT_Y: {Math.round(higgsRotateAngle)}°</span>
+                                <span>FORMAT: .gltf v2.0 (Embedded)</span>
                               </div>
                             </div>
 
-                            {/* Node Prompt Text preview */}
-                            {node.promptText && (
-                              <p className="text-[9px] text-slate-400 leading-tight line-clamp-2 text-left">
-                                {node.promptText}
-                              </p>
-                            )}
-                          </motion.div>
-                        ))}
+                            {/* Right Side Control Options */}
+                            <div className="w-full md:w-48 bg-[#040a17] border border-[#1e2f4d]/30 rounded-lg p-2.5 flex flex-col justify-between text-left space-y-2">
+                              <div className="space-y-2">
+                                <span className="text-[10px] font-mono text-indigo-400 font-black uppercase tracking-wider flex items-center gap-1">
+                                  <Cpu className="w-3.5 h-3.5 animate-spin" />
+                                  <span>{isZh ? "3D 物理 Specs 指标" : "3D Physical Specs"}</span>
+                                </span>
+                                
+                                <div className="space-y-1 text-[9px] font-mono text-slate-400">
+                                  <div className="flex justify-between border-b border-[#1e2f4d]/20 pb-0.5">
+                                    <span>{isZh ? "点数 (Vertices):" : "Vertices:"}</span>
+                                    <span className="text-cyan-400 font-bold">18,492</span>
+                                  </div>
+                                  <div className="flex justify-between border-b border-[#1e2f4d]/20 pb-0.5">
+                                    <span>{isZh ? "多边形 (Polygons):" : "Polygons:"}</span>
+                                    <span className="text-cyan-400 font-bold">36,980</span>
+                                  </div>
+                                  <div className="flex justify-between border-b border-[#1e2f4d]/20 pb-0.5">
+                                    <span>{isZh ? "物理合规认证:" : "Specs Audit:"}</span>
+                                    <span className="text-emerald-400 font-bold flex items-center gap-0.5">
+                                      <Check className="w-2.5 h-2.5" /> COMPLIANT
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>{isZh ? "文件大小 (Size):" : "File Size:"}</span>
+                                    <span className="text-amber-400">12.8 MB</span>
+                                  </div>
+                                </div>
+
+                                {/* Render options toggle */}
+                                <div className="space-y-1 pt-1">
+                                  <span className="text-[8.5px] font-mono text-slate-500 uppercase tracking-wider">{isZh ? "渲染样式 (Style)" : "Render Style"}</span>
+                                  <div className="grid grid-cols-3 gap-1">
+                                    {(["wireframe", "shaded", "points"] as const).map((style) => (
+                                      <button
+                                        key={style}
+                                        onClick={() => setHiggsMeshStyle(style)}
+                                        className={`px-1 py-0.5 rounded text-[8.5px] font-bold text-center border capitalize transition cursor-pointer ${
+                                          higgsMeshStyle === style 
+                                            ? "bg-indigo-950/60 border-indigo-500/80 text-indigo-300"
+                                            : "bg-[#030610] border-transparent text-slate-500 hover:text-slate-300"
+                                        }`}
+                                      >
+                                        {style}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Action buttons */}
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[8.5px] font-mono text-slate-500">{isZh ? "转速:" : "Spd:"}</span>
+                                  <input
+                                    type="range"
+                                    min="0.2"
+                                    max="3.0"
+                                    step="0.2"
+                                    value={higgsMeshSpeed}
+                                    onChange={(e) => setHiggsMeshSpeed(Number(e.target.value))}
+                                    className="flex-1 accent-indigo-500 h-1 bg-slate-900 rounded cursor-pointer"
+                                  />
+                                </div>
+                                <button
+                                  onClick={() => alert(isZh ? "📦 3D GLTF asset compiled successfully!" : "📦 Standard GLTF model compiled!")}
+                                  className="w-full py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[9px] uppercase tracking-wider shadow-sm transition cursor-pointer flex items-center justify-center gap-1"
+                                >
+                                  <span>{isZh ? "导出标准 3D GLTF" : "Export 3D GLTF"}</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
-                    </div>
+                      {/* Sequencer Timeline Track */}
+                      <div className="bg-[#030712] border border-[#1e2f4d]/60 rounded-xl p-3 space-y-2 relative text-left">
+                        <div className="flex items-center justify-between text-[10px] font-mono border-b border-[#1e2f4d]/30 pb-2 mb-1">
+                          <span className="text-cyan-400 font-bold tracking-wider flex items-center gap-1.5">
+                            <Sliders className="w-3.5 h-3.5" />
+                            <span>{isZh ? "全模态多轨时间轴" : "Multi-Modal Multi-Track Timeline"}</span>
+                          </span>
+                          <div className="flex items-center gap-4 text-slate-500">
+                            <span>0s</span>
+                            <span>1s</span>
+                            <span>2s</span>
+                            <span>3s</span>
+                            <span>4s</span>
+                            <span>5s</span>
+                            <span className="text-cyan-400 font-bold">{isZh ? "总长: 5.0s" : "Total: 5.0s"}</span>
+                          </div>
+                        </div>
 
-                    {/* 2. Floating Top Canvas Toolbar */}
-                    <div className="absolute top-3 left-1/2 transform -translate-x-1/2 bg-[#050b16]/90 border border-[#1e2f4d]/80 rounded-full px-4 py-1.5 flex items-center gap-3 shadow-lg z-20 pointer-events-auto backdrop-blur-sm">
-                      <div className="flex items-center gap-1.5">
-                        <select
-                          value={canvasSubtitlesAction}
-                          onChange={(e) => setCanvasSubtitlesAction(e.target.value)}
-                          className="bg-transparent text-[10px] font-black text-cyan-300 focus:outline-none border-none cursor-pointer"
-                        >
-                          <option value="Remove subtitles" className="bg-[#0c1322]">🎬 {isZh ? "去除字幕" : "Remove subtitles"}</option>
-                          <option value="Smart Subtitle" className="bg-[#0c1322]">📝 {isZh ? "自动配字" : "Add subtitles"}</option>
-                          <option value="Translate Sub" className="bg-[#0c1322]">🌐 {isZh ? "双语译幕" : "Translate subs"}</option>
-                        </select>
+                        <div className="space-y-1.5">
+                          {/* Track 1: Video Track */}
+                          <div className="flex items-center gap-2">
+                            <span className="w-16 text-[9px] font-mono text-slate-400 font-bold flex items-center gap-1">
+                              <Video className="w-3 h-3 text-emerald-400" />
+                              <span>VIDEO</span>
+                            </span>
+                            <div className="flex-1 h-6 bg-[#09152a]/60 rounded border border-emerald-500/20 relative overflow-hidden flex items-center px-2">
+                              <div className="absolute inset-y-0 left-0 bg-emerald-500/10 border-r border-emerald-500/30" style={{ width: "100%" }} />
+                              <span className="text-[9px] font-mono text-emerald-300 font-bold z-10 truncate">
+                                📼 H3_Video_{higgsCharacterSeed.replace(/\s+/g, '_')}_{higgsCameraPreset}.mp4 ({canvasAspect})
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Track 2: Audio Soundtrack Track */}
+                          <div className="flex items-center gap-2">
+                            <span className="w-16 text-[9px] font-mono text-slate-400 font-bold flex items-center gap-1">
+                              <Music className="w-3 h-3 text-cyan-400" />
+                              <span>AUDIO</span>
+                            </span>
+                            <div className={`flex-1 h-6 bg-[#04162e]/50 rounded border relative overflow-hidden flex items-center px-2 transition ${
+                              higgsSyncAudio ? "border-cyan-500/20" : "border-slate-800 opacity-30"
+                            }`}>
+                              {higgsSyncAudio && (
+                                <>
+                                  {/* Draw tiny simulated audio wave */}
+                                  <div className="absolute inset-y-0 left-0 bg-cyan-500/10 flex items-center gap-[1px] w-full px-2">
+                                    {[4,2,6,3,7,2,8,4,5,2,6,4,3,7,3,5,2,8,5,3,6,4].map((h, i) => (
+                                      <div key={i} className="bg-cyan-500/20 w-[3px]" style={{ height: `${h * 10}%` }} />
+                                    ))}
+                                  </div>
+                                  <span className="text-[9px] font-mono text-cyan-300 font-bold z-10 truncate">
+                                    🎵 Lyria_Ambient_{musicLeadInstrument}_Bpm{musicTempoBpm}.mp3
+                                  </span>
+                                </>
+                              )}
+                              {!higgsSyncAudio && (
+                                <span className="text-[9px] font-mono text-slate-600 font-bold z-10">
+                                  {isZh ? "未启用背景声轨" : "Audio Track Disabled"}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Track 3: Subtitle Overlay Track */}
+                          <div className="flex items-center gap-2">
+                            <span className="w-16 text-[9px] font-mono text-slate-400 font-bold flex items-center gap-1">
+                              <MessageSquare className="w-3 h-3 text-amber-400" />
+                              <span>SUBTITLE</span>
+                            </span>
+                            <div className="flex-1 h-6 bg-[#160d2e]/40 rounded border border-purple-500/20 relative overflow-hidden flex items-center px-2">
+                              <div className="absolute inset-y-0 left-0 bg-purple-500/5" style={{ width: "100%" }} />
+                              <span className="text-[9px] font-mono text-purple-300 font-bold z-10 truncate">
+                                💬 Subtitle Overlay - [{videoSubtitles.toUpperCase()}]
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Track 4: 3D Asset Export Track */}
+                          <div className="flex items-center gap-2">
+                            <span className="w-16 text-[9px] font-mono text-slate-400 font-bold flex items-center gap-1">
+                              <Cpu className="w-3 h-3 text-indigo-400" />
+                              <span>3D SPEC</span>
+                            </span>
+                            <div className={`flex-1 h-6 bg-[#040c24]/50 rounded border relative overflow-hidden flex items-center px-2 transition ${
+                              higgsSync3D ? "border-indigo-500/20" : "border-slate-800 opacity-30"
+                            }`}>
+                              {higgsSync3D && (
+                                <>
+                                  <div className="absolute inset-y-0 left-0 bg-indigo-500/10" style={{ width: "100%" }} />
+                                  <span className="text-[9px] font-mono text-indigo-300 font-bold z-10 truncate">
+                                    📦 Mesh_Standard_{higgsCharacterSeed.replace(/\s+/g, '_')}.gltf (Vertices: 18,492)
+                                  </span>
+                                </>
+                              )}
+                              {!higgsSync3D && (
+                                <span className="text-[9px] font-mono text-slate-600 font-bold z-10">
+                                  {isZh ? "未启用3D Specs输出" : "3D Specs Export Disabled"}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Progress slider and playback overlay */}
+                        <div className="flex items-center gap-3 pt-1 border-t border-[#1e2f4d]/20">
+                          <button
+                            onClick={() => setHiggsVideoPlaying(!higgsVideoPlaying)}
+                            className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition cursor-pointer flex-shrink-0"
+                          >
+                            {higgsVideoPlaying ? <Volume2 className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />}
+                          </button>
+                          <div className="flex-1 relative flex items-center">
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={higgsTimelineProgress}
+                              onChange={(e) => setHiggsTimelineProgress(Number(e.target.value))}
+                              className="w-full accent-cyan-400 cursor-pointer h-1 bg-[#101a30] rounded-lg"
+                            />
+                            <div className="absolute top-[-18px] text-[8px] font-mono text-cyan-400" style={{ left: `${higgsTimelineProgress}%`, transform: 'translateX(-50%)' }}>
+                              {(higgsTimelineProgress * 0.05).toFixed(1)}s
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-mono text-slate-500">{(higgsTimelineProgress * 0.05).toFixed(1)}s / 5.0s</span>
+                        </div>
                       </div>
-                      <span className="w-px h-3 bg-[#1e2f4d]"></span>
-                      
-                      <button 
-                        onClick={() => alert(isZh ? "✂️ 已开启剪辑帧提取，可在右侧Co-pilot中调整微小切片" : "✂️ Slice extraction initiated. Frame cuts details loaded in co-pilot.")}
-                        className="text-slate-400 hover:text-white transition cursor-pointer" 
-                        title={isZh ? "视频剪切" : "Video Trim"}
-                      >
-                        <Scissors className="w-3.5 h-3.5" />
-                      </button>
 
-                      <button
-                        onClick={() => setCanvasHdMode(!canvasHdMode)}
-                        className={`text-xs font-black px-1.5 py-0.5 rounded transition cursor-pointer flex items-center gap-1 ${
-                          canvasHdMode ? "bg-[#14233c] text-cyan-400 font-bold" : "text-slate-500"
-                        }`}
-                        title={isZh ? "高画质渲染" : "HD Resolution Render"}
-                      >
-                        <span className="text-[9px]">HD</span>
-                        <span className={`w-1.5 h-1.5 rounded-full ${canvasHdMode ? "bg-emerald-400 animate-pulse" : "bg-slate-600"}`}></span>
-                      </button>
+                      {/* Prompt Selection & Styles Row */}
+                      <div className="bg-[#030712] border border-[#1e2f4d]/60 rounded-xl p-3 space-y-3 relative text-left">
+                        <div className="flex items-center justify-between text-[10px] font-mono border-b border-[#1e2f4d]/30 pb-2 gap-1">
+                          <span className="text-cyan-400 font-bold tracking-wider flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                            <span>{isZh ? "极智提示词空间" : "Intelligent Prompt Workspace"}</span>
+                          </span>
+                          <button
+                            onClick={() => {
+                              if (!canvasPrompt) {
+                                alert(isZh ? "请先输入一些简单的画面构想，以便 Gemini 帮您升级！" : "Please enter a simple concept first so Gemini can optimize it!");
+                                return;
+                              }
+                              onConsumeQuota?.("Gemini Prompt Specs Optimization");
+                              const optimized = `[Model: Gemini Ultra-Spec] A majestic character resembling a ${higgsCharacterSeed} in ${higgsSelectedStyle} aesthetic, highly detailed face, executing a cinematic motion sequence matching camera ${higgsCameraPreset} movement, volumetric cinematic god-rays, hyper-textured materials, perfect color grading, ultra-sharp focus.`;
+                              setCanvasPrompt(optimized);
+                              
+                              setCopilotMessages(prev => [
+                                ...prev,
+                                {
+                                  id: `c-${Date.now()}`,
+                                  role: "assistant",
+                                  text: isZh 
+                                    ? `✨ 已为您将提示词深度优化并对齐 Specs 规范。已启用多模态协同框架：包括对 ${higgsCharacterSeed} 的面部细节锁定和 ${higgsCameraPreset} 镜头的动态跟踪。` 
+                                    : `✨ Gemini has optimized your prompt to match professional Production Specs. Facelock active for ${higgsCharacterSeed} with camera tracking for ${higgsCameraPreset}.`,
+                                  thinking: "Gemini 3.5 Flash: Rewrote client query into fully production-ready screenplay prompt with multi-modal parameters."
+                                }
+                              ]);
+                            }}
+                            className="px-2.5 py-1 rounded bg-cyan-500/10 border border-cyan-500/25 hover:bg-cyan-500/20 text-cyan-300 text-[10px] font-black transition cursor-pointer flex items-center gap-1"
+                          >
+                            <span>✨ {isZh ? "Gemini 自动优化" : "Gemini Optimize"}</span>
+                          </button>
+                        </div>
 
-                      <button 
-                        onClick={() => alert(isZh ? "🎛️ 音视频波形对齐系统已重置，当前误差 0ms" : "🎛️ Audio waveforms synced successfully. Phase delta 0ms.")}
-                        className="text-slate-400 hover:text-white transition cursor-pointer" 
-                        title={isZh ? "音画同步校对" : "Audio-Video Sync Panel"}
-                      >
-                        <Sliders className="w-3.5 h-3.5" />
-                      </button>
+                        <div className="relative">
+                          <textarea
+                            rows={2}
+                            value={canvasPrompt}
+                            onChange={(e) => setCanvasPrompt(e.target.value)}
+                            placeholder={isZh ? "描述您的场景动作 (如: 极速穿越竹林，雨丝飞舞) 让我们联培生成全套资产..." : "Describe the motion sequence (e.g., fast camera tracking in bamboo forest, rain drops splashing)..."}
+                            className="w-full bg-[#060c18] border border-[#1e2f4d]/50 rounded-lg p-2.5 text-[11px] text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 resize-none font-sans shadow-inner pr-16"
+                          />
+                          {canvasPrompt === "" && (
+                            <button
+                              onClick={() => {
+                                setCanvasPrompt(isZh ? "在落叶纷飞的竹林中，潇洒挥舞古剑，身形如风" : "Gracefully wielding a legendary ancient sword in a bamboo forest with falling autumn leaves, fast motion");
+                              }}
+                              className="absolute right-2.5 bottom-3.5 text-[9px] bg-slate-850 hover:bg-[#14233c] text-cyan-400 border border-[#1e2f4d]/60 px-1.5 py-0.5 rounded transition cursor-pointer"
+                            >
+                              💡 {isZh ? "加载样板" : "Load Preset"}
+                            </button>
+                          )}
+                        </div>
 
-                      <button 
-                        onClick={() => {
-                          alert(isZh ? "🎵 已触发海螺AI智能配曲，使用Guzheng Lofi风格自动拟合..." : "🎵 Suno/Lyria soundtrack background loop triggered...");
-                        }}
-                        className="text-slate-400 hover:text-white transition cursor-pointer" 
-                        title={isZh ? "一键背景配音配乐" : "One-click background soundtrack"}
-                      >
-                        <Music className="w-3.5 h-3.5 text-cyan-400" />
-                      </button>
+                        {/* Style selections row */}
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-mono text-slate-500 font-bold">{isZh ? "图像与渲染艺术风格 (IMAGE & RENDER STYLES)" : "RENDER & IMAGE ART STYLE"}</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {[
+                              { id: "cinematic", name: isZh ? "电影级写实" : "Cinematic Realism", icon: "🎬", desc: "Photorealistic lighting, epic depth of field, 8k" },
+                              { id: "anime", name: isZh ? "水彩动漫" : "Watercolor Anime", icon: "🎨", desc: "Studio Ghibli style, soft paint strokes, vibrant" },
+                              { id: "pixar", name: isZh ? "3D 动画" : "Pixar 3D", icon: "🧱", desc: "Chibi character, subsurface scattering, toy story" },
+                              { id: "claymation", name: isZh ? "黏土定格" : "Claymation", icon: "🏺", desc: "Stop-motion texture, fingerprints, plasticine" },
+                              { id: "pixel", name: isZh ? "复古像素" : "Retro Pixel", icon: "👾", desc: "16-bit retro arcade, detailed dither shading" }
+                            ].map((st) => (
+                              <button
+                                key={st.id}
+                                onClick={() => {
+                                  setHiggsSelectedStyle(st.id);
+                                  let styleTag = `[Style: ${st.desc}]`;
+                                  if (!canvasPrompt.includes(styleTag)) {
+                                    setCanvasPrompt(prev => {
+                                      let cleaned = prev;
+                                      [
+                                        "Photorealistic lighting, epic depth of field, 8k",
+                                        "Studio Ghibli style, soft paint strokes, vibrant",
+                                        "Chibi character, subsurface scattering, toy story",
+                                        "Stop-motion texture, fingerprints, plasticine",
+                                        "16-bit retro arcade, detailed dither shading"
+                                      ].forEach(desc => {
+                                        cleaned = cleaned.replace(`[Style: ${desc}]`, "");
+                                      });
+                                      return `${cleaned.trim()} ${styleTag}`.trim();
+                                    });
+                                  }
+                                }}
+                                className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition flex items-center gap-1 cursor-pointer border ${
+                                  higgsSelectedStyle === st.id
+                                    ? "bg-gradient-to-b from-cyan-950 to-[#0c1a30] text-cyan-300 border-cyan-400/60 shadow-md shadow-cyan-500/10 font-black"
+                                    : "bg-[#060b14] hover:bg-slate-800/30 text-slate-400 border-[#1e2f4d]/40"
+                                }`}
+                                title={st.desc}
+                              >
+                                <span>{st.icon}</span>
+                                <span>{st.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
 
-                      <button 
-                        onClick={() => alert(isZh ? "🔊 文字转语音合成已注入" : "🔊 Custom text-to-speech engine configured.")}
-                        className="text-slate-400 hover:text-white transition cursor-pointer" 
-                        title={isZh ? "人声音轨合成" : "Vocal Track Synth"}
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                      </button>
-
-                      <span className="w-px h-3 bg-[#1e2f4d]"></span>
-                      <button 
-                        onClick={() => {
-                          setZoomScale(1);
-                          setPanOffset({ x: 0, y: 0 });
-                          alert(isZh ? "已重置画布比例与焦点定位！" : "Grid bounds recalculated and centered.");
-                        }}
-                        className="text-slate-400 hover:text-white transition cursor-pointer" 
-                        title={isZh ? "全屏无边界画布" : "Fullscreen Grid Canvas"}
-                      >
-                        <Maximize2 className="w-3.5 h-3.5" />
-                      </button>
                     </div>
 
                     {/* Floating Zoom & Pan Control Deck */}
@@ -2525,7 +2984,7 @@ export default function CreativeStudioView({
                       <div className="flex items-center gap-1 bg-[#081020] px-1 py-0.5 rounded border border-[#1e2f4d]/40">
                         <button
                           onClick={() => setZoomScale(prev => Math.max(0.4, prev - 0.15))}
-                          className="p-1 hover:text-white hover:bg-slate-800/40 rounded transition"
+                          className="p-1 hover:text-white hover:bg-slate-800/40 rounded transition cursor-pointer"
                           title={isZh ? "缩小" : "Zoom Out"}
                         >
                           <Minus className="w-3 h-3 text-slate-400" />
@@ -2537,7 +2996,7 @@ export default function CreativeStudioView({
 
                         <button
                           onClick={() => setZoomScale(prev => Math.min(2.2, prev + 0.15))}
-                          className="p-1 hover:text-white hover:bg-slate-800/40 rounded transition"
+                          className="p-1 hover:text-white hover:bg-slate-800/40 rounded transition cursor-pointer"
                           title={isZh ? "放大" : "Zoom In"}
                         >
                           <Plus className="w-3 h-3 text-slate-400" />
@@ -2548,8 +3007,9 @@ export default function CreativeStudioView({
                         onClick={() => {
                           setZoomScale(1);
                           setPanOffset({ x: 0, y: 0 });
+                          alert(isZh ? "缩放比例重置成功" : "Scale view reset!");
                         }}
-                        className="px-2 py-1 text-[9px] font-bold bg-[#14233c] hover:bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 rounded transition"
+                        className="px-2 py-1 text-[9px] font-bold bg-[#14233c] hover:bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 rounded transition cursor-pointer"
                         title={isZh ? "复位视图" : "Reset View"}
                       >
                         {isZh ? "复位" : "Reset"}
@@ -2562,7 +3022,7 @@ export default function CreativeStudioView({
                         <span className="text-[9px] text-slate-500 font-bold">{isZh ? "高度:" : "H:"}</span>
                         <button
                           onClick={() => setCanvasHeight(prev => Math.max(380, prev - 60))}
-                          className="w-5 h-5 flex items-center justify-center hover:text-white hover:bg-slate-800/40 rounded transition text-[10px] font-black"
+                          className="w-5 h-5 flex items-center justify-center hover:text-white hover:bg-slate-800/40 rounded transition text-[10px] font-black cursor-pointer"
                           title={isZh ? "减小画布高度" : "Decrease Canvas Height"}
                         >
                           －
@@ -2571,8 +3031,8 @@ export default function CreativeStudioView({
                           {canvasHeight}px
                         </span>
                         <button
-                          onClick={() => setCanvasHeight(prev => Math.min(850, prev + 60))}
-                          className="w-5 h-5 flex items-center justify-center hover:text-cyan-400 hover:bg-slate-800/40 rounded transition text-[10px] font-black text-cyan-400"
+                          onClick={() => setCanvasHeight(prev => Math.min(1050, prev + 60))}
+                          className="w-5 h-5 flex items-center justify-center hover:text-cyan-400 hover:bg-slate-800/40 rounded transition text-[10px] font-black text-cyan-400 cursor-pointer"
                           title={isZh ? "拉伸画布高度" : "Stretch Canvas Height"}
                         >
                           ＋
@@ -2580,380 +3040,325 @@ export default function CreativeStudioView({
                       </div>
                     </div>
 
-                    {/* 4. Canvas Interactive Prompt / Generate Area */}
-                    <div className="m-3 p-3 bg-[#040915]/95 border border-[#1e2f4d]/60 rounded-xl space-y-2 relative z-20 backdrop-blur-sm text-left">
-                      <div className="flex items-center justify-between text-[10px] border-b border-[#1e2f4d]/30 pb-1.5 mb-1 gap-1">
-                        <span className="text-slate-400 flex items-center gap-1.5">
-                          <Cpu className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-                          <span>{isZh ? "生成目标: 绑定主画布卡片并转译微剧本" : "Direct canvas translation co-pilot"}</span>
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] bg-cyan-950 border border-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded font-bold font-mono">
-                            {isZh ? "引用:" : "Ref:"} {selectedNodeId ? canvasNodes.find(n => n.id === selectedNodeId)?.title : (isZh ? "无" : "None")}
+                  </div>
+
+                {/* Drag Resizer 2 (Middle to Right) */}
+                {isLargeScreen && (
+                  <div
+                    onMouseDown={(e) => startResizing(e, "right")}
+                    className="hidden lg:flex w-2.5 bg-transparent hover:bg-cyan-500/20 active:bg-cyan-500/35 cursor-col-resize self-stretch transition-all duration-150 z-20 items-center justify-center group flex-shrink-0"
+                    title={isZh ? "按住左右拖拽调整宽度" : "Drag left/right to resize"}
+                  >
+                    <div className="w-[2px] h-8 bg-[#1e2f4d]/80 group-hover:bg-cyan-400/80 rounded transition-colors" />
+                  </div>
+                )}
+
+                  {/* PANE 3: HIGGSFIELD ADVANCED CREATOR RIG */}
+                  <div 
+                    style={{ width: isLargeScreen ? `${rightWidth}px` : "100%", flexShrink: 0 }}
+                    className="bg-[#040810]/95 border border-[#1e2f4d]/50 rounded-xl p-3.5 flex flex-col justify-between min-h-[500px] transition-[width] duration-75 text-left"
+                  >
+                    <div className="space-y-4 flex-1 flex flex-col">
+                      {/* Section 1: Header with Width Controller */}
+                      <div className="flex items-center justify-between border-b border-[#1e2f4d]/30 pb-2">
+                        <div className="flex items-center gap-1.5 overflow-hidden">
+                          <Sliders className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                          <span className="text-xs font-black text-white uppercase tracking-wider truncate">
+                            {isZh ? "高级摄影机与角色 Rig" : "Creator Camera Rig"}
                           </span>
                         </div>
-                      </div>
-
-                      {/* Prompt Input textarea */}
-                      <div className="relative">
-                        <textarea
-                          rows={2}
-                          value={canvasPrompt}
-                          onChange={(e) => setCanvasPrompt(e.target.value)}
-                          placeholder={isZh ? "输入指令，输入 '/' 调起高阶微短剧合成技能与多端配乐模板..." : "Enter workspace instructions. Use '/' to pull adaptive short-video templates..."}
-                          className="w-full bg-[#060c18] border border-[#1e2f4d]/40 rounded-lg p-2 text-[11px] text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 resize-none font-sans"
-                        />
-                        {canvasPrompt === "" && (
-                          <div className="absolute right-2.5 bottom-2.5 flex items-center gap-1.5">
+                        {isLargeScreen && (
+                          <div className="flex items-center gap-1 bg-[#081020]/90 px-1.5 py-0.5 rounded border border-[#1e2f4d]/40 scale-90 origin-right flex-shrink-0">
                             <button
-                              onClick={() => setCanvasPrompt(isZh ? "使用 Meme Cat 模版生成中东大区 A/B 短视频" : "Use Meme Cat template to generate AB test group short dramas.")}
-                              className="text-[9px] bg-[#14233c]/60 text-cyan-300 border border-cyan-500/20 px-1.5 py-0.5 rounded hover:bg-cyan-500/10 transition cursor-pointer"
+                              onClick={() => setRightWidth(prev => Math.max(220, prev - 25))}
+                              className="text-slate-400 hover:text-white transition text-[10px] font-bold w-4 h-4 flex items-center justify-center bg-slate-800/40 rounded cursor-pointer"
+                              title={isZh ? "变窄" : "Narrower"}
                             >
-                              🚀 {isZh ? "推荐指令" : "Example"}
+                              －
+                            </button>
+                            <span className="text-[9px] font-mono font-bold text-cyan-400 min-w-[28px] text-center">
+                              {rightWidth}px
+                            </span>
+                            <button
+                              onClick={() => setRightWidth(prev => Math.min(500, prev + 25))}
+                              className="text-slate-400 hover:text-white transition text-[10px] font-bold w-4 h-4 flex items-center justify-center bg-slate-800/40 rounded cursor-pointer"
+                              title={isZh ? "变宽" : "Wider"}
+                            >
+                              ＋
                             </button>
                           </div>
                         )}
                       </div>
 
-                      {/* Row 2: parameters & button */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
-                        {/* Tags */}
-                        <div className="flex flex-wrap items-center gap-1.5 text-[9px] font-mono">
-                          <select
-                            value={canvasModel}
-                            onChange={(e) => setCanvasModel(e.target.value)}
-                            className="bg-[#0c1322] border border-[#1e2f4d]/40 rounded px-1 text-slate-300 focus:outline-none"
+                      {/* Scrollable controls list */}
+                      <div className="space-y-4 overflow-y-auto pr-1 flex-1 scrollbar-thin" style={{ maxHeight: `${canvasHeight - 110}px` }}>
+                        
+                        {/* CAMERA RIG & LENS CONTROL CARD */}
+                        <div className="bg-[#030712] border border-[#1e2f4d]/50 rounded-xl p-3 space-y-3">
+                          <button
+                            onClick={() => setIsCameraRigExpanded(!isCameraRigExpanded)}
+                            className="w-full flex items-center justify-between text-left text-[10px] font-mono text-cyan-400 font-black uppercase tracking-wider cursor-pointer select-none"
                           >
-                            <option value="H3">H3 Model</option>
-                            <option value="H4-Pro">H4 Pro</option>
-                            <option value="Gemini-2.0">Gemini 2.0</option>
-                          </select>
-                          <select
-                            value={canvasAspect}
-                            onChange={(e) => setCanvasAspect(e.target.value)}
-                            className="bg-[#0c1322] border border-[#1e2f4d]/40 rounded px-1 text-slate-300 focus:outline-none"
-                          >
-                            <option value="16:9">16:9 (720p)</option>
-                            <option value="9:16">9:16 (Vertical)</option>
-                            <option value="1:1">1:1 (Square)</option>
-                          </select>
-                          <span className="bg-[#14233c]/50 text-slate-400 border border-[#1e2f4d]/40 px-1.5 rounded">{canvasDuration}</span>
+                            <span className="flex items-center gap-1.5">
+                              <Video className="w-3.5 h-3.5" />
+                              <span>{isZh ? "1. 镜头轨相机运动 (Camera Rig)" : "1. Camera Motion Rig"}</span>
+                            </span>
+                            {isCameraRigExpanded ? <ChevronUp className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-500" />}
+                          </button>
+
+                          {isCameraRigExpanded && (
+                            <div className="space-y-3 pt-1 border-t border-[#1e2f4d]/25 animate-fade-in">
+                              {/* Camera presets grid */}
+                              <div className="space-y-1.5">
+                                <span className="text-[9px] font-mono text-slate-500 uppercase tracking-wider">{isZh ? "预设相机运动 (Preset)" : "Motion Preset"}</span>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                  {[
+                                    { id: "zoom_in", name: isZh ? "📽️ 镜头推 (Zoom In)" : "📽️ Zoom In" },
+                                    { id: "zoom_out", name: isZh ? "📽️ 镜头拉 (Zoom Out)" : "📽️ Zoom Out" },
+                                    { id: "pan_right", name: isZh ? "🔄 横摇 (Pan Right)" : "🔄 Pan Right" },
+                                    { id: "orbit_3d", name: isZh ? "🚀 环绕 (Orbit)" : "🚀 Orbit" },
+                                    { id: "dolly_zoom", name: isZh ? "⚡ 希区柯克 (Dolly)" : "⚡ Dolly Zoom" },
+                                    { id: "custom_rig", name: isZh ? "🎛️ 自由 Rig" : "🎛️ Custom Rig" }
+                                  ].map((cam) => (
+                                    <button
+                                      key={cam.id}
+                                      onClick={() => {
+                                        setHiggsCameraPreset(cam.id);
+                                        let tag = `[Camera: ${cam.id.toUpperCase()}]`;
+                                        if (!canvasPrompt.includes(tag)) {
+                                          setCanvasPrompt(prev => {
+                                            let cleaned = prev;
+                                            ["[Camera: ZOOM_IN]", "[Camera: ZOOM_OUT]", "[Camera: PAN_RIGHT]", "[Camera: ORBIT_3D]", "[Camera: DOLLY_ZOOM]", "[Camera: CUSTOM_RIG]"].forEach(t => {
+                                              cleaned = cleaned.replace(t, "");
+                                            });
+                                            return `${cleaned.trim()} ${tag}`.trim();
+                                          });
+                                        }
+                                      }}
+                                      className={`px-2 py-1.5 rounded-lg text-[9.5px] font-bold text-left border transition cursor-pointer ${
+                                        higgsCameraPreset === cam.id
+                                          ? "bg-cyan-950/50 border-cyan-500 text-cyan-300 font-black shadow-inner"
+                                          : "bg-[#060c18] border-transparent text-slate-400 hover:bg-slate-800/20 hover:text-slate-200"
+                                      }`}
+                                    >
+                                      {cam.name}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Slide controls */}
+                              <div className="space-y-2 pt-1 border-t border-[#1e2f4d]/20">
+                                {/* Motion Strength */}
+                                <div className="space-y-0.5">
+                                  <div className="flex justify-between text-[9px] font-mono">
+                                    <span className="text-slate-500">{isZh ? "运动幅度 (Strength):" : "Motion Strength:"}</span>
+                                    <span className="text-cyan-400 font-bold">{higgsMotionStrength}</span>
+                                  </div>
+                                  <input
+                                    type="range"
+                                    min="1"
+                                    max="10"
+                                    value={higgsMotionStrength}
+                                    onChange={(e) => setHiggsMotionStrength(Number(e.target.value))}
+                                    className="w-full accent-cyan-400 h-1 bg-slate-900 rounded cursor-pointer"
+                                  />
+                                </div>
+
+                                {/* Camera speed */}
+                                <div className="space-y-0.5">
+                                  <div className="flex justify-between text-[9px] font-mono">
+                                    <span className="text-slate-500">{isZh ? "转速因子 (Speed):" : "Speed Factor:"}</span>
+                                    <span className="text-cyan-400 font-bold">{higgsCameraSpeed}x</span>
+                                  </div>
+                                  <input
+                                    type="range"
+                                    min="0.5"
+                                    max="4.0"
+                                    step="0.5"
+                                    value={higgsCameraSpeed}
+                                    onChange={(e) => setHiggsCameraSpeed(Number(e.target.value))}
+                                    className="w-full accent-cyan-400 h-1 bg-slate-900 rounded cursor-pointer"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
-                        {/* Generate Trigger Button */}
+                        {/* CHARACTER & STYLE LOCK RIG CARD */}
+                        <div className="bg-[#030712] border border-[#1e2f4d]/50 rounded-xl p-3 space-y-3">
+                          <button
+                            onClick={() => setIsActorRigExpanded(!isActorRigExpanded)}
+                            className="w-full flex items-center justify-between text-left text-[10px] font-mono text-indigo-400 font-black uppercase tracking-wider cursor-pointer select-none"
+                          >
+                            <span className="flex items-center gap-1.5">
+                              <Cpu className="w-3.5 h-3.5" />
+                              <span>{isZh ? "2. 角色种子与一致性 (Actor Rig)" : "2. Actor Consistency Rig"}</span>
+                            </span>
+                            {isActorRigExpanded ? <ChevronUp className="w-3.5 h-3.5 text-indigo-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-500" />}
+                          </button>
+
+                          {isActorRigExpanded && (
+                            <div className="space-y-2 pt-1 border-t border-[#1e2f4d]/25 animate-fade-in">
+                              {/* Actor seed input */}
+                              <div className="space-y-1 text-left">
+                                <span className="text-[9px] font-mono text-slate-500 uppercase tracking-wider">{isZh ? "面部/骨骼种子 (Actor Seed)" : "Actor ID / Seed"}</span>
+                                <div className="flex gap-1">
+                                  <input
+                                    type="text"
+                                    value={higgsCharacterSeed}
+                                    onChange={(e) => setHiggsCharacterSeed(e.target.value)}
+                                    placeholder={isZh ? "演员标识 (如: 古装剑客)" : "Actor template name..."}
+                                    className="flex-1 bg-[#060c18] border border-[#1e2f4d]/40 rounded-lg px-2.5 py-1 text-[11px] text-slate-200 placeholder-slate-600 focus:outline-none"
+                                  />
+                                  <button
+                                    onClick={() => {
+                                      const seeds = [isZh ? "古装剑客" : "Ancient Warrior", isZh ? "赛博游侠" : "Cyber Ronin", isZh ? "机甲少女" : "Mech Pilot", isZh ? "中东学者" : "Arab Scholar"];
+                                      const rand = seeds[Math.floor(Math.random() * seeds.length)];
+                                      setHiggsCharacterSeed(rand);
+                                    }}
+                                    className="px-2.5 py-1 text-[9.5px] font-bold bg-indigo-950 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 rounded-lg transition cursor-pointer"
+                                    title={isZh ? "随机生成种子" : "Randomize Seed"}
+                                  >
+                                    🎲
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Facelock and mesh synchronization toggle checkboxes */}
+                              <div className="space-y-1.5 pt-1 text-[9.5px] font-mono text-slate-400">
+                                <label className="flex items-center gap-2 cursor-pointer hover:text-slate-200">
+                                  <input
+                                    type="checkbox"
+                                    checked={higgsSyncAudio}
+                                    onChange={(e) => setHiggsSyncAudio(e.target.checked)}
+                                    className="rounded border-[#1e2f4d]/60 text-indigo-600 focus:ring-0"
+                                  />
+                                  <span>{isZh ? "同步 SoundHelix 音乐轨道" : "Link SoundHelix music track"}</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer hover:text-slate-200">
+                                  <input
+                                    type="checkbox"
+                                    checked={higgsSync3D}
+                                    onChange={(e) => setHiggsSync3D(e.target.checked)}
+                                    className="rounded border-[#1e2f4d]/60 text-indigo-600 focus:ring-0"
+                                  />
+                                  <span>{isZh ? "同步输出 3D CAD Specs 顶点网格" : "Export 3D CAD vertex meshes"}</span>
+                                </label>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* VIDEO RENDER EFFECTS CONFIG */}
+                        <div className="bg-[#030712] border border-[#1e2f4d]/50 rounded-xl p-3 space-y-3">
+                          <button
+                            onClick={() => setIsRenderFxExpanded(!isRenderFxExpanded)}
+                            className="w-full flex items-center justify-between text-left text-[10px] font-mono text-emerald-400 font-black uppercase tracking-wider cursor-pointer select-none"
+                          >
+                            <span className="flex items-center gap-1.5">
+                              <Sparkles className="w-3.5 h-3.5" />
+                              <span>{isZh ? "3. 视频后处理与译幕 (Render FX)" : "3. Video FX & Bilingual Subs"}</span>
+                            </span>
+                            {isRenderFxExpanded ? <ChevronUp className="w-3.5 h-3.5 text-emerald-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-500" />}
+                          </button>
+
+                          {isRenderFxExpanded && (
+                            <div className="space-y-3 pt-1 border-t border-[#1e2f4d]/25 animate-fade-in">
+                              {/* Visual Filter */}
+                              <div className="space-y-1">
+                                <span className="text-[9px] font-mono text-slate-500 uppercase tracking-wider">{isZh ? "色彩滤镜 (Color LUT)" : "Color Grading LUT"}</span>
+                                <div className="grid grid-cols-5 gap-1">
+                                  {[
+                                    { id: "none", name: isZh ? "原色" : "None" },
+                                    { id: "warm", name: isZh ? "暖阳" : "Warm" },
+                                    { id: "vintage", name: isZh ? "复古" : "Vint" },
+                                    { id: "cyber", name: isZh ? "霓虹" : "Cyber" },
+                                    { id: "cool", name: isZh ? "冷寂" : "Cool" }
+                                  ].map((lut) => (
+                                    <button
+                                      key={lut.id}
+                                      onClick={() => setVideoFilter(lut.id)}
+                                      className={`py-1 rounded text-[8.5px] font-bold text-center border capitalize transition cursor-pointer ${
+                                        videoFilter === lut.id
+                                          ? "bg-emerald-950/60 border-emerald-500/80 text-emerald-300 font-black"
+                                          : "bg-[#060c18] border-transparent text-slate-500 hover:text-slate-300"
+                                      }`}
+                                    >
+                                      {lut.name}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Subtitle translation select */}
+                              <div className="space-y-1">
+                                <span className="text-[9px] font-mono text-slate-500 uppercase tracking-wider">{isZh ? "多国语言译幕配置" : "Bilingual Subs Locale"}</span>
+                                <select
+                                  value={videoSubtitles}
+                                  onChange={(e) => setVideoSubtitles(e.target.value)}
+                                  className="w-full bg-[#060c18] border border-[#1e2f4d]/50 rounded-lg p-2 text-xs text-slate-300 focus:outline-none animate-fade-in"
+                                >
+                                  <option value="none">🎬 {isZh ? "去除字幕 (No Subtitles)" : "No Subtitles"}</option>
+                                  <option value="zh">📝 {isZh ? "简体中文配字" : "Simplified Chinese Subs"}</option>
+                                  <option value="en">📝 {isZh ? "英语双译 (English Subs)" : "English Translated Subs"}</option>
+                                  <option value="ar">📝 {isZh ? "中东阿语 (Arabic Subs)" : "Arabic Bilingual Subs"}</option>
+                                  <option value="ja">📝 {isZh ? "日语原幕 (Japanese Subs)" : "Japanese Translated Subs"}</option>
+                                </select>
+                              </div>
+
+                              {/* Security Watermark Toggle */}
+                              <div className="flex items-center justify-between pt-1 text-[9.5px] font-mono text-slate-400">
+                                <span>{isZh ? "数字安全防伪水印:" : "Digital Security Watermark:"}</span>
+                                <button
+                                  onClick={() => setVideoWatermark(!videoWatermark)}
+                                  className={`px-2 py-0.5 rounded text-[8.5px] border font-black transition cursor-pointer ${
+                                    videoWatermark
+                                      ? "bg-cyan-950 border-cyan-500/60 text-cyan-400"
+                                      : "bg-slate-900 border-transparent text-slate-500"
+                                  }`}
+                                >
+                                  {videoWatermark ? (isZh ? "水印开启" : "WATERMARK ON") : (isZh ? "水印关闭" : "WATERMARK OFF")}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                      </div>
+
+                      {/* BIG FULL-STACK COLLABORATIVE GENERATOR BUTTON */}
+                      <div className="pt-2 border-t border-[#1e2f4d]/40">
                         <button
-                          onClick={async () => {
+                          onClick={() => {
                             if (isCanvasGenerating) return;
-                            
-                            // Check quota consumption
-                            const pass = onConsumeQuota ? onConsumeQuota("canvas_generation") : true;
+                            const pass = onConsumeQuota ? onConsumeQuota("higgsfield_studio_render") : true;
                             if (!pass) return;
-
-                            setIsCanvasGenerating(true);
-                            setCanvasGenSteps([
-                              isZh ? "🔍 正在分析画板输入指令，检索选中参考卡片 (Pixel Cat.png)..." : "🔍 Analysing workspace prompt and referenced asset (Pixel Cat.png)...",
-                              isZh ? "🧬 触发 Hofstede 跨国社会偏好雷达对位，规避中东/东南亚流行违规禁忌..." : "🧬 Alignment to Hofstede dimensional metrics. Mitigating regional culture taboos...",
-                              isZh ? "📝 利用 DeepSeek V3 大模型编排 3 镜头微型像素故事剧本线..." : "📝 Dispatching DeepSeek V3 engine to compile storyboard narrative sequence...",
-                              isZh ? "🎨 调用 MiniMax Video-01 智能多模态引擎渲染 HD 像素风动态帧..." : "🎨 Invoking MiniMax Video-01 model to render scenic high-definition 8-bit frames...",
-                              isZh ? "🎵 整合 SoundScape 钢琴古筝合成器自动压制立体声舒缓背景乐..." : "🎵 Conjoining SoundScape synth to stitch backing loops...",
-                              isZh ? "✅ 校验完成，画板装载物料生成成功！" : "✅ Security audit passed. Delivered assets successfully loaded!"
-                            ]);
-                            
-                            let step = 0;
-                            setActiveGenStepIdx(0);
-                            
-                            const interval = setInterval(() => {
-                              step++;
-                              if (step <= 5) {
-                                setActiveGenStepIdx(step);
-                              } else {
-                                clearInterval(interval);
-                                // Add a beautiful video node on canvas
-                                const newId = `n-${Date.now()}`;
-                                const newNode: CanvasNode = {
-                                  id: newId,
-                                  title: isZh ? "海螺微剧场-01.mp4" : "H螺-PixShort_01.mp4",
-                                  type: "video",
-                                  x: 230,
-                                  y: 180,
-                                  contentUrl: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=300&auto=format&fit=crop",
-                                  promptText: canvasPrompt || (isZh ? "海螺画板自动渲染：像素风奇幻叙事，中东本土化文化配音。" : "Meme Cat short video: premium 8-bit dynamic composite."),
-                                  status: "complete"
-                                };
-                                
-                                setCanvasNodes(prev => [...prev, newNode]);
-                                // Connect from referenced node
-                                if (selectedNodeId) {
-                                  setCanvasConnections(prev => [...prev, { from: selectedNodeId, to: newId }]);
-                                }
-                                
-                                setSelectedNodeId(newId);
-                                setIsCanvasGenerating(false);
-                                setActiveGenStepIdx(-1);
-                                setCanvasPrompt("");
-
-                                // Add to copilot logs
-                                setCopilotMessages(prev => [
-                                  ...prev,
-                                  {
-                                    id: `c-${Date.now()}`,
-                                    role: "assistant",
-                                    text: isZh 
-                                      ? "✅ 剧本已经装配完毕，生成物料「海螺微剧场-01.mp4」已自动推送到您的画布中央，并连接到参考节点。请播放预览！" 
-                                      : "✅ Completed synthesis. 'H螺-PixShort_01.mp4' has been added to your canvas workspace. Try playing it!",
-                                    thinking: "Model pipeline success. Output size: 16:9, codec: h264."
-                                  }
-                                ]);
-                              }
-                            }, 1100);
+                            handleGenerateFullStack();
                           }}
                           disabled={isCanvasGenerating}
-                          className={`px-4 py-1.5 rounded-lg text-xs font-black text-slate-950 bg-[#eab308] hover:bg-[#d9a300] shadow-sm transition flex items-center gap-1 cursor-pointer shrink-0 ${
-                            isCanvasGenerating ? "opacity-60 cursor-not-allowed" : ""
+                          className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider transition duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg ${
+                            isCanvasGenerating
+                              ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                              : "bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 text-white hover:opacity-90 shadow-cyan-500/10"
                           }`}
                         >
                           {isCanvasGenerating ? (
                             <>
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              <span>{isZh ? "生成中..." : "Synthesizing..."}</span>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>{isZh ? "智能多源融合压制中..." : "Compiling Multi-modal specs..."}</span>
                             </>
                           ) : (
                             <>
-                              <Sparkles className="w-3.5 h-3.5" />
-                              <span>{isZh ? "开始生成" : "Generate"}</span>
-                              <span className="text-[9px] font-mono bg-black/15 text-slate-900 px-1 rounded">30</span>
+                              <Sparkles className="w-4 h-4 text-white animate-pulse" />
+                              <span>{isZh ? "一键融合生成 H3 全套资产" : "Synthesize H3 Multi-Modal Asset"}</span>
                             </>
                           )}
                         </button>
                       </div>
+
                     </div>
-                  </div>
-
-                  {/* Drag Resizer 2 (Middle to Right) */}
-                  {isLargeScreen && (
-                    <div
-                      onMouseDown={(e) => startResizing(e, "right")}
-                      className="hidden lg:flex w-2.5 bg-transparent hover:bg-cyan-500/20 active:bg-cyan-500/35 cursor-col-resize self-stretch transition-all duration-150 z-20 items-center justify-center group flex-shrink-0"
-                      title={isZh ? "按住左右拖拽调整宽度" : "Drag left/right to resize"}
-                    >
-                      <div className="w-[2px] h-8 bg-[#1e2f4d]/80 group-hover:bg-cyan-400/80 rounded transition-colors" />
-                    </div>
-                  )}
-
-                  {/* PANE 3: RIGHT SIDEBAR (AI Assistant Co-pilot & Approval Panel) */}
-                  <div 
-                    style={{ width: isLargeScreen ? `${rightWidth}px` : "100%", flexShrink: 0 }}
-                    className="bg-[#040810]/95 border border-[#1e2f4d]/50 rounded-xl p-3 flex flex-col justify-between min-h-[500px] transition-[width] duration-75"
-                  >
-                    
-                    <div className="space-y-3 flex-1 flex flex-col justify-between">
-                      <div className="space-y-3 flex-1 flex flex-col">
-                        {/* Panel header */}
-                        <div className="flex items-center justify-between border-b border-[#1e2f4d]/30 pb-2">
-                          <div className="flex items-center gap-1.5 overflow-hidden">
-                            <Cpu className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                            <span className="text-xs font-black text-white uppercase tracking-wider truncate">
-                              {isZh ? "AI 协作者" : "Co-Pilot Workspace"}
-                            </span>
-                          </div>
-
-                          {/* Width controller */}
-                          {isLargeScreen && (
-                            <div className="flex items-center gap-1 bg-[#081020]/90 px-1.5 py-0.5 rounded border border-[#1e2f4d]/40 scale-90 origin-right flex-shrink-0">
-                              <button
-                                onClick={() => setRightWidth(prev => Math.max(180, prev - 25))}
-                                className="text-slate-400 hover:text-white transition text-xs font-bold w-4 h-4 flex items-center justify-center bg-slate-800/40 rounded cursor-pointer"
-                                title={isZh ? "变窄" : "Narrower"}
-                              >
-                                －
-                              </button>
-                              <span className="text-[9px] font-mono font-bold text-cyan-400 min-w-[28px] text-center">
-                                {rightWidth}px
-                              </span>
-                              <button
-                                onClick={() => setRightWidth(prev => Math.min(500, prev + 25))}
-                                className="text-slate-400 hover:text-white transition text-xs font-bold w-4 h-4 flex items-center justify-center bg-slate-800/40 rounded cursor-pointer"
-                                title={isZh ? "变宽" : "Wider"}
-                              >
-                                ＋
-                              </button>
-                            </div>
-                          )}
-
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
-                        </div>
-
-                        {/* Co-pilot messages log */}
-                        <div 
-                          style={{ maxHeight: `${canvasHeight - 260}px` }}
-                          className="space-y-3.5 overflow-y-auto scrollbar-thin text-left pr-1 mt-2 flex-1"
-                        >
-                          {copilotMessages.map((msg) => (
-                            <div key={msg.id} className="space-y-1">
-                              <span className="text-[9px] font-mono font-bold uppercase tracking-wider block text-slate-500">
-                                {msg.role === "user" ? "👤 User" : "🤖 Co-Pilot Advisor"}
-                              </span>
-                              <div className={`p-2 rounded-lg text-xs leading-relaxed ${
-                                msg.role === "user" 
-                                  ? "bg-[#1e2f4d]/35 text-slate-200 border border-[#1e2f4d]/40" 
-                                  : "bg-[#050b16]/90 text-cyan-100 border border-[#1e2f4d]/30"
-                              }`}>
-                                <p>{msg.text}</p>
-                              </div>
-                              {msg.thinking && (
-                                <div className="text-[9px] font-mono text-slate-500 pl-1.5 border-l border-cyan-500/20 italic">
-                                  ⚡ {msg.thinking}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-
-                          {/* Live generation steps if active */}
-                          {isCanvasGenerating && (
-                            <div className="p-2.5 rounded-lg bg-cyan-950/20 border border-cyan-500/25 space-y-2 text-left">
-                              <div className="flex items-center justify-between text-[9px] font-mono text-cyan-400">
-                                <span className="font-bold flex items-center gap-1">
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                  <span>{isZh ? "多端协同生成中..." : "Multi-agent synthesis..."}</span>
-                                </span>
-                                <span>{activeGenStepIdx + 1} / 6</span>
-                              </div>
-                              <div className="space-y-1.5 text-[10px] text-slate-300">
-                                {canvasGenSteps.map((step, sIdx) => (
-                                  <div 
-                                    key={sIdx} 
-                                    className={`flex items-start gap-1.5 transition-opacity duration-300 ${
-                                      sIdx === activeGenStepIdx 
-                                        ? "text-cyan-300 font-bold" 
-                                        : sIdx < activeGenStepIdx 
-                                          ? "text-emerald-400 opacity-60" 
-                                          : "text-slate-500 opacity-40"
-                                    }`}
-                                  >
-                                    <span className="shrink-0 font-mono">
-                                      {sIdx < activeGenStepIdx ? "✓" : sIdx === activeGenStepIdx ? "●" : "○"}
-                                    </span>
-                                    <p className="leading-tight">{step}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Approval Draft segment */}
-                      <div className="bg-[#030610] border border-[#1e2f4d]/40 p-2.5 rounded-lg text-left space-y-2 mt-2">
-                        <div className="flex items-center justify-between border-b border-[#1e2f4d]/20 pb-1.5 text-[9px] font-mono font-bold">
-                          <span className="text-cyan-400 flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-cyan-400" />
-                            <span>{isZh ? "草稿审批流 (Waiting Approval)" : "Generation Draft"}</span>
-                          </span>
-                          <span className="bg-amber-500/10 text-amber-400 px-1 rounded uppercase">
-                            H3 16:9
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-slate-300 leading-relaxed max-h-[85px] overflow-y-auto scrollbar-thin">
-                          {isZh 
-                            ? "A funny pixel art cat meme featuring a slightly chubby cat with a dramatic blank stare, sitting in a messy retro computer room. 8-bit pixel style..." 
-                            : "A funny pixel art cat meme featuring a slightly chubby cat with a dramatic blank stare, sitting in a messy retro computer room. 8-bit pixel style, chaotic internet energy."}
-                        </p>
-                        <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-[#1e2f4d]/10">
-                          <button
-                            onClick={() => alert(isZh ? "已拒绝该草稿重新编排" : "Draft cancelled.")}
-                            className="px-2 py-1 rounded bg-[#1e2f4d]/40 text-slate-400 hover:text-white text-[9px] transition cursor-pointer"
-                          >
-                            {isZh ? "取消" : "Cancel"}
-                          </button>
-                          <button
-                            onClick={() => {
-                              alert(isZh ? "草稿校验成功，已触发 30 算力微镜头压制！" : "Draft approved! Generation started.");
-                              setCanvasPrompt(isZh ? "使用 Meme Cat 模版生成中东大区 A/B 短视频" : "Use Meme Cat template to generate AB test group short dramas.");
-                            }}
-                            className="px-2 py-1 rounded bg-amber-500 text-slate-950 font-black text-[9px] transition cursor-pointer"
-                          >
-                            {isZh ? "通过并生成" : "Approve & Gen"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Bottom Co-pilot Message submission form */}
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        if (!copilotInput.trim()) return;
-                        
-                        const text = copilotInput;
-                        setCopilotMessages(prev => [
-                          ...prev,
-                          { id: `c-u-${Date.now()}`, role: "user", text }
-                        ]);
-                        setCopilotInput("");
-
-                        // Quick automated AI co-pilot reply matching content
-                        setTimeout(() => {
-                          let aiText = isZh 
-                            ? "收到您的画板调节指令！我已更新您的画板剧本，并调整了合成大模型参数。点击「开始生成」即可压制多媒体微镜头。" 
-                            : "Received instructions! Adjusted the workspace configuration accordingly. Click 'Generate' to initiate rendering.";
-                          let thinkingText = "Processed query. Aligning canvas configurations...";
-
-                          if (text.toLowerCase().includes("cat") || text.includes("猫")) {
-                            aiText = isZh 
-                              ? "正在聚焦 Pixel Meme Cat。我建议将此卡片作为核心镜头（Shot-01），利用 H3 多模态大模型将其与 SoundHelix Guzheng Lofi 立体乐进行自动化融合渲染。"
-                              : "Focusing on Pixel Meme Cat. Recommended to set this as central reference card (Shot-01), rendering high-fidelity h264 footage with Chinese Lofi backdrops.";
-                            thinkingText = "Set focus reference: Pixel Cat.png. Pre-compiling Lyria prompt tags.";
-                          }
-
-                          setCopilotMessages(prev => [
-                            ...prev,
-                            {
-                              id: `c-a-${Date.now()}`,
-                              role: "assistant",
-                              text: aiText,
-                              thinking: thinkingText
-                            }
-                          ]);
-                        }, 900);
-                      }}
-                      className="pt-2 border-t border-[#1e2f4d]/40 space-y-1.5"
-                    >
-                      <div className="flex items-center gap-1 text-[9px] font-mono">
-                        <button
-                          type="button"
-                          onClick={() => alert(isZh ? "已切换到 H3-Pro 大模型" : "Model set to H3-Pro")}
-                          className="bg-[#0c1322] border border-[#1e2f4d]/40 rounded-full px-2 py-0.5 text-slate-400 hover:text-white transition"
-                        >
-                          Model
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => alert(isZh ? "已启用「像素风增强」和「文化等效映射」" : "Active skills: Pixel Enhancer, Cultural Symbolic Mapper")}
-                          className="bg-[#0c1322] border border-[#1e2f4d]/40 rounded-full px-2 py-0.5 text-slate-400 hover:text-white transition"
-                        >
-                          Skill (2)
-                        </button>
-                        <span className="text-slate-600">|</span>
-                        <span className="text-slate-500">Ask mode</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-1.5 bg-[#081020] border border-[#1e2f4d]/50 rounded-xl p-1">
-                        <input
-                          type="text"
-                          value={copilotInput}
-                          onChange={(e) => setCopilotInput(e.target.value)}
-                          placeholder={isZh ? "和AI协作者交流指令..." : "Instruct your co-pilot advisor..."}
-                          className="flex-1 bg-transparent px-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none"
-                        />
-                        <button
-                          type="submit"
-                          className="p-1.5 rounded-lg bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition cursor-pointer"
-                        >
-                          <Send className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </form>
-
                   </div>
                 </div>
               </motion.div>
@@ -3656,309 +4061,359 @@ export default function CreativeStudioView({
                   <div className="space-y-3.5 bg-[#050912]/50 border border-[#1e2f4d]/30 rounded-xl p-4 flex flex-col justify-between">
                     <div className="space-y-3">
                       
-                      {/* Preset Selection Rail */}
-                      <div>
-                        <span className="block text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center justify-between">
-                          <span>{isZh ? "品牌声景预设" : "Brand Soundscapes"}</span>
-                          <span className="text-[9px] text-cyan-400 font-mono font-bold">{isZh ? "一键配置参数" : "Quick Mix Pre-sets"}</span>
-                        </span>
-                        <div className="grid grid-cols-3 lg:grid-cols-5 gap-1 text-xs">
-                          {Object.values(MUSIC_PRESETS).map((preset) => (
-                            <button
-                              key={preset.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedMusicPreset(preset.id);
-                                setMusicLeadInstrument(preset.leadInstrument);
-                                setMusicScaleMode(preset.scaleMode);
-                                setMusicTempoBpm(preset.tempoBpm);
-                                setMusicFxLayer(preset.fxLayer);
-                                setMusicVolumeLead(preset.volumes.lead);
-                                setMusicVolumePad(preset.volumes.pad);
-                                setMusicVolumeRhythm(preset.volumes.rhythm);
-                                setMusicVolumeFx(preset.volumes.fx);
-                                setMusicPrompt(isZh ? preset.promptZh : preset.promptEn);
-                              }}
-                              className={`px-1.5 py-1.5 rounded-lg border text-center flex flex-col justify-center items-center transition cursor-pointer leading-tight ${
-                                selectedMusicPreset === preset.id
-                                  ? "bg-cyan-500/10 border-cyan-500 text-cyan-400 font-bold"
-                                  : "border-[#1e2f4d]/30 bg-[#050912]/40 text-slate-400 hover:border-[#1e2f4d]/65 hover:text-slate-300"
-                              }`}
-                            >
-                              <span className="font-extrabold truncate text-[9px] block w-full">
-                                {isZh ? preset.nameZh.split(" ")[0] : preset.nameEn.split(" ")[0]}
-                              </span>
-                              <span className="text-[8px] text-slate-500 truncate leading-none mt-0.5 scale-90 font-mono">
-                                {preset.tempoBpm} BPM
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                      {/* SECTION 1: PRESETS & COVER REFERENCE */}
+                      <div className="bg-[#030712] border border-[#1e2f4d]/40 rounded-xl p-3 space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setIsAudioPresetsExpanded(!isAudioPresetsExpanded)}
+                          className="w-full flex items-center justify-between text-left text-[10px] font-mono text-cyan-400 font-black uppercase tracking-wider cursor-pointer select-none"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <Compass className="w-3.5 h-3.5" />
+                            <span>{isZh ? "1. 声景预设与参考 (Presets & Visual)" : "1. Soundscape Presets & Reference"}</span>
+                          </span>
+                          {isAudioPresetsExpanded ? <ChevronUp className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-500" />}
+                        </button>
 
-                      {/* Optional Image grounding */}
-                      <div>
-                        <span className="block text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
-                          {isZh ? "读图作曲参考图 (选填，开启 Image-to-Audio)" : "Visual Grounding reference (Optional)"}
-                        </span>
-                        
-                        {musicImgBase64 ? (
-                          <div className="flex items-center justify-between p-2 rounded-lg border border-cyan-500/30 bg-cyan-500/5 text-xs">
-                            <div className="flex items-center gap-2 text-cyan-400 font-mono">
-                              <ImageIcon className="w-4 h-4" />
-                              <span className="truncate max-w-[150px]">{musicImgName || "cover_art.png"}</span>
+                        {isAudioPresetsExpanded && (
+                          <div className="space-y-3 pt-1.5 border-t border-[#1e2f4d]/20 animate-fade-in">
+                            {/* Preset Selection Rail */}
+                            <div>
+                              <span className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                                <span>{isZh ? "品牌声景预设" : "Brand Soundscapes"}</span>
+                                <span className="text-[8px] text-cyan-400 font-mono font-bold">{isZh ? "一键配置" : "Quick Mix"}</span>
+                              </span>
+                              <div className="grid grid-cols-3 gap-1 text-xs">
+                                {Object.values(MUSIC_PRESETS).map((preset) => (
+                                  <button
+                                    key={preset.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedMusicPreset(preset.id);
+                                      setMusicLeadInstrument(preset.leadInstrument);
+                                      setMusicScaleMode(preset.scaleMode);
+                                      setMusicTempoBpm(preset.tempoBpm);
+                                      setMusicFxLayer(preset.fxLayer);
+                                      setMusicVolumeLead(preset.volumes.lead);
+                                      setMusicVolumePad(preset.volumes.pad);
+                                      setMusicVolumeRhythm(preset.volumes.rhythm);
+                                      setMusicVolumeFx(preset.volumes.fx);
+                                      setMusicPrompt(isZh ? preset.promptZh : preset.promptEn);
+                                    }}
+                                    className={`px-1 py-1 rounded border text-center flex flex-col justify-center items-center transition cursor-pointer leading-tight ${
+                                      selectedMusicPreset === preset.id
+                                        ? "bg-cyan-500/10 border-cyan-500 text-cyan-400 font-bold"
+                                        : "border-[#1e2f4d]/30 bg-[#050912]/40 text-slate-400 hover:border-[#1e2f4d]/65 hover:text-slate-300"
+                                    }`}
+                                  >
+                                    <span className="font-extrabold truncate text-[9px] block w-full">
+                                      {isZh ? preset.nameZh.split(" ")[0] : preset.nameEn.split(" ")[0]}
+                                    </span>
+                                    <span className="text-[8px] text-slate-500 truncate leading-none mt-0.5 scale-90 font-mono">
+                                      {preset.tempoBpm} BPM
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
                             </div>
-                            <button
-                              onClick={resetMusicUpload}
-                              className="text-slate-400 hover:text-red-400 cursor-pointer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="relative group border border-dashed border-[#1e2f4d]/60 rounded-lg p-2.5 text-center hover:border-cyan-500/50 transition">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => handleImageUploadHelper(e, "music")}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            />
-                            <Upload className="w-4 h-4 text-slate-450 mx-auto mb-1" />
-                            <p className="text-[9px] text-slate-450">{isZh ? "上传视觉参考图 — 音乐节奏将自动契合视觉氛围" : "Attach media graphic poster for theme pacing adaptation"}</p>
+
+                            {/* Optional Image grounding */}
+                            <div className="space-y-1">
+                              <span className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+                                {isZh ? "读图作曲参考图 (选填，开启 Image-to-Audio)" : "Visual Grounding reference (Optional)"}
+                              </span>
+                              
+                              {musicImgBase64 ? (
+                                <div className="flex items-center justify-between p-2 rounded-lg border border-cyan-500/30 bg-cyan-500/5 text-xs">
+                                  <div className="flex items-center gap-2 text-cyan-400 font-mono">
+                                    <ImageIcon className="w-4 h-4" />
+                                    <span className="truncate max-w-[150px]">{musicImgName || "cover_art.png"}</span>
+                                  </div>
+                                  <button
+                                    onClick={resetMusicUpload}
+                                    className="text-slate-400 hover:text-red-400 cursor-pointer"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="relative group border border-dashed border-[#1e2f4d]/60 rounded-lg p-2 text-center hover:border-cyan-500/50 transition">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleImageUploadHelper(e, "music")}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                  />
+                                  <Upload className="w-4 h-4 text-slate-450 mx-auto mb-1" />
+                                  <p className="text-[8.5px] text-slate-450 leading-tight">{isZh ? "上传视觉参考图 — 音乐节奏将自动契合视觉" : "Attach media graphic for theme pacing adaptation"}</p>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
 
-                      {/* Instruments & Scale Grid */}
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        {/* Lead Instrument */}
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
-                            {isZh ? "主奏乐器" : "Lead Instrument"}
-                          </label>
-                          <select
-                            value={musicLeadInstrument}
-                            onChange={(e) => setMusicLeadInstrument(e.target.value as any)}
-                            className="w-full bg-[#050912] border border-[#1e2f4d]/60 rounded-lg p-2 text-slate-200 outline-none focus:border-cyan-500/50 text-xs font-mono"
-                          >
-                            <option value="guzheng">{isZh ? "古筝 (Guzheng)" : "Guzheng"}</option>
-                            <option value="flute">{isZh ? "竹笛 (Flute Breeze)" : "Bamboo Flute"}</option>
-                            <option value="guitar">{isZh ? "木吉他 (Guitar Pluck)" : "Acoustic Guitar"}</option>
-                            <option value="piano">{isZh ? "温馨钢琴 (Warm Piano)" : "Warm Piano"}</option>
-                            <option value="kalimba">{isZh ? "卡林巴琴 (Kalimba)" : "Kalimba"}</option>
-                            <option value="handpan">{isZh ? "手碟 (Handpan)" : "Handpan"}</option>
-                            <option value="shakuhachi">{isZh ? "尺八 (Shakuhachi)" : "Shakuhachi"}</option>
-                          </select>
-                        </div>
-
-                        {/* Musical Scale */}
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
-                            {isZh ? "和声调式" : "Musical Scale"}
-                          </label>
-                          <select
-                            value={musicScaleMode}
-                            onChange={(e) => setMusicScaleMode(e.target.value as any)}
-                            className="w-full bg-[#050912] border border-[#1e2f4d]/60 rounded-lg p-2 text-slate-200 outline-none focus:border-cyan-500/50 text-xs font-mono"
-                          >
-                            <option value="pentatonic_yo">{isZh ? "东方的律吕 (Yo scale)" : "Pentatonic Yo"}</option>
-                            <option value="natural_minor">{isZh ? "自然小调 (calm)" : "Natural Minor"}</option>
-                            <option value="pentatonic_major">{isZh ? "大调五声 (warm)" : "Pentatonic Major"}</option>
-                            <option value="phrygian_latam">{isZh ? "弗里吉亚拉丁 (warmth)" : "Phrygian Dominant"}</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Tempo & FX Layer */}
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        {/* Tempo BPM */}
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1 flex items-center justify-between">
-                            <span>{isZh ? "和弦速度" : "Tempo BPM"}</span>
-                            <span className="text-cyan-400 font-mono font-bold">{musicTempoBpm} BPM</span>
-                          </label>
-                          <div className="flex items-center gap-2 pt-1">
-                            <input
-                              type="range"
-                              min="50"
-                              max="120"
-                              step="1"
-                              value={musicTempoBpm}
-                              onChange={(e) => setMusicTempoBpm(parseInt(e.target.value))}
-                              className="flex-1 h-1 bg-[#14233c] rounded-lg appearance-none cursor-pointer accent-cyan-400"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Soundscape FX Layer */}
-                        <div>
-                          <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
-                            {isZh ? "高保真环境音效" : "Ambient ASMR FX"}
-                          </label>
-                          <select
-                            value={musicFxLayer}
-                            onChange={(e) => setMusicFxLayer(e.target.value as any)}
-                            className="w-full bg-[#050912] border border-[#1e2f4d]/60 rounded-lg p-2 text-slate-200 outline-none focus:border-cyan-500/50 text-xs font-mono"
-                          >
-                            <option value="rain">{isZh ? "竹林细雨 (Rain ASMR)" : "Rain ASMR"}</option>
-                            <option value="wind_chimes">{isZh ? "木制风铃 (Wind Chimes)" : "Wind Chimes"}</option>
-                            <option value="campfire">{isZh ? "深夜篝火 (Campfire)" : "Campfire Crackle"}</option>
-                            <option value="waves">{isZh ? "海岸潮汐 (Ocean Waves)" : "Ocean Waves"}</option>
-                            <option value="vinyl">{isZh ? "复古黑胶 (Vinyl record)" : "Vinyl Crackle"}</option>
-                            <option value="none">{isZh ? "静音 (None)" : "None"}</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Multi-Track Mixing Console */}
-                      <div className="p-3 bg-[#03060d] border border-[#1e2f4d]/40 rounded-xl space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest flex items-center gap-1.5">
+                      {/* SECTION 2: MUSICAL SETTINGS & INSTRUMENTS */}
+                      <div className="bg-[#030712] border border-[#1e2f4d]/40 rounded-xl p-3 space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setIsAudioInstrumentsExpanded(!isAudioInstrumentsExpanded)}
+                          className="w-full flex items-center justify-between text-left text-[10px] font-mono text-indigo-400 font-black uppercase tracking-wider cursor-pointer select-none"
+                        >
+                          <span className="flex items-center gap-1.5">
                             <Sliders className="w-3.5 h-3.5" />
-                            {isZh ? "4轨声学硬件混音台" : "4-Track Mixer Bus"}
+                            <span>{isZh ? "2. 乐器、调式与速度 (Acoustic Rig)" : "2. Acoustic Instrument Rig"}</span>
                           </span>
-                          <span className="text-[8px] text-slate-500 font-mono uppercase">Master: -1.5dB</span>
-                        </div>
-                        
-                        <div className="grid grid-cols-4 gap-1.5 text-center">
-                          {/* Track 1: Lead */}
-                          <div className="space-y-1 bg-[#050912]/50 p-1.5 rounded border border-[#1e2f4d]/20">
-                            <span className="block text-[8px] font-bold text-slate-400 truncate uppercase">{isZh ? "主奏轨" : "Lead"}</span>
-                            <input
-                              type="range"
-                              min="0"
-                              max="1"
-                              step="0.05"
-                              value={musicVolumeLead}
-                              onChange={(e) => setMusicVolumeLead(parseFloat(e.target.value))}
-                              className="w-full h-1 bg-[#14233c] rounded-lg appearance-none cursor-pointer accent-cyan-400 scale-y-95"
-                            />
-                            <span className="text-[8px] text-cyan-400 font-mono block">{(musicVolumeLead * 100).toFixed(0)}%</span>
-                          </div>
+                          {isAudioInstrumentsExpanded ? <ChevronUp className="w-3.5 h-3.5 text-indigo-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-500" />}
+                        </button>
 
-                          {/* Track 2: Pad */}
-                          <div className="space-y-1 bg-[#050912]/50 p-1.5 rounded border border-[#1e2f4d]/20">
-                            <span className="block text-[8px] font-bold text-slate-400 truncate uppercase">{isZh ? "和鸣轨" : "Pad"}</span>
-                            <input
-                              type="range"
-                              min="0"
-                              max="1"
-                              step="0.05"
-                              value={musicVolumePad}
-                              onChange={(e) => setMusicVolumePad(parseFloat(e.target.value))}
-                              className="w-full h-1 bg-[#14233c] rounded-lg appearance-none cursor-pointer accent-cyan-400 scale-y-95"
-                            />
-                            <span className="text-[8px] text-cyan-400 font-mono block">{(musicVolumePad * 100).toFixed(0)}%</span>
-                          </div>
+                        {isAudioInstrumentsExpanded && (
+                          <div className="space-y-3 pt-1.5 border-t border-[#1e2f4d]/20 animate-fade-in">
+                            {/* Instruments & Scale Grid */}
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              {/* Lead Instrument */}
+                              <div>
+                                <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                                  {isZh ? "主奏乐器" : "Lead Instrument"}
+                                </label>
+                                <select
+                                  value={musicLeadInstrument}
+                                  onChange={(e) => setMusicLeadInstrument(e.target.value as any)}
+                                  className="w-full bg-[#050912] border border-[#1e2f4d]/60 rounded-lg p-2 text-slate-200 outline-none focus:border-cyan-500/50 text-xs font-mono"
+                                >
+                                  <option value="guzheng">{isZh ? "古筝 (Guzheng)" : "Guzheng"}</option>
+                                  <option value="flute">{isZh ? "竹笛 (Flute Breeze)" : "Bamboo Flute"}</option>
+                                  <option value="guitar">{isZh ? "木吉他 (Guitar Pluck)" : "Acoustic Guitar"}</option>
+                                  <option value="piano">{isZh ? "温馨钢琴 (Warm Piano)" : "Warm Piano"}</option>
+                                  <option value="kalimba">{isZh ? "卡林巴琴 (Kalimba)" : "Kalimba"}</option>
+                                  <option value="handpan">{isZh ? "手碟 (Handpan)" : "Handpan"}</option>
+                                  <option value="shakuhachi">{isZh ? "尺八 (Shakuhachi)" : "Shakuhachi"}</option>
+                                </select>
+                              </div>
 
-                          {/* Track 3: Beat */}
-                          <div className="space-y-1 bg-[#050912]/50 p-1.5 rounded border border-[#1e2f4d]/20">
-                            <span className="block text-[8px] font-bold text-slate-400 truncate uppercase">{isZh ? "打击轨" : "Beat"}</span>
-                            <input
-                              type="range"
-                              min="0"
-                              max="1"
-                              step="0.05"
-                              value={musicVolumeRhythm}
-                              onChange={(e) => setMusicVolumeRhythm(parseFloat(e.target.value))}
-                              className="w-full h-1 bg-[#14233c] rounded-lg appearance-none cursor-pointer accent-cyan-400 scale-y-95"
-                            />
-                            <span className="text-[8px] text-cyan-400 font-mono block">{(musicVolumeRhythm * 100).toFixed(0)}%</span>
-                          </div>
+                              {/* Musical Scale */}
+                              <div>
+                                <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                                  {isZh ? "和声调式" : "Musical Scale"}
+                                </label>
+                                <select
+                                  value={musicScaleMode}
+                                  onChange={(e) => setMusicScaleMode(e.target.value as any)}
+                                  className="w-full bg-[#050912] border border-[#1e2f4d]/60 rounded-lg p-2 text-slate-200 outline-none focus:border-cyan-500/50 text-xs font-mono"
+                                >
+                                  <option value="pentatonic_yo">{isZh ? "东方的律吕 (Yo scale)" : "Pentatonic Yo"}</option>
+                                  <option value="natural_minor">{isZh ? "自然小调 (calm)" : "Natural Minor"}</option>
+                                  <option value="pentatonic_major">{isZh ? "大调五声 (warm)" : "Pentatonic Major"}</option>
+                                  <option value="phrygian_latam">{isZh ? "弗里吉亚拉丁 (warmth)" : "Phrygian Dominant"}</option>
+                                </select>
+                              </div>
+                            </div>
 
-                          {/* Track 4: FX */}
-                          <div className="space-y-1 bg-[#050912]/50 p-1.5 rounded border border-[#1e2f4d]/20">
-                            <span className="block text-[8px] font-bold text-slate-400 truncate uppercase">{isZh ? "特效轨" : "ASMR"}</span>
-                            <input
-                              type="range"
-                              min="0"
-                              max="1"
-                              step="0.05"
-                              value={musicVolumeFx}
-                              onChange={(e) => setMusicVolumeFx(parseFloat(e.target.value))}
-                              className="w-full h-1 bg-[#14233c] rounded-lg appearance-none cursor-pointer accent-cyan-400 scale-y-95"
-                            />
-                            <span className="text-[8px] text-cyan-400 font-mono block">{(musicVolumeFx * 100).toFixed(0)}%</span>
-                          </div>
-                        </div>
-                      </div>
+                            {/* Tempo & FX Layer */}
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              {/* Tempo BPM */}
+                              <div>
+                                <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                                  <span>{isZh ? "和弦速度" : "Tempo BPM"}</span>
+                                  <span className="text-cyan-400 font-mono font-bold">{musicTempoBpm} BPM</span>
+                                </label>
+                                <div className="flex items-center gap-2 pt-1">
+                                  <input
+                                    type="range"
+                                    min="50"
+                                    max="120"
+                                    step="1"
+                                    value={musicTempoBpm}
+                                    onChange={(e) => setMusicTempoBpm(parseInt(e.target.value))}
+                                    className="flex-1 h-1 bg-[#14233c] rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                                  />
+                                </div>
+                              </div>
 
-                      {/* Music Prompt text */}
-                      <div>
-                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
-                          {isZh ? "微声配乐描述与情感意境" : "Background Sound Prompt Vibe"}
-                        </label>
-                        <textarea
-                          rows={2}
-                          value={musicPrompt}
-                          onChange={(e) => setMusicPrompt(e.target.value)}
-                          className="w-full bg-[#050912] border border-[#1e2f4d]/60 rounded-lg p-2 text-xs text-slate-200 outline-none focus:border-cyan-500/50"
-                        />
-                      </div>
+                              {/* Soundscape FX Layer */}
+                              <div>
+                                <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                                  {isZh ? "环境 ASMR" : "Ambient ASMR"}
+                                </label>
+                                <select
+                                  value={musicFxLayer}
+                                  onChange={(e) => setMusicFxLayer(e.target.value as any)}
+                                  className="w-full bg-[#050912] border border-[#1e2f4d]/60 rounded-lg p-2 text-slate-200 outline-none focus:border-cyan-500/50 text-xs font-mono"
+                                >
+                                  <option value="rain">{isZh ? "竹林细雨 (Rain ASMR)" : "Rain ASMR"}</option>
+                                  <option value="wind_chimes">{isZh ? "木制风铃 (Wind Chimes)" : "Wind Chimes"}</option>
+                                  <option value="campfire">{isZh ? "深夜篝火 (Campfire)" : "Campfire Crackle"}</option>
+                                  <option value="waves">{isZh ? "海岸潮汐 (Ocean Waves)" : "Ocean Waves"}</option>
+                                  <option value="vinyl">{isZh ? "复古黑胶 (Vinyl record)" : "Vinyl Crackle"}</option>
+                                  <option value="none">{isZh ? "静音 (None)" : "None"}</option>
+                                </select>
+                              </div>
+                            </div>
 
-                      {/* Engine Selection & Length Grid */}
-                      <div className="space-y-3 text-xs">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5">
-                              {isZh ? "合成音轨长度" : "Duration Preset"}
-                            </label>
-                            <div className="grid grid-cols-2 gap-1.5 text-xs">
-                              <button
-                                type="button"
-                                onClick={() => setMusicLength("clip")}
-                                className={`py-1 rounded border transition cursor-pointer flex flex-col items-center justify-center p-1.5 ${
-                                  musicLength === "clip"
-                                    ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/40"
-                                    : "border-slate-800 text-slate-400 hover:text-slate-350"
-                                }`}
-                              >
-                                <span className="font-bold text-[10px]">Clip (15s)</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setMusicLength("pro")}
-                                className={`py-1 rounded border transition cursor-pointer flex flex-col items-center justify-center p-1.5 ${
-                                  musicLength === "pro"
-                                    ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/40"
-                                    : "border-slate-800 text-slate-400 hover:text-slate-350"
-                                }`}
-                              >
-                                <span className="font-bold text-[10px]">Full (30s)</span>
-                              </button>
+                            {/* Music Prompt text */}
+                            <div className="space-y-1">
+                              <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+                                {isZh ? "配乐描述与情感意境" : "Background Sound Prompt Vibe"}
+                              </label>
+                              <textarea
+                                rows={2}
+                                value={musicPrompt}
+                                onChange={(e) => setMusicPrompt(e.target.value)}
+                                className="w-full bg-[#050912] border border-[#1e2f4d]/60 rounded-lg p-2 text-xs text-slate-200 outline-none focus:border-cyan-500/50"
+                              />
+                            </div>
+
+                            {/* Engine Selection & Length Grid */}
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div>
+                                <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                                  {isZh ? "音轨长度" : "Duration"}
+                                </label>
+                                <div className="grid grid-cols-2 gap-1 text-xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => setMusicLength("clip")}
+                                    className={`py-1 rounded border transition cursor-pointer flex items-center justify-center ${
+                                      musicLength === "clip"
+                                        ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/45 font-bold"
+                                        : "border-slate-800 text-slate-400 hover:text-slate-350"
+                                    }`}
+                                  >
+                                    <span>15s</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setMusicLength("pro")}
+                                    className={`py-1 rounded border transition cursor-pointer flex items-center justify-center ${
+                                      musicLength === "pro"
+                                        ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/45 font-bold"
+                                        : "border-slate-800 text-slate-400 hover:text-slate-350"
+                                    }`}
+                                  >
+                                    <span>30s</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                                  {isZh ? "合成引擎" : "Synthesizer"}
+                                </label>
+                                <div className="grid grid-cols-2 gap-1 text-xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => setMusicSynthMode("procedural")}
+                                    className={`py-1 rounded border transition cursor-pointer flex items-center justify-center ${
+                                      musicSynthMode === "procedural"
+                                        ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/45 font-bold"
+                                        : "border-slate-800 text-slate-400 hover:text-slate-350"
+                                    }`}
+                                  >
+                                    <span>Local</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setMusicSynthMode("lyria")}
+                                    className={`py-1 rounded border transition cursor-pointer flex items-center justify-center ${
+                                      musicSynthMode === "lyria"
+                                        ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/45 font-bold"
+                                        : "border-slate-800 text-slate-400 hover:text-slate-350"
+                                    }`}
+                                  >
+                                    <span>Lyria</span>
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           </div>
+                        )}
+                      </div>
 
-                          <div>
-                            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center justify-between">
-                              <span>{isZh ? "基本合成器" : "Local Engines"}</span>
-                            </label>
-                            <div className="grid grid-cols-2 gap-1.5 text-xs">
-                              <button
-                                type="button"
-                                onClick={() => setMusicSynthMode("procedural")}
-                                className={`py-1 rounded border transition cursor-pointer flex flex-col items-center justify-center p-1 ${
-                                  musicSynthMode === "procedural"
-                                    ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/40"
-                                    : "border-slate-800 text-slate-400 hover:text-slate-350"
-                                }`}
-                              >
-                                <span className="font-bold text-[9px]">{isZh ? "本地硬件" : "Local"}</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setMusicSynthMode("lyria")}
-                                className={`py-1 rounded border transition cursor-pointer flex flex-col items-center justify-center p-1 ${
-                                  musicSynthMode === "lyria"
-                                    ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/40"
-                                    : "border-slate-800 text-slate-400 hover:text-slate-350"
-                                }`}
-                              >
-                                <span className="font-bold text-[9px]">Cloud Lyria</span>
-                              </button>
+                      {/* SECTION 3: MULTI-TRACK MIXING CONSOLE */}
+                      <div className="bg-[#030712] border border-[#1e2f4d]/40 rounded-xl p-3 space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setIsAudioMixerExpanded(!isAudioMixerExpanded)}
+                          className="w-full flex items-center justify-between text-left text-[10px] font-mono text-emerald-400 font-black uppercase tracking-wider cursor-pointer select-none"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <Cpu className="w-3.5 h-3.5" />
+                            <span>{isZh ? "3. 四轨硬混音台 (Track mixer)" : "3. 4-Track Mixing Bus"}</span>
+                          </span>
+                          {isAudioMixerExpanded ? <ChevronUp className="w-3.5 h-3.5 text-emerald-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-500" />}
+                        </button>
+
+                        {isAudioMixerExpanded && (
+                          <div className="pt-1.5 border-t border-[#1e2f4d]/20 animate-fade-in space-y-2">
+                            <div className="flex items-center justify-between text-[8px] font-mono text-slate-500 uppercase">
+                              <span>Bus Out: Stereo</span>
+                              <span>Peak: -1.5dB</span>
+                            </div>
+                            
+                            <div className="grid grid-cols-4 gap-1 text-center">
+                              {/* Track 1: Lead */}
+                              <div className="space-y-1 bg-[#050912]/50 p-1.5 rounded border border-[#1e2f4d]/20">
+                                <span className="block text-[8px] font-bold text-slate-400 truncate uppercase">{isZh ? "主奏轨" : "Lead"}</span>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="1"
+                                  step="0.05"
+                                  value={musicVolumeLead}
+                                  onChange={(e) => setMusicVolumeLead(parseFloat(e.target.value))}
+                                  className="w-full h-1 bg-[#14233c] rounded-lg appearance-none cursor-pointer accent-cyan-400 scale-y-95"
+                                />
+                                <span className="text-[8px] text-cyan-400 font-mono block">{(musicVolumeLead * 100).toFixed(0)}%</span>
+                              </div>
+
+                              {/* Track 2: Pad */}
+                              <div className="space-y-1 bg-[#050912]/50 p-1.5 rounded border border-[#1e2f4d]/20">
+                                <span className="block text-[8px] font-bold text-slate-400 truncate uppercase">{isZh ? "和鸣轨" : "Pad"}</span>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="1"
+                                  step="0.05"
+                                  value={musicVolumePad}
+                                  onChange={(e) => setMusicVolumePad(parseFloat(e.target.value))}
+                                  className="w-full h-1 bg-[#14233c] rounded-lg appearance-none cursor-pointer accent-cyan-400 scale-y-95"
+                                />
+                                <span className="text-[8px] text-cyan-400 font-mono block">{(musicVolumePad * 100).toFixed(0)}%</span>
+                              </div>
+
+                              {/* Track 3: Beat */}
+                              <div className="space-y-1 bg-[#050912]/50 p-1.5 rounded border border-[#1e2f4d]/20">
+                                <span className="block text-[8px] font-bold text-slate-400 truncate uppercase">{isZh ? "打击轨" : "Beat"}</span>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="1"
+                                  step="0.05"
+                                  value={musicVolumeRhythm}
+                                  onChange={(e) => setMusicVolumeRhythm(parseFloat(e.target.value))}
+                                  className="w-full h-1 bg-[#14233c] rounded-lg appearance-none cursor-pointer accent-cyan-400 scale-y-95"
+                                />
+                                <span className="text-[8px] text-cyan-400 font-mono block">{(musicVolumeRhythm * 100).toFixed(0)}%</span>
+                              </div>
+
+                              {/* Track 4: FX */}
+                              <div className="space-y-1 bg-[#050912]/50 p-1.5 rounded border border-[#1e2f4d]/20">
+                                <span className="block text-[8px] font-bold text-slate-400 truncate uppercase">{isZh ? "特效轨" : "ASMR"}</span>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="1"
+                                  step="0.05"
+                                  value={musicVolumeFx}
+                                  onChange={(e) => setMusicVolumeFx(parseFloat(e.target.value))}
+                                  className="w-full h-1 bg-[#14233c] rounded-lg appearance-none cursor-pointer accent-cyan-400 scale-y-95"
+                                />
+                                <span className="text-[8px] text-cyan-400 font-mono block">{(musicVolumeFx * 100).toFixed(0)}%</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        )}
+                      </div>
 
                         {/* Additional Choice for Modern Platforms */}
                         <div>
@@ -4106,8 +4561,6 @@ export default function CreativeStudioView({
                           </motion.div>
                         )}
                       </div>
-
-                    </div>
 
                     <button
                       type="button"

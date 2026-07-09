@@ -14,6 +14,12 @@ const config = {
 async function run() {
   console.log('🚀 Starting Automatic Deployment pipeline to ECS...');
 
+  if (!config.host || !config.username || !config.password) {
+    console.error('❌ Error: Missing required ECS deployment credentials (ECS_HOST, ECS_USERNAME, ECS_PASSWORD).');
+    console.error('💡 Please set these as environment variables before running the deploy script.');
+    process.exit(1);
+  }
+
   // Step 1: Run build locally
   try {
     console.log('📦 Step 1: Building application locally...');

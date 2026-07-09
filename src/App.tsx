@@ -16,7 +16,7 @@ import { prdMarkdown, designMarkdown, adapterMarkdown, evalMarkdown } from './da
 import { 
   useAuthManager, AuthQuotaControl, AuthModal, QuotaExceededModal, AdminDashboardView, AccountManagerModal 
 } from './components/AuthManager';
-import { Shield } from 'lucide-react';
+import { Shield, Video } from 'lucide-react';
 
 export default function App() {
   const [view, setView] = useState<'landing' | 'workspace' | 'studio' | 'docs' | 'database' | 'ppt' | 'admin'>('landing');
@@ -407,6 +407,19 @@ export default function App() {
             </button>
             
             <button
+              id="nav-studio"
+              onClick={() => setView('studio')}
+              className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
+                view === 'studio' 
+                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm shadow-cyan-500/10' 
+                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
+              }`}
+            >
+              <Sparkles className={`w-3.5 h-3.5 ${view === 'studio' ? 'text-cyan-300' : 'text-slate-450'}`} />
+              <span>{isZh ? '命题 1：AIGC技术' : 'Prop 1: AIGC Tech'}</span>
+            </button>
+
+            <button
                id="nav-workspace"
                onClick={() => setView('workspace')}
                className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
@@ -415,7 +428,8 @@ export default function App() {
                    : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
                }`}
             >
-              <span>{isZh ? '创意工作台' : 'Workspace'}</span>
+              <Video className={`w-3.5 h-3.5 ${view === 'workspace' ? 'text-cyan-300 animate-pulse' : 'text-slate-450'}`} />
+              <span>{isZh ? '命题 2：文化出海' : 'Prop 2: Culture Outbound'}</span>
             </button>
 
             <button
@@ -428,20 +442,7 @@ export default function App() {
               }`}
             >
               <Globe className={`w-3.5 h-3.5 ${view === 'database' ? 'text-cyan-300' : 'text-slate-450'}`} />
-              <span>{isZh ? '自进化库' : 'Evolution DB'}</span>
-            </button>
-
-            <button
-              id="nav-studio"
-              onClick={() => setView('studio')}
-              className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer shrink-0 border text-xs md:text-sm font-semibold ${
-                view === 'studio' 
-                  ? 'bg-[#14233ccb] text-cyan-300 border-cyan-500/50 shadow-sm shadow-cyan-500/10' 
-                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/20'
-              }`}
-            >
-              <Sparkles className={`w-3.5 h-3.5 ${view === 'studio' ? 'text-cyan-300' : 'text-slate-450'}`} />
-              <span>{isZh ? 'AI 译配' : 'AI Studio'}</span>
+              <span>{isZh ? '命题 3：品牌出海' : 'Prop 3: Brand Outbound'}</span>
             </button>
 
             <button
@@ -525,7 +526,7 @@ export default function App() {
       </header>
 
       {/* Main View Port Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8 space-y-6">
+      <main className={`flex-1 w-full mx-auto py-8 space-y-6 ${view === 'studio' ? 'max-w-[100%] lg:max-w-[98%] px-4 lg:px-6' : 'max-w-7xl px-6'}`}>
         <AnimatePresence mode="wait">
           {view === 'landing' && (
             <motion.div
@@ -538,6 +539,7 @@ export default function App() {
               <LandingView 
                 lang={lang}
                 onEnterWorkspace={() => setView('workspace')}
+                onNavigateToView={(v) => setView(v)}
                 agents={agentsList}
                 defaultPack={PRESETS.lucky_deer.culturePack}
                 scoreDims={PRESETS.lucky_deer.culturePack.evaluation_score.scores}

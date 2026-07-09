@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { 
   TrendingUp, Compass, BookOpen, Music, 
   Smartphone, AlertCircle, Award, Eye, 
-  Sparkles, Layers, Network, Database, ShieldCheck, CalendarDays
+  Sparkles, Layers
 } from 'lucide-react';
 import { CulturePack, CulturePackKey } from '../types';
 
@@ -30,95 +30,8 @@ export default function CulturePackView({ lang, pack }: CulturePackViewProps) {
 
   const currentTab = tabsList.find(t => t.key === activePackTab) || tabsList[0];
 
-  const cluster = pack.mvp_agent_cluster;
-
   return (
     <div className="space-y-6">
-      {cluster && (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-          <div className="xl:col-span-4 p-5 rounded-2xl bg-[#0b1324]/90 border-2 border-cyan-500/20 shadow-xl space-y-3">
-            <div className="flex items-center gap-2 text-cyan-300 font-black">
-              <Network className="w-5 h-5" />
-              <span>{isZh ? 'MVP Agent 集群控制塔' : 'MVP Agent Cluster Tower'}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3"><span className="text-slate-500 block">Version</span><strong className="text-amber-300">{cluster.version}</strong></div>
-              <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3"><span className="text-slate-500 block">Agents</span><strong className="text-emerald-300">{cluster.agents?.length || 0}</strong></div>
-            </div>
-            <div className="space-y-2 max-h-56 overflow-auto pr-1">
-              {cluster.agents?.map((agent: any, idx: number) => (
-                <div key={idx} className="flex items-center justify-between gap-3 bg-slate-950/60 border border-slate-850 rounded-xl p-2.5">
-                  <div className="min-w-0"><p className="text-xs font-black text-slate-100 truncate">{agent.agentId}</p><p className="text-[10px] text-slate-500 truncate">{agent.rulesUsed?.slice(0,2).join(' · ') || 'orchestration'}</p></div>
-                  <span className="text-[10px] font-mono text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2 py-0.5">{Math.round((agent.confidence || 0.9) * 100)}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="xl:col-span-4 p-5 rounded-2xl bg-[#0b1324]/90 border-2 border-amber-500/20 shadow-xl space-y-3">
-            <div className="flex items-center gap-2 text-amber-300 font-black"><Database className="w-5 h-5" /><span>{isZh ? '数据底座 / 规则来源' : 'Data Grounding Trace'}</span></div>
-            <div className="space-y-2 max-h-72 overflow-auto pr-1">
-              {cluster.dataContext?.dataSourceTrace?.map((d: any, idx: number) => (
-                <div key={idx} className="bg-slate-950/60 border border-slate-850 rounded-xl p-3 space-y-1">
-                  <div className="flex items-center justify-between gap-2"><strong className="text-xs text-cyan-300 truncate">{d.recordId}</strong><span className="text-[10px] text-amber-300 font-mono">{Math.round((d.confidence || 0.8) * 100)}%</span></div>
-                  <p className="text-[11px] text-slate-300 leading-relaxed">{d.reason}</p>
-                  <p className="text-[10px] text-slate-500 font-mono truncate">{d.source}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="xl:col-span-4 p-5 rounded-2xl bg-[#0b1324]/90 border-2 border-red-500/20 shadow-xl space-y-3">
-            <div className="flex items-center gap-2 text-red-300 font-black"><ShieldCheck className="w-5 h-5" /><span>{isZh ? '规则命中 / 风险闸门' : 'Rule Hits / Risk Gates'}</span></div>
-            <div className="space-y-2 max-h-72 overflow-auto pr-1">
-              {cluster.rulesTriggered?.map((r: any, idx: number) => (
-                <div key={idx} className="bg-slate-950/60 border border-slate-850 rounded-xl p-3 space-y-1">
-                  <div className="flex items-center justify-between gap-2"><strong className="text-xs text-slate-100 truncate">{r.name}</strong><span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${r.severity === 'high' ? 'text-red-300 border-red-500/30 bg-red-500/10' : 'text-amber-300 border-amber-500/30 bg-amber-500/10'}`}>{r.severity}</span></div>
-                  <p className="text-[11px] text-slate-300 leading-relaxed">{r.action}</p>
-                  <p className="text-[10px] text-slate-500 font-mono">{r.ruleId}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="xl:col-span-12 grid grid-cols-1 xl:grid-cols-12 gap-4">
-            <div className="xl:col-span-8 p-5 rounded-2xl bg-[#0b1324]/90 border-2 border-emerald-500/20 shadow-xl space-y-3">
-              <div className="flex items-center gap-2 text-emerald-300 font-black"><CalendarDays className="w-5 h-5" /><span>{isZh ? '14 天自媒体出海 MVP 冲刺计划' : '14-Day Creator MVP Sprint'}</span></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {cluster.fourteen_day_sprint?.slice(0, 8).map((day: any) => (
-                  <div key={day.day} className="bg-slate-950/60 border border-slate-850 rounded-xl p-3 space-y-2">
-                    <div className="flex justify-between"><strong className="text-amber-300 font-mono">DAY {day.day}</strong><span className="text-[10px] text-slate-500">{day.ruleFocus}</span></div>
-                    <p className="text-xs text-slate-100 font-bold leading-relaxed">{day.task}</p>
-                    <p className="text-[11px] text-cyan-300 leading-relaxed">{day.deliverable}</p>
-                    <p className="text-[10px] text-slate-500 font-mono">{day.metric}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="xl:col-span-4 p-5 rounded-2xl bg-[#0b1324]/90 border-2 border-purple-500/20 shadow-xl space-y-4">
-              <div className="space-y-2">
-                <h4 className="text-purple-300 font-black text-sm">{isZh ? '真实 CSV 数据底座加载状态' : 'CSV Data Hub Status'}</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(cluster.dataContext?.csvDbSummary || {}).slice(0, 8).map(([name, rows]: any) => (
-                    <div key={name} className="bg-slate-950/60 border border-slate-850 rounded-lg p-2">
-                      <p className="text-[10px] text-slate-400 truncate">{name}</p>
-                      <strong className="text-xs text-cyan-300">{rows} rows</strong>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-amber-300 font-black text-sm">{isZh ? '发布前 Launch Checklist' : 'Launch Checklist'}</h4>
-                <ul className="space-y-2">
-                  {cluster.launch_checklist?.map((item: string, idx: number) => (
-                    <li key={idx} className="flex gap-2 text-[11px] text-slate-200 leading-relaxed"><span className="text-emerald-300 font-black">✓</span><span>{item}</span></li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
       <div className="flex flex-col gap-6 w-full">
         
         {/* Top Horizontal Navigation List */}

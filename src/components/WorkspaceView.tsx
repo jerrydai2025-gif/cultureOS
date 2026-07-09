@@ -94,6 +94,32 @@ const SIMPLE_TEMPLATES: Record<string, { zh: string; directEn: string; directEs:
     eqEs: "FlowEdit Creator Hub: Potencia tu narración visual. Convierte imágenes sin procesar en clips sociales atractivos con ajustes automáticos y capas de audio inteligentes.",
     explanationZh: "【合规与版权自清算对齐】：剔除可能触发平台封号和法律起诉的『抓取全网』、『暴富套现』和『小白躺赚』等灰色诱导性宣称，转译为高大上的『视觉叙事加速』及『多平台自适应』，完美通过社交媒体广告合规检测。",
     explanationEn: "[Platform Compliance & IP Safety Realignment]: Purged gray-hat claims ('scrape whole web', 'newbies easily get rich', 'earn $1000 daily') that trigger instant shadowbans and copyright lawsuits. Rebuilt as professional, high-vibe SaaS tool terminology ('supercharge visual storytelling', 'seamless smart audio layering')."
+  },
+  xuedoushan_zen: {
+    zh: "雪窦山开光弥勒佛开运摆件与禅意老白茶礼盒：大慈大悲弥勒佛加持，保佑你2026年消灾免难、招财进宝、大吉大利，多喝老白茶还能降脂抗癌，包治百病，送长辈绝对有面子！",
+    directEn: "Xuedoushan consecrated Maitreya Buddha lucky ornament and Zen old white tea gift box: Great mercy Maitreya blessing, guarantees you to avoid disasters, attract wealth and great luck in 2026, drinking old white tea also lowers fat and anti-cancer, cures all diseases, perfect gift to elders!",
+    directEs: "Adorno de la suerte del Buda Maitreya consagrado en Xuedoushan y caja de regalo de té blanco Zen: ¡Bendición de gran misericordia que garantiza evitar desastres y atraer riqueza!",
+    eqEn: "Lumina-Zen Maitreya Keepsake & Mountain White Tea Set: A companion of quiet harmony and light-hearted warmth. Paired with aged, sustainably grown organic mountain white tea, offering an inviting sensory ritual to slow down and cultivate daily mindfulness.",
+    eqEs: "Recuerdo Lumina-Zen Maitreya y juego de té blanco: Un compañero de armonía tranquila y calidez alegre. Ofrece un ritual sensorial para calmar la mente y cultivar la atención diaria.",
+    explanationZh: "【文化代偿与合规审计对齐】：1. 规避了 FDA 严禁的茶叶『防癌/包治百病』等虚假医学药效宣称。2. 规避了西方对于『消灾免难/拜佛开光』等宗教神怪论的理解偏好，将其精妙转译为符合欧美高管与瑜伽人群生活审美的『Lumina-Zen 仪式感手办』与『有机高山白茶感官静心仪式』。3. 将中式强行拉赞助的『送礼有面子』重贴合为『轻盈欢喜与温情常在』的和乐文化共鸣。",
+    explanationEn: "[Compliant Well-being & Cross-Cultural Resonance]: 1. Strictly purged non-compliant medical claims ('anti-cancer', 'cures all diseases') forbidden by FDA/FTC. 2. Reframed superstitious, heavy religious concepts ('consecrated', 'avoid disaster') into a universal mental well-being ritual ('Lumina-Zen Keepsake', 'inviting sensory ritual to slow down'). 3. Shifted status-driven marketing ('perfect gift to show respect to elders') to emotional care ('harmony and light-hearted warmth')."
+  }
+};
+
+const OBFUSCATION_KEY = "cultureos_secure_key_2026";
+
+const decryptString = (encoded: string): string => {
+  if (!encoded) return "";
+  try {
+    const decoded = decodeURIComponent(escape(atob(encoded)));
+    let result = "";
+    for (let i = 0; i < decoded.length; i++) {
+      const charCode = decoded.charCodeAt(i) ^ OBFUSCATION_KEY.charCodeAt(i % OBFUSCATION_KEY.length);
+      result += String.fromCharCode(charCode);
+    }
+    return result;
+  } catch (e) {
+    return encoded; // Fallback to plain text if not encoded
   }
 };
 
@@ -219,6 +245,7 @@ export default function WorkspaceView({
               { label: isZh ? '🚴 绿色电动出行硬件' : '🚴 E-Bike Eco-mobility', value: 'ebike' },
               { label: isZh ? '🐕 智能宠物硬件与 IoT' : '🐕 Smart Pet IoT', value: 'pet_iot' },
               { label: isZh ? '🍵 东方本草养生茶饮' : '🍵 Wellness Tea', value: 'wellness_tea' },
+              { label: isZh ? '🧘 雪窦山禅意与弥勒 IP' : '🧘 Xuedoushan Zen & Maitreya IP', value: 'xuedoushan_zen' },
               { label: isZh ? '💻 AI 效率与 SaaS 工具' : '💻 AI SaaS Tools', value: 'ai_tools' },
               { label: isZh ? '🎤 个人自媒体 / 音乐二创' : '🎤 Personal Vlog / C-Pop Covers', value: 'personal_ip' }
             ]
@@ -318,6 +345,21 @@ export default function WorkspaceView({
               loadPreset('wellness_tea');
               setSelectedPreset('wellness_tea');
               setActiveRagId('rag-008');
+            } else if (cat === 'xuedoushan_zen') {
+              // Custom configuration specifically for Xuedoushan Zen & Maitreya IP
+              setSelectedPreset('custom');
+              setDbCategory('xuedoushan_zen');
+              setIpType('personal');
+              setIpName('Lumina-Zen (雪窦和乐)');
+              setCultureAsset('布袋和尚“和乐欢喜”情绪哲学与雪窦高山禅茶');
+              setBusinessGoal('通过AI治愈音画、深夜静心ASMR与极简潮玩文创，建立海内外青年的心灵共鸣闭环');
+              setEmotionalKernelText('quiet harmony, light-hearted warmth, daily mindfulness, inner slow-living');
+              setBrandTone('serene, warm, welcoming, minimalist Eastern aesthetic');
+              setTargetRegions(['Europe', 'North America']);
+              setTargetPlatforms(['YouTube Shorts', 'Instagram Reels', 'Kickstarter']);
+              setActiveRagId('rag-008'); // Bind to high-reverence/tea RAG which aligns nicely
+              setMustHaveText('light-hearted warmth; daily mindfulness; slow-living');
+              setMustNotText('religious superstition; anti-cancer health claims; aggressive commercial push');
             } else if (cat === 'ai_tools') {
               // Custom build or ai_tools preset
               setSelectedPreset('custom');
@@ -352,7 +394,11 @@ export default function WorkspaceView({
     }, 600);
   };
 
-  const executeSimpleTranslation = () => {
+  const executeSimpleTranslation = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setIsTranslatingSimple(true);
     setTimeout(() => {
       const cat = consultationState.category || 'cosmetics';
@@ -677,7 +723,12 @@ export default function WorkspaceView({
     try {
       const savedCredentials = localStorage.getItem('cultureos_credentials') || '{}';
       let parsedCreds = { customApiKey: '', customApiBase: '' };
-      try { parsedCreds = JSON.parse(savedCredentials); } catch (e) {}
+      try { 
+        parsedCreds = JSON.parse(savedCredentials); 
+        if (parsedCreds.customApiKey) {
+          parsedCreds.customApiKey = decryptString(parsedCreds.customApiKey);
+        }
+      } catch (e) {}
 
       // Call Express server-side Gemini/Model integration route
       const response = await fetch("/api/campaign/generate", {
@@ -751,15 +802,15 @@ export default function WorkspaceView({
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="flex h-2.5 w-2.5 rounded-full bg-cyan-400 animate-ping" />
-              <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-widest">CultureOS User Journey</span>
+              <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-widest">CultureOS Content Chain</span>
             </div>
             <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 font-sans tracking-tight">
-              <span>{isZh ? '全球出海定位诊断与自适应体验旅程' : 'Global Positioning Diagnosis & Progressive Journey'}</span>
+              <span>{isZh ? '命题二：文化出海全链条生产与互动场景验证' : 'Prop 2: Cultural Outbound Content Chain & Interactive Scene'}</span>
             </h3>
             <p className="text-xs text-slate-400">
               {isZh 
-                ? '我们已将数据库与 AI 译配功能按难易度分层，帮助你在出海征程中由浅入深、规避地缘侵权红线。' 
-                : 'Interactive learning roadmap layering complex tools into easy-to-use discovery steps.'}
+                ? '围绕网文剧本编纂、影片智能译配、视频多渠道切片分发及游戏内容标准，验证文化资产出海的全链路生产。' 
+                : 'Verify multi-agent standard-aligned pipelines across novel script transcreation, film translation, and video distribution.'}
             </p>
           </div>
           
@@ -778,8 +829,8 @@ export default function WorkspaceView({
               }`}
             >
               <span>{skipToAdvanced || activeJourneyStep === 'advanced' 
-                ? (isZh ? '🛡️ 切换回新手引导 / Back to Guide' : '🛡️ Guided Assistant')
-                : (isZh ? '⚡ 直接体验 7-Agent 高端终端 / Skip to Advanced' : '⚡ Skip to Advanced Mode')
+                ? (isZh ? '🛡️ 返回全链条引导 / Back to Guide' : '🛡️ Content Chain Guide')
+                : (isZh ? '⚡ 直接体验 7-Agent 终极制片端 / Skip to Advanced' : '⚡ 7-Agent Production Studio')
               }</span>
             </button>
           </div>
@@ -809,10 +860,10 @@ export default function WorkspaceView({
             </div>
             <div>
               <h4 className={`text-xs font-bold tracking-tight ${activeJourneyStep === 'consulting' && !skipToAdvanced ? 'text-amber-350' : 'text-slate-300'}`}>
-                {isZh ? '🌐 智脑出海咨询顾问' : '🌐 Outbound AI Advisor'}
+                {isZh ? '🌐 网文剧本出海咨询' : '🌐 Outbound Script Advisor'}
               </h4>
               <p className="text-[10px] text-slate-500 font-sans truncate w-full mt-0.5">
-                {isZh ? '出海定位与雷达诊断' : 'Global Diagnostic chat'}
+                {isZh ? '海外文化代偿与情境诊断' : 'Sociocultural script diagnosis'}
               </p>
             </div>
           </button>
@@ -822,7 +873,7 @@ export default function WorkspaceView({
             onClick={() => {
               if (!skipToAdvanced) {
                 if (consultationProgress < 4) {
-                  alert(isZh ? "请先完成 Step 1 的智脑咨询诊断哦！" : "Please complete Step 1 AI Consultation first!");
+                  alert(isZh ? "请先完成 Step 1 的剧本出海诊断哦！" : "Please complete Step 1 Script Diagnosis first!");
                   return;
                 }
                 setActiveJourneyStep('simple_edit');
@@ -845,10 +896,10 @@ export default function WorkspaceView({
             </div>
             <div>
               <h4 className={`text-xs font-bold tracking-tight ${activeJourneyStep === 'simple_edit' && !skipToAdvanced ? 'text-amber-350' : 'text-slate-300'}`}>
-                {isZh ? '✍️ 极简内容译配尝试' : '✍️ Content Adaptation'}
+                {isZh ? '✍️ 智能译配编纂分镜' : '✍️ Script Translation'}
               </h4>
               <p className="text-[10px] text-slate-500 font-sans truncate w-full mt-0.5">
-                {isZh ? '中式直译 vs 情感代偿' : 'Direct vs Cultural adaptation'}
+                {isZh ? '中式剧本 vs 地标情感润色' : 'Direct vs Cultural adaptation'}
               </p>
             </div>
           </button>
@@ -858,7 +909,7 @@ export default function WorkspaceView({
             onClick={() => {
               if (!skipToAdvanced) {
                 if (consultationProgress < 4) {
-                  alert(isZh ? "请先完成 Step 1 的智脑咨询诊断哦！" : "Please complete Step 1 AI Consultation first!");
+                  alert(isZh ? "请先完成 Step 1 的剧本出海诊断哦！" : "Please complete Step 1 Script Diagnosis first!");
                   return;
                 }
                 setActiveJourneyStep('purification');
@@ -876,15 +927,15 @@ export default function WorkspaceView({
               {purifiedRules.every(r => r.status === 'purified') ? (
                 <span className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-400 rounded-full font-mono font-bold">Done</span>
               ) : (
-                <span className="text-slate-600 font-mono text-[9px]">{isZh ? '待自进化' : 'Evolving'}</span>
+                <span className="text-slate-600 font-mono text-[9px]">{isZh ? '合规重构' : 'Refactoring'}</span>
               )}
             </div>
             <div>
               <h4 className={`text-xs font-bold tracking-tight ${activeJourneyStep === 'purification' && !skipToAdvanced ? 'text-amber-350' : 'text-slate-300'}`}>
-                {isZh ? '🧹 自进化库合规净化' : '🧹 Database Purification'}
+                {isZh ? '🎬 视频切片与音轴对位' : '🎬 Slicing & Audio Align'}
               </h4>
               <p className="text-[10px] text-slate-500 font-sans truncate w-full mt-0.5">
-                {isZh ? 'RAG 规约扫描与边界安全' : 'Sanitize RAG regulatory bounds'}
+                {isZh ? '出海剪辑与地方法律审查' : 'Sanitize video clip regulatory bounds'}
               </p>
             </div>
           </button>
@@ -894,7 +945,7 @@ export default function WorkspaceView({
             onClick={() => {
               if (!skipToAdvanced) {
                 if (consultationProgress < 4) {
-                  alert(isZh ? "请先完成 Step 1 的智脑咨询诊断哦！" : "Please complete Step 1 AI Consultation first!");
+                  alert(isZh ? "请先完成 Step 1 的剧本出海诊断哦！" : "Please complete Step 1 Script Diagnosis first!");
                   return;
                 }
                 setActiveJourneyStep('advanced');
@@ -909,14 +960,14 @@ export default function WorkspaceView({
           >
             <div className="flex items-center justify-between w-full">
               <span className="text-[10px] font-mono font-bold text-slate-500">STEP 04</span>
-              <span className="text-slate-600 font-mono text-[9px]">{isZh ? '高级' : 'Advanced'}</span>
+              <span className="text-slate-600 font-mono text-[9px]">{isZh ? '终极' : 'Ultimate'}</span>
             </div>
             <div>
               <h4 className={`text-xs font-bold tracking-tight ${activeJourneyStep === 'advanced' && !skipToAdvanced ? 'text-amber-350' : 'text-slate-300'}`}>
-                {isZh ? '⚙️ 7-Agent 全案协同' : '⚙️ 7-Agent Workstation'}
+                {isZh ? '🎮 AI制片全链条交互' : '🎮 Multi-Agent Production'}
               </h4>
               <p className="text-[10px] text-slate-500 font-sans truncate w-full mt-0.5">
-                {isZh ? '千万推流大案对抗演练' : 'Simulate mass brand launches'}
+                {isZh ? '7-Agent 互动剧本生产验证' : 'Interactive script sandbox'}
               </p>
             </div>
           </button>
@@ -1141,6 +1192,7 @@ export default function WorkspaceView({
                 className="w-full h-[180px] bg-slate-950 border border-slate-850 hover:border-slate-800 rounded-xl p-3 text-xs font-semibold text-slate-300 leading-relaxed focus:border-amber-400 outline-none"
               />
               <button
+                type="button"
                 onClick={executeSimpleTranslation}
                 disabled={isTranslatingSimple}
                 className="w-full py-2.5 bg-amber-400 text-slate-950 font-black rounded-xl text-xs hover:bg-amber-350 cursor-pointer flex items-center justify-center gap-1.5 transition shadow-lg shadow-amber-400/5 disabled:opacity-60"
